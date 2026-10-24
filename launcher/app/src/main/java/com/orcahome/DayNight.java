@@ -82,16 +82,25 @@ final class DayNight {
         return at;
     }
 
-    private static double[] position(Context c) {
+    /**
+     * The newest position any provider has. Compared by time since boot, not by the clock in
+     * the fix: a fix with a wrong date (a head unit's clock, an odd GPS) would otherwise win forever.
+     */
+    static Location lastKnown(Context c) {
         LocationManager lm = c.getSystemService(LocationManager.class);
         Location best = null;
         try {
             for (String p : lm.getProviders(true)) {
                 Location l = lm.getLastKnownLocation(p);
-                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+                if (l != null && (best == null || l.getElapsedRealtimeNanos() > best.getElapsedRealtimeNanos())) best = l;
             }
         } catch (SecurityException | NullPointerException ignored) {
         }
+        return best;
+    }
+
+    private static double[] position(Context c) {
+        Location best = lastKnown(c);
         return best != null ? new double[]{best.getLatitude(), best.getLongitude()}
                 : new double[]{FALLBACK_LAT, FALLBACK_LON};
     }

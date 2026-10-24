@@ -4,7 +4,6 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -62,18 +61,7 @@ final class Weather {
         });
     }
 
-    private static Location lastLocation(Context c) {
-        LocationManager lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
-        Location best = null;
-        try {
-            for (String p : lm.getProviders(true)) {
-                Location l = lm.getLastKnownLocation(p);
-                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
-            }
-        } catch (SecurityException ignored) {
-        }
-        return best;
-    }
+    private static Location lastLocation(Context c) { return DayNight.lastKnown(c); }
 
     private static String cityName(Context c, Location l) {
         try {

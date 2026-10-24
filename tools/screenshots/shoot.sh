@@ -187,6 +187,7 @@ else NIGHT="-6.19,-73.18" DAY="-6.1864,106.8238"; fi
 place() { sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es place "$1" > /dev/null; sleep 4; }
 sun() { python3 "$HERE/sun.py" "${1%,*}" "${1#*,}"; }
 bright() { echo "$(sh_ settings get system screen_brightness) (mode $(sh_ settings get system screen_brightness_mode))"; }
+adb logcat -c
 place "$NIGHT"
 EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide; home; sleep 4
 say "Night brightness, car at $NIGHT ($(sun "$NIGHT")): brightness $(bright), expected 77 (30 %)"
@@ -196,6 +197,8 @@ say "  turned up by hand to 120, after going home again: $(bright), expected 120
 place "$DAY"
 sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 2; home; sleep 3
 say "  car at $DAY ($(sun "$DAY")): $(bright), expected 200 (mode 0)"
+adb logcat -d -s OrcaHome:* > "$OUT/logcat-brightness.txt"
+sh_ dumpsys location | grep -E 'Last Known Locations|^ +[a-z]+: Location\[' > "$OUT/location-brightness.txt"
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
 sh_ appops set "$PKG" WRITE_SETTINGS default
 

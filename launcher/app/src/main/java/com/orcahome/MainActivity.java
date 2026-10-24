@@ -485,14 +485,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     /** Shows where the car was last seen right away, before the first new GPS fix. */
     private void showLastKnownLocation() {
         if (!locationAllowed()) { mapHint.setText("Tap the map to allow GPS"); return; }
-        Location best = null;
-        try {
-            for (String pr : location.getProviders(true)) {
-                Location l = location.getLastKnownLocation(pr);
-                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
-            }
-        } catch (SecurityException ignored) {
-        }
+        Location best = DayNight.lastKnown(this);
         if (best != null) { map.setLocation(best); mapHint.setText(""); }
         else mapHint.setText("Waiting for GPS\u2026");
     }
@@ -686,17 +679,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         onNavChanged();
     }
 
-    private Location lastLocation() {
-        Location best = null;
-        try {
-            for (String pr : location.getProviders(true)) {
-                Location l = location.getLastKnownLocation(pr);
-                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
-            }
-        } catch (SecurityException ignored) {
-        }
-        return best;
-    }
+    private Location lastLocation() { return DayNight.lastKnown(this); }
 
     /** Starts turn-by-turn navigation in the maps app (Google Maps or Waze), else a search. */
     private void navigateTo(String dest) {

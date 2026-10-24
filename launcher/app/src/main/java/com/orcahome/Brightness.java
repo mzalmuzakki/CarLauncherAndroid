@@ -27,6 +27,8 @@ final class Brightness {
         long now = System.currentTimeMillis();
         if (!allowed(c)) return;
         boolean dim = p.nightDim() && DayNight.isNight(c, now);
+        if ((c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
+            Log.d("OrcaHome", "night brightness (test build): dim=" + dim + " dimmed=" + p.dimmed());
         ContentResolver r = c.getContentResolver();
         try {
             if (dim && !p.dimmed()) {
