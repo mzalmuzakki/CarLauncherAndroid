@@ -154,6 +154,10 @@ sh_ input swipe 175 113 175 113 1200; shot 43-set-work-place 3
 sh_ input keyevent KEYCODE_BACK; sh_ input keyevent KEYCODE_BACK
 
 # 2.6: speed alert, map zoom with speed, dock buttons, recent places, music shortcuts, settings.
+# The test GPS again: its app can be stopped while Google Maps opens above.
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive start > /dev/null
+sleep 4
+say "Test GPS for 2.6 shots: $(sh_ dumpsys location | grep -m1 -E 'gps: Location\[')"
 EXTRA='<int name="speedlimit" value="40" />' prefs 6 true theme north wide; home; shot 50-speed-alert 8
 EXTRA='<int name="speedlimit" value="40" />' prefs 0 false theme; home; shot 51-speed-alert-gauge 6
 EXTRA='<boolean name="autozoom" value="true" />' prefs 6 true theme north wide; home; shot 52-zoom-with-speed 10
@@ -169,36 +173,37 @@ home; shot 55-recent-places 5
 say "Recent places saved: $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o '<string name="recent">[^<]*' | sed 's/.*>//')"
 EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide; home; sleep 3
 sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; shot 57-settings-night-brightness 3
-sh_ input swipe 512 520 512 120 400; sh_ input swipe 512 520 512 120 400; shot 58-settings-zoom 2
+sh_ input swipe 512 520 512 120 400; shot 58-settings-zoom 2
 sh_ input swipe 512 520 512 120 400; shot 59-settings-speed-alert 2
+sh_ input swipe 512 520 512 120 400; shot 60-settings-tips 2
 sh_ input keyevent KEYCODE_BACK
-sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
-home; sleep 3
 
-# 2.6 night brightness: put the car where it is night now, then where it is day.
+# 2.6 night brightness: put the car (test GPS) where it is night now, then where it is day.
 sh_ appops set "$PKG" WRITE_SETTINGS allow
 sh_ settings put system screen_brightness_mode 0
 sh_ settings put system screen_brightness 200
-if [ "$(python3 "$HERE/sun.py" -6.1864 106.8238)" = night ]; then NIGHT="106.8238 -6.1864" DAY="-73.18 -6.19"
-else NIGHT="-73.18 -6.19" DAY="106.8238 -6.1864"; fi
+if [ "$(python3 "$HERE/sun.py" -6.1864 106.8238)" = night ]; then NIGHT="-6.1864,106.8238" DAY="-6.19,-73.18"
+else NIGHT="-6.19,-73.18" DAY="-6.1864,106.8238"; fi
+place() { sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es place "$1" > /dev/null; sleep 4; }
+sun() { python3 "$HERE/sun.py" "${1%,*}" "${1#*,}"; }
 bright() { echo "$(sh_ settings get system screen_brightness) (mode $(sh_ settings get system screen_brightness_mode))"; }
-adb emu geo fix $NIGHT > /dev/null; sleep 4
+place "$NIGHT"
 EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide; home; sleep 4
-say "Night brightness, car at $NIGHT ($(python3 "$HERE/sun.py" ${NIGHT#* } ${NIGHT% *})): brightness $(bright), expected 77 (30 %)"
+say "Night brightness, car at $NIGHT ($(sun "$NIGHT")): brightness $(bright), expected 77 (30 %)"
 sh_ settings put system screen_brightness 120  # turned up by hand at night: must stay
 sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 2; home; sleep 3
 say "  turned up by hand to 120, after going home again: $(bright), expected 120"
-adb emu geo fix $DAY > /dev/null; sleep 4
+place "$DAY"
 sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 2; home; sleep 3
-say "  car at $DAY ($(python3 "$HERE/sun.py" ${DAY#* } ${DAY% *})): $(bright), expected 200 (mode 0)"
-adb emu geo fix 106.8238 -6.1864 > /dev/null
+say "  car at $DAY ($(sun "$DAY")): $(bright), expected 200 (mode 0)"
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
 sh_ appops set "$PKG" WRITE_SETTINGS default
 
 # Music shortcuts: nothing playing (the demo player stopped).
 sh_ am force-stop com.orcahome.demoplayer
 prefs 6 true theme north wide; home; shot 56-music-shortcuts 8
 home; sleep 3
-say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'FATAL EXCEPTION')"
+say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'Process: com.orcahome,') (other apps: $(adb logcat -b crash -d | grep 'Process: ' | grep -vc 'Process: com.orcahome,'))"
 adb logcat -b crash -d > "$OUT/crash-debug.txt"
 
 # --- Checks with the release APK the head unit gets ----------------------------------------
@@ -231,7 +236,7 @@ shot 16-release-home 2
 # Survives a theme rebuild and repeated home presses without crashing.
 for i in 1 2 3 4 5; do sh_ input keyevent KEYCODE_HOME; sleep 1; done
 sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; sleep 2; sh_ input keyevent KEYCODE_BACK; sleep 2
-crashes=$(adb logcat -b crash -d | grep -c 'FATAL EXCEPTION')
+crashes=$(adb logcat -b crash -d | grep -c 'Process: com.orcahome,')
 say "Release-APK crashes: $crashes"
 adb logcat -b crash -d > "$OUT/crash-release.txt"
 adb logcat -d | grep -iE 'orcahome|AndroidRuntime' | tail -200 > "$OUT/logcat-orcahome.txt"

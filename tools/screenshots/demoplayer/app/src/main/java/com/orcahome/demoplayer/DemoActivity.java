@@ -37,7 +37,17 @@ public class DemoActivity extends Activity {
         // "--es drive start|stop": a test GPS driving east (heading 90) at 48 km/h; the
         // emulator's own "geo fix" can't set a heading. Needs the mock-location app-op.
         String drive = getIntent().getStringExtra("drive");
-        if (drive != null) { drive(getApplicationContext(), "start".equals(drive)); finish(); return; }
+        if (drive != null) {
+            lat = -6.18640; lon = 106.82380; speed = 13.3f;
+            drive(getApplicationContext(), "start".equals(drive)); finish(); return;
+        }
+        // "--es place lat,lon": the test GPS parked there (night brightness test).
+        String place = getIntent().getStringExtra("place");
+        if (place != null) {
+            String[] p = place.split(",");
+            lat = Double.parseDouble(p[0]); lon = Double.parseDouble(p[1]); speed = 0f;
+            drive(getApplicationContext(), true); finish(); return;
+        }
         if (session == null) {
             session = new MediaSession(getApplicationContext(), "demo");
             session.setCallback(new MediaSession.Callback() {
@@ -57,6 +67,8 @@ public class DemoActivity extends Activity {
     }
 
     private static volatile boolean driving;
+    private static volatile double lat, lon;
+    private static volatile float speed;
 
     private static void drive(Context c, boolean on) {
         LocationManager lm = c.getSystemService(LocationManager.class);
@@ -67,16 +79,19 @@ public class DemoActivity extends Activity {
             return;
         }
         if (driving) return;
-        lm.addTestProvider(gps, false, true, false, false, true, true, true,
-                Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+        try {
+            lm.addTestProvider(gps, false, true, false, false, true, true, true,
+                    Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+        } catch (RuntimeException alreadyThere) { // left by an earlier, stopped process
+        }
         lm.setTestProviderEnabled(gps, true);
         driving = true;
         new Thread(() -> {
             for (int i = 0; driving; i++) {
                 Location l = new Location(gps);
-                l.setLatitude(-6.18640);
-                l.setLongitude(106.82380 + 0.00012 * (i % 120));
-                l.setSpeed(13.3f);
+                l.setLatitude(lat);
+                l.setLongitude(lon + (speed > 0 ? 0.00012 * (i % 120) : 0));
+                l.setSpeed(speed);
                 l.setBearing(90f);
                 l.setAccuracy(5f);
                 l.setAltitude(10);
