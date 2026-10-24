@@ -1,0 +1,8 @@
+(adb capture mode: execout)
+  [32m✓[0m home screen back to com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+  [32m✓[0m Google Maps' floating window is back as it was
+[1;34m==>[0m Restored. (Precompiled apps stay compiled — that is harmless.) Reboot the unit.
+(adb capture mode: execout)
+  [32m✓[0m home screen back to com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+  [32m✓[0m Google Maps' floating window is back as it was
+[1;34m==>[0m Restored. (Precompiled apps stay compiled — that is harmless.) Reboot the unit.
