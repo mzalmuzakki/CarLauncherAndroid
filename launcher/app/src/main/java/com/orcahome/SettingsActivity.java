@@ -102,6 +102,15 @@ public class SettingsActivity extends Activity {
         ms.check("classic".equals(prefs.mapStyle()) ? 401 : 400);
         ms.setOnCheckedChangeListener((g, id) -> prefs.setMapStyle(id == 401 ? "classic" : "theme"));
         col.addView(ms);
+        radios(col, "Map direction", new String[][]{
+                {"north", "North up (the arrow turns)"},
+                {"heading", "Driving direction up (the map turns, the arrow always points up)"}},
+                prefs.mapDirection(), prefs::setMapDirection, 500);
+        radios(col, "Map layout", new String[][]{
+                {"wide", "Wide map, apps in a row below"},
+                {"tall", "Square map, apps in a column beside it"}},
+                prefs.mapLayout(), prefs::setMapLayout, 600);
+
         TextView mapNote = ui.label(this, 13, ui.sub, false);
         mapNote.setText("Map tiles are downloaded only while the home screen is visible and kept on the unit (max 50 MB), so roads you drive often need no data.");
         mapNote.setPadding(0, ui.dp(4), 0, 0);
@@ -170,7 +179,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.3 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
+        about.setText("Orca Home 2.4 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);
@@ -202,6 +211,24 @@ public class SettingsActivity extends Activity {
     }
 
     private interface Setter { void set(boolean b); }
+    private interface Chooser { void set(String value); }
+
+    /** A heading and one radio button per {value, label}; ids start at idBase. */
+    private void radios(LinearLayout col, String title, String[][] options, String current, Chooser c, int idBase) {
+        header(col, title);
+        RadioGroup g = new RadioGroup(this);
+        for (int i = 0; i < options.length; i++) {
+            RadioButton r = new RadioButton(this);
+            r.setId(idBase + i);
+            r.setText(options[i][1]);
+            r.setTextColor(ui.text);
+            r.setButtonTintList(ColorStateList.valueOf(ui.accent));
+            g.addView(r);
+            if (options[i][0].equals(current)) g.check(idBase + i);
+        }
+        g.setOnCheckedChangeListener((gr, id) -> c.set(options[id - idBase][0]));
+        col.addView(g);
+    }
 
     private void check(LinearLayout col, String text, boolean value, Setter s) {
         CheckBox c = new CheckBox(this);

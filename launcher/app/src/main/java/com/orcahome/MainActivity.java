@@ -2,6 +2,7 @@ package com.orcahome;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -24,13 +25,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.service.notification.NotificationListenerService;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridView;
@@ -72,7 +76,12 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private TileAdapter tiles;
     private GridView grid;
-    private View searchArea, navCard;
+    private View searchArea, navCard, topArea;
+    private EditText searchField;
+    // Big guidance over the map while Google Maps / Waze navigates (map layouts).
+    private View navBanner;
+    private ImageView bannerArrow;
+    private TextView bannerDistance, bannerInstruction, bannerEta;
     private ImageView navArrow;
     private TextView navDistance, navInstruction, navEta;
     private GaugeView gauge;
@@ -128,6 +137,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         showWeather();
         if (prefs.showWeather()) Weather.refreshIfStale(this, prefs, this::showWeather);
         NavState.setListener(this);
+        rebindListener();
         onNavChanged();
         if (map != null) map.setActive(true);
         startSpeed();
@@ -139,6 +149,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         super.onPause();
         visible = false;
         shown = false;
+        hideKeyboard();
         unregisterReceiver(dateChanged);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
@@ -201,11 +212,13 @@ public class MainActivity extends Activity implements NavState.Listener {
         content.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(8));
         root.addView(content, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        // The square-map layout gives the map half the width; its apps go in a column beside it.
+        boolean tall = prefs.showMap() && "tall".equals(prefs.mapLayout());
         View mainPanel = mainPanel();
-        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 62f));
+        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 52f : 62f));
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 38f);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 48f : 38f);
         rlp.leftMargin = ui.dp(10);
         content.addView(right, rlp);
         right.addView(infoRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(104)));
@@ -231,6 +244,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         p.setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(8));
 
         FrameLayout top = new FrameLayout(this);
+        topArea = top;
         searchArea = searchArea();
         top.addView(searchArea);
         navCard = navCard();
@@ -249,6 +263,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         map = null;
         speedBubble = mapHint = null;
         favRow = null;
+        navBanner = null;
         LinearLayout body = new LinearLayout(this);
         p.addView(body, blp);
 
@@ -305,17 +320,39 @@ public class MainActivity extends Activity implements NavState.Listener {
         return p;
     }
 
-    /** Live map with a speed bubble and zoom buttons, and a row of favourite apps below. */
+    /**
+     * Live map with a speed bubble and zoom buttons, and the favourite apps: in a row below
+     * (wide layout) or in a column beside it (square-map layout).
+     */
     private View mapBody() {
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
+        boolean tall = "tall".equals(prefs.mapLayout());
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(tall ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+        favRow = new LinearLayout(this);
+        favRow.setOrientation(tall ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+        favRow.setGravity(Gravity.CENTER);
+        if (tall) {
+            box.addView(mapFrame(), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ui.dp(76), ViewGroup.LayoutParams.MATCH_PARENT);
+            fl.leftMargin = ui.dp(6);
+            box.addView(favRow, fl);
+        } else {
+            box.addView(mapFrame(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(74));
+            fl.topMargin = ui.dp(6);
+            box.addView(favRow, fl);
+        }
+        showLastKnownLocation();
+        return box;
+    }
 
+    private View mapFrame() {
         FrameLayout frame = new FrameLayout(this);
         frame.setBackground(ui.box(ui.tile));
         frame.setClipToOutline(true);
         String style = "classic".equals(prefs.mapStyle()) ? MapTiles.STYLE_CLASSIC
                 : (ui.light ? MapTiles.STYLE_LIGHT : MapTiles.STYLE_DARK);
-        map = new MapPanel(this, ui, style, prefs.mapZoom());
+        map = new MapPanel(this, ui, style, prefs.mapZoom(), "heading".equals(prefs.mapDirection()));
         map.setOnClickListener(v -> {
             if (!locationAllowed() || !location.isProviderEnabled(LocationManager.GPS_PROVIDER)) askLocation();
             else openNavigation();
@@ -348,15 +385,52 @@ public class MainActivity extends Activity implements NavState.Listener {
         FrameLayout.LayoutParams zl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
         zl.bottomMargin = zl.rightMargin = ui.dp(10);
         frame.addView(zoom, zl);
-        col.addView(frame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        favRow = new LinearLayout(this);
-        favRow.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(74));
-        fl.topMargin = ui.dp(6);
-        col.addView(favRow, fl);
-        showLastKnownLocation();
-        return col;
+        navBanner = navBanner();
+        navBanner.setVisibility(View.GONE);
+        FrameLayout.LayoutParams bl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP);
+        bl.leftMargin = bl.topMargin = ui.dp(10);
+        bl.rightMargin = speedBubble != null ? ui.dp(92) : ui.dp(10);
+        frame.addView(navBanner, bl);
+        bannerEta = ui.label(this, 14, ui.text, true);
+        bannerEta.setBackground(ui.box(ui.panel, ui.dp(16)));
+        bannerEta.setPadding(ui.dp(14), ui.dp(6), ui.dp(14), ui.dp(6));
+        bannerEta.setVisibility(View.GONE);
+        FrameLayout.LayoutParams el = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+        el.leftMargin = ui.dp(10);
+        el.bottomMargin = ui.dp(22);
+        frame.addView(bannerEta, el);
+        return frame;
+    }
+
+    /** Google Maps-style guidance: turn arrow, distance and street, from the navigation app. */
+    private View navBanner() {
+        LinearLayout c = new LinearLayout(this);
+        c.setGravity(Gravity.CENTER_VERTICAL);
+        c.setBackground(ui.box(0xFF1E7A4C, ui.dp(14)));
+        c.setPadding(ui.dp(14), ui.dp(12), ui.dp(16), ui.dp(12));
+        c.setElevation(ui.dp(4));
+        bannerArrow = new ImageView(this);
+        c.addView(bannerArrow, new LinearLayout.LayoutParams(ui.dp(56), ui.dp(56)));
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(ui.dp(14), 0, 0, 0);
+        bannerDistance = ui.label(this, 26, 0xFFFFFFFF, true);
+        bannerInstruction = ui.label(this, 16, 0xFFFFFFFF, false);
+        bannerInstruction.setMaxLines(2);
+        bannerInstruction.setEllipsize(TextUtils.TruncateAt.END);
+        col.addView(bannerDistance);
+        col.addView(bannerInstruction, wrapTop(2));
+        c.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        c.setOnClickListener(v -> openNavApp());
+        return c;
+    }
+
+    private void openNavApp() {
+        if (NavState.open != null) {
+            try { NavState.open.send(); return; } catch (PendingIntent.CanceledException ignored) { }
+        }
+        launchPackage(NavState.pkg);
     }
 
     private View zoomButton(String label, int delta) {
@@ -387,11 +461,12 @@ public class MainActivity extends Activity implements NavState.Listener {
         else mapHint.setText("Waiting for GPS\u2026");
     }
 
-    /** One row of favourite apps under the map (as many as fit), then "All apps". */
+    /** The favourite apps beside the map (as many as fit), then "All apps". */
     private void fillFavRow() {
         favRow.removeAllViews();
         List<Apps.Entry> favs = Apps.favorites(this, prefs);
-        for (int i = 0; i < favs.size() && i < Apps.MAP_ROW_TILES; i++) favRow.addView(favTile(favs.get(i)));
+        int max = Apps.mapTiles(prefs);
+        for (int i = 0; i < favs.size() && i < max; i++) favRow.addView(favTile(favs.get(i)));
         favRow.addView(favTile(null));
     }
 
@@ -422,7 +497,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nl.topMargin = ui.dp(4);
         t.addView(name, nl);
-        t.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        boolean column = favRow.getOrientation() == LinearLayout.VERTICAL;
+        t.setLayoutParams(column ? new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
+                : new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         return t;
     }
 
@@ -437,6 +514,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         ImageView s = ui.icon(this, R.drawable.ic_search, ui.sub);
         bar.addView(s, new LinearLayout.LayoutParams(ui.dp(20), ui.dp(20)));
         final EditText q = new EditText(this);
+        searchField = q;
         q.setHint("Enter destination");
         q.setHintTextColor(ui.sub);
         q.setTextColor(ui.text);
@@ -448,6 +526,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             boolean go = action == EditorInfo.IME_ACTION_SEARCH
                     || (ev != null && ev.getKeyCode() == KeyEvent.KEYCODE_ENTER && ev.getAction() == KeyEvent.ACTION_DOWN);
             if (go && q.getText().length() > 0) { searchPlace(q.getText().toString()); q.setText(""); }
+            if (go) hideKeyboard();
             return go;
         });
         LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
@@ -499,12 +578,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         navEta.setGravity(Gravity.END);
         navEta.setMaxWidth(ui.dp(170));
         c.addView(navEta);
-        c.setOnClickListener(v -> {
-            if (NavState.open != null) {
-                try { NavState.open.send(); return; } catch (PendingIntent.CanceledException ignored) { }
-            }
-            launchPackage(NavState.pkg);
-        });
+        c.setOnClickListener(v -> openNavApp());
         return c;
     }
 
@@ -846,6 +920,26 @@ public class MainActivity extends Activity implements NavState.Listener {
     @Override
     public void onNavChanged() {
         boolean show = prefs.showNavCard() && NavState.active;
+        if (navBanner != null) {
+            // Map layouts: the search bar steps aside and the guidance goes big over the map.
+            topArea.setVisibility(show ? View.GONE : View.VISIBLE);
+            navBanner.setVisibility(show ? View.VISIBLE : View.GONE);
+            bannerEta.setVisibility(show && !NavState.eta.isEmpty() ? View.VISIBLE : View.GONE);
+            if (!show) return;
+            hideKeyboard();
+            bannerDistance.setText(NavState.distance);
+            bannerInstruction.setText(NavState.instruction);
+            bannerEta.setText(NavState.eta);
+            Drawable a = NavState.arrow(this);
+            if (a != null) {
+                bannerArrow.clearColorFilter();
+                bannerArrow.setImageDrawable(a);
+            } else {
+                bannerArrow.setImageResource(R.drawable.ic_turn);
+                bannerArrow.setColorFilter(0xFFFFFFFF);
+            }
+            return;
+        }
         navCard.setVisibility(show ? View.VISIBLE : View.GONE);
         searchArea.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
         if (!show) return;
@@ -888,6 +982,41 @@ public class MainActivity extends Activity implements NavState.Listener {
         @Override public void onProviderEnabled(String p) { showGpsState(true); }
         @Override public void onProviderDisabled(String p) { showGpsState(false); }
     };
+
+    // ---- keyboard ----------------------------------------------------------------
+
+    private void hideKeyboard() {
+        if (searchField == null) return;
+        searchField.clearFocus();
+        InputMethodManager imm = getSystemService(InputMethodManager.class);
+        if (imm != null) imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
+    }
+
+    /** A tap anywhere outside the search bar closes the keyboard. */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN && searchField != null && searchField.hasFocus()) {
+            int[] at = new int[2];
+            searchField.getLocationOnScreen(at);
+            float x = ev.getRawX(), y = ev.getRawY();
+            if (x < at[0] || x > at[0] + searchField.getWidth() || y < at[1] || y > at[1] + searchField.getHeight()) hideKeyboard();
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    // ---- navigation notifications ------------------------------------------------
+
+    /**
+     * NWD firmware can keep Android from connecting the notification reader at boot
+     * (before Orca Home has been opened), and then the nav card never shows. Ask again.
+     */
+    private void rebindListener() {
+        if (MediaListener.connected) return;
+        ComponentName me = new ComponentName(this, MediaListener.class);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm == null || !nm.isNotificationListenerAccessGranted(me)) return;
+        try { NotificationListenerService.requestRebind(me); } catch (RuntimeException ignored) { }
+    }
 
     private boolean locationAllowed() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;

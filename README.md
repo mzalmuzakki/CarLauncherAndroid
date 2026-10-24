@@ -261,6 +261,7 @@ version is too old to sign in to Google.
   adb exec-out setprop persist.nwd.launcher.default com.android.launchertheme
   adb exec-out cmd package set-home-activity com.android.launchertheme/com.android.launcher2.Launcher
   adb exec-out appops set com.orcahome SYSTEM_ALERT_WINDOW default
+  adb exec-out appops set com.google.android.apps.maps PICTURE_IN_PICTURE default
   adb exec-out appops write-settings
   ```
   then press Home. (`com.android.launchertheme` is "UI Style", the factory launcher on the

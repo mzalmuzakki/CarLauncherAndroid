@@ -41,6 +41,7 @@ fi
 
 # Orca Home must not open itself at boot once it isn't the home screen.
 pkg_installed com.orcahome && orca_boot off
+maps_pip back || FAILED=1
 
 # NWD firmwares that pick the launcher themselves (see launcher.sh); also when
 # the record is missing but the setting still names Orca Home.

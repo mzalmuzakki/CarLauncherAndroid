@@ -9,14 +9,25 @@ import android.service.notification.StatusBarNotification;
  * every other notification is ignored straight away.
  */
 public class MediaListener extends NotificationListenerService {
+    /** False until Android has connected this reader (see MainActivity.rebindListener). */
+    static volatile boolean connected;
+
     @Override
     public void onListenerConnected() {
+        connected = true;
+        // Test builds (debuggable) also take test guidance from the screenshot demo app.
+        NavState.testApp = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         try {
             for (StatusBarNotification s : getActiveNotifications()) {
                 if (NavState.isNavApp(s.getPackageName())) NavState.posted(s);
             }
         } catch (SecurityException ignored) {
         }
+    }
+
+    @Override
+    public void onListenerDisconnected() {
+        connected = false;
     }
 
     @Override

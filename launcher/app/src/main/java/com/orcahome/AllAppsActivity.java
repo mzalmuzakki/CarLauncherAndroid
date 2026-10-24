@@ -98,9 +98,9 @@ public class AllAppsActivity extends Activity {
             if (onHome) keys.remove(e.key());
             else keys.add(e.key());
             prefs.setFavorites(keys);
-            if (!onHome && prefs.showMap() && keys.size() > Apps.MAP_ROW_TILES) {
-                Toast.makeText(this, "Added, but the row under the map shows only the first "
-                        + Apps.MAP_ROW_TILES + " apps: remove one from home to make room", Toast.LENGTH_LONG).show();
+            if (!onHome && prefs.showMap() && keys.size() > Apps.mapTiles(prefs)) {
+                Toast.makeText(this, "Added, but beside the map there is room for only the first "
+                        + Apps.mapTiles(prefs) + " apps: remove one from home to make room", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, onHome ? "Removed from home" : "Added to home", Toast.LENGTH_SHORT).show();
             }

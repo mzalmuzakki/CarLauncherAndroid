@@ -23,7 +23,7 @@
             android:resumeWhilePausing="true"
             android:stateNotNeeded="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|smallestScreenSize"
-            android:windowSoftInputMode="adjustNothing">
+            android:windowSoftInputMode="adjustNothing|stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

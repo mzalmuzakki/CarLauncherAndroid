@@ -46,8 +46,11 @@ final class Apps {
         "com.google.android.apps.maps", "tstudio.nfc.ceksaldo",
     };
 
-    /** Tiles that fit in the row under the map; the app-grid layout shows them all. */
-    static final int MAP_ROW_TILES = 6;
+    /** Tiles that fit beside the map (row below it, or column in the square-map layout);
+     *  the app-grid layout shows them all. */
+    static final int MAP_ROW_TILES = 6, MAP_COLUMN_TILES = 5;
+
+    static int mapTiles(Prefs p) { return "tall".equals(p.mapLayout()) ? MAP_COLUMN_TILES : MAP_ROW_TILES; }
 
     private static List<Entry> cache;
     private static final LruCache<String, Drawable> ICONS = new LruCache<>(120);

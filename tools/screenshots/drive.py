@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Feeds the emulator a car driving north on Jl. MH Thamrin, Jakarta, at about 50 km/h.
+"""Feeds the emulator a car driving east on Jl. Kebon Sirih, Jakarta, at about 50 km/h.
 
 Sends one NMEA RMC sentence per second (position, speed and heading) through `adb emu`
 (or `geo fix` with speed and heading when run as `drive.py fix`),
@@ -9,8 +9,9 @@ import subprocess
 import sys
 import time
 
-LAT0, LON0 = -6.1990, 106.82296   # Bundaran HI
-STEP = 0.00012                    # degrees per second north, ~13.3 m/s = 48 km/h
+LAT0, LON0 = -6.18640, 106.82380   # Jl. Kebon Sirih, near Jl. Thamrin
+STEP = 0.00012                      # degrees per second east, ~13.3 m/s = 48 km/h
+HEADING = 90
 KNOTS = 13.3 * 1.943844
 
 
@@ -31,13 +32,14 @@ def nmea(lat, lon, knots, course):
 
 i = 0
 while True:
-    lat = LAT0 + STEP * (i % 120)   # loop back every two minutes so the car stays on Thamrin
+    lon = LON0 + STEP * (i % 120)   # loop back every two minutes so the car stays on the road
+    lat = LAT0
     if len(sys.argv) > 1 and sys.argv[1] == "fix":
         # Fallback: `geo fix <lon> <lat> <altitude> <satellites> <knots> <heading>`.
         # This emulator reports the velocity field as metres per second.
-        cmd = ["geo", "fix", f"{LON0:.6f}", f"{lat:.6f}", "10", "8", "13.3", "0"]
+        cmd = ["geo", "fix", f"{lon:.6f}", f"{lat:.6f}", "10", "8", "13.3", str(HEADING)]
     else:
-        cmd = ["geo", "nmea", nmea(lat, LON0, KNOTS, 0.0)]
+        cmd = ["geo", "nmea", nmea(lat, lon, KNOTS, float(HEADING))]
     subprocess.run(["adb", "emu"] + cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     i += 1
     time.sleep(1)

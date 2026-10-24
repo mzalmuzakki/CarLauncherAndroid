@@ -309,6 +309,38 @@ original_home() {
     done
 }
 
+# Google Maps' floating window (picture-in-picture) covers the home screen while it
+# navigates; Orca Home shows the guidance itself. launcher.sh turns it off, 'off' and
+# restore.sh put back what it was (recorded in maps-pip.txt).
+GMAPS=com.google.android.apps.maps
+maps_pip() { # off|back; for off, true once the unit has it
+  local m
+  pkg_installed "$GMAPS" || return 0
+  if [ "$1" = off ]; then
+    if [ ! -f "$STATE_DIR/maps-pip.txt" ]; then
+      m=$(dev appops get "$GMAPS" PICTURE_IN_PICTURE | grep -o -E 'allow|ignore|deny|default' | head -1)
+      echo "${m:-default}" > "$STATE_DIR/maps-pip.txt"
+    fi
+    dev appops set "$GMAPS" PICTURE_IN_PICTURE ignore >/dev/null
+    dev appops write-settings >/dev/null
+    dev appops get "$GMAPS" PICTURE_IN_PICTURE | grep -q ignore
+  else
+    m=$(cat "$STATE_DIR/maps-pip.txt" 2>/dev/null)
+    if [ -z "$m" ]; then
+      # No record: only undo our own change (floating window off).
+      dev appops get "$GMAPS" PICTURE_IN_PICTURE | grep -q ignore || return 0
+      m=default
+    fi
+    dev appops set "$GMAPS" PICTURE_IN_PICTURE "$m" >/dev/null
+    dev appops write-settings >/dev/null
+    if dev appops get "$GMAPS" PICTURE_IN_PICTURE | grep -q ignore && [ "$m" != ignore ]; then
+      warn "Google Maps' floating window is still off; by hand: adb exec-out appops set $GMAPS PICTURE_IN_PICTURE default"
+      return 1
+    fi
+    ok "Google Maps' floating window is back as it was"; rm -f "$STATE_DIR/maps-pip.txt"
+  fi
+}
+
 put_prop() { # name value
   local old
   mkdir -p "$STATE_DIR"

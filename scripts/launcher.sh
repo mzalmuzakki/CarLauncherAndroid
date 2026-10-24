@@ -37,6 +37,7 @@ fi
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
   nwd_home_back
+  maps_pip back
   prev=$(cat "$STATE_DIR/home-before.txt" 2>/dev/null)
   real_home "$prev" || prev=$(original_home)
   if [ -n "$prev" ] && dev cmd package set-home-activity "$prev" | grep -qi success; then
@@ -99,6 +100,8 @@ elif current_home | grep -q '^com.orcahome/'; then
 else
   warn "press Home on the unit and choose \"Orca Home\" -> Always"
 fi
+if maps_pip off; then ok "Google Maps' floating window off: Orca Home shows the guidance itself"
+else warn "couldn't switch off Google Maps' floating window (it may cover the home screen while navigating)"; fi
 dev input keyevent KEYCODE_HOME
 
 # Don't keep the old launcher running next to Orca Home: that would cost memory.

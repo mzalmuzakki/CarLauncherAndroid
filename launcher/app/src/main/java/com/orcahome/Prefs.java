@@ -27,10 +27,16 @@ final class Prefs {
     /** "theme" = dark map with dark themes; "classic" = standard OpenStreetMap colours. */
     String mapStyle() { return sp.getString("mapstyle", "theme"); }
     int mapZoom() { return sp.getInt("mapzoom", 16); }
+    /** "north": north up, the arrow turns; "heading": driving direction up, the map turns. */
+    String mapDirection() { return sp.getString("mapdir", "north"); }
+    /** "wide": map with the apps in a row below; "tall": squarer map, apps in a column beside it. */
+    String mapLayout() { return sp.getString("maplayout", "wide"); }
 
     void setShowMap(boolean b) { put("map", b); }
     void setMapStyle(String st) { sp.edit().putString("mapstyle", st).putLong("stamp", System.nanoTime()).apply(); }
     void setMapZoom(int z) { sp.edit().putInt("mapzoom", z).apply(); }
+    void setMapDirection(String d) { sp.edit().putString("mapdir", d).putLong("stamp", System.nanoTime()).apply(); }
+    void setMapLayout(String l) { sp.edit().putString("maplayout", l).putLong("stamp", System.nanoTime()).apply(); }
 
     void setTheme(int t) { sp.edit().putInt("theme7", t).putLong("stamp", System.nanoTime()).apply(); }
     void setShowWeather(boolean b) { put("weather", b); }
