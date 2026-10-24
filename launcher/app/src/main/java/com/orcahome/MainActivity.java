@@ -215,10 +215,10 @@ public class MainActivity extends Activity implements NavState.Listener {
         // The square-map layout gives the map half the width; its apps go in a column beside it.
         boolean tall = prefs.showMap() && "tall".equals(prefs.mapLayout());
         View mainPanel = mainPanel();
-        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 52f : 62f));
+        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 45f : 62f));
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 48f : 38f);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 55f : 38f);
         rlp.leftMargin = ui.dp(10);
         content.addView(right, rlp);
         right.addView(infoRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(104)));

@@ -108,6 +108,12 @@ sh_ input swipe 512 520 512 120 400; shot 14-settings-3 2
 sh_ input keyevent KEYCODE_BACK
 
 # 2.4: map direction, square-map layout, navigation mode, keyboard.
+# From here the demo app is the GPS: it can report a heading (east), geo fix can't.
+kill $DRIVE 2>/dev/null
+sh_ appops set com.orcahome.demoplayer android:mock_location allow
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive start > /dev/null
+sleep 4
+say "Test GPS for 2.4 shots: $(sh_ dumpsys location | grep -m1 -E 'gps: Location\[')"
 prefs 6 true theme heading wide; home; shot 20-heading-up 10
 prefs 6 true theme north tall; home; shot 21-square-map 8
 prefs 6 true theme heading tall; home; shot 22-square-map-heading-up 8
@@ -116,7 +122,6 @@ prefs 6 true theme north wide; home; shot 23-navigation-wide 8
 prefs 6 true theme heading tall; home; shot 24-navigation-square 8
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es nav off > /dev/null
 home; shot 25-navigation-ended 5
-say "Navigation banner: $(adb logcat -d | grep -c 'OrcaHome') log lines; listener: $(sh_ dumpsys notification | grep -A2 -i 'live notification listeners' | grep -c orcahome)"
 # Keyboard: open it from the search bar, open another app, come back home.
 sh_ settings put secure show_ime_with_hard_keyboard 1
 prefs 6 true theme north wide; home; sleep 4
@@ -124,6 +129,7 @@ sh_ input tap 300 66; shot 26-keyboard-open 3
 sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 3
 home; shot 27-keyboard-after-other-app 4
 say "Keyboard shown after coming back: $(sh_ dumpsys input_method | grep -m1 -o 'mInputShown=[a-z]*')"
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
 home; sleep 3
 say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'FATAL EXCEPTION')"
 adb logcat -b crash -d > "$OUT/crash-debug.txt"

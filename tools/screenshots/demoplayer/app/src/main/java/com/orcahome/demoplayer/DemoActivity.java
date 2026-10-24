@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Shader;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
@@ -30,6 +34,10 @@ public class DemoActivity extends Activity {
         // Orca Home accept it from this app).
         String nav = getIntent().getStringExtra("nav");
         if (nav != null) { navigation("on".equals(nav)); finish(); return; }
+        // "--es drive start|stop": a test GPS driving east (heading 90) at 48 km/h; the
+        // emulator's own "geo fix" can't set a heading. Needs the mock-location app-op.
+        String drive = getIntent().getStringExtra("drive");
+        if (drive != null) { drive(getApplicationContext(), "start".equals(drive)); finish(); return; }
         if (session == null) {
             session = new MediaSession(getApplicationContext(), "demo");
             session.setCallback(new MediaSession.Callback() {
@@ -46,6 +54,38 @@ public class DemoActivity extends Activity {
             session.setActive(true);
         }
         finish();
+    }
+
+    private static volatile boolean driving;
+
+    private static void drive(Context c, boolean on) {
+        LocationManager lm = c.getSystemService(LocationManager.class);
+        String gps = LocationManager.GPS_PROVIDER;
+        if (!on) {
+            driving = false;
+            try { lm.removeTestProvider(gps); } catch (RuntimeException ignored) { }
+            return;
+        }
+        if (driving) return;
+        lm.addTestProvider(gps, false, true, false, false, true, true, true,
+                Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+        lm.setTestProviderEnabled(gps, true);
+        driving = true;
+        new Thread(() -> {
+            for (int i = 0; driving; i++) {
+                Location l = new Location(gps);
+                l.setLatitude(-6.18640);
+                l.setLongitude(106.82380 + 0.00012 * (i % 120));
+                l.setSpeed(13.3f);
+                l.setBearing(90f);
+                l.setAccuracy(5f);
+                l.setAltitude(10);
+                l.setTime(System.currentTimeMillis());
+                l.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+                try { lm.setTestProviderLocation(gps, l); } catch (RuntimeException e) { driving = false; }
+                SystemClock.sleep(1000);
+            }
+        }).start();
     }
 
     private void navigation(boolean on) {
