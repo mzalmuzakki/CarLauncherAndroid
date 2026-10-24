@@ -57,7 +57,7 @@ for p in com.google.android.youtube com.google.android.apps.maps com.android.chr
 done
 say "Home tiles: $FAVS"
 
-prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/heading] [layout wide/tall]
+prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/heading] [layout wide/tall] [side left/right] [autotheme false/true]
     local xml b64
     xml="<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
@@ -66,6 +66,9 @@ prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/hea
     <string name=\"mapstyle\">$3</string>
     <string name=\"mapdir\">${4:-north}</string>
     <string name=\"maplayout\">${5:-wide}</string>
+    <string name=\"side\">${6:-left}</string>
+    <boolean name=\"autotheme\" value=\"${7:-false}\" />
+    <string name=\"home\">Monas, Jakarta</string>
     <string name=\"favorites\">$FAVS</string>
     <long name=\"stamp\" value=\"$RANDOM$RANDOM\" />
 </map>"
@@ -129,6 +132,21 @@ sh_ input tap 300 66; shot 26-keyboard-open 3
 sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 3
 home; shot 27-keyboard-after-other-app 4
 say "Keyboard shown after coming back: $(sh_ dumpsys input_method | grep -m1 -o 'mInputShown=[a-z]*')"
+
+# 2.5: driver-side layout, automatic day/night theme, Home/Work, bigger buttons.
+prefs 6 true theme north wide right; home; shot 40-driver-side 8
+prefs 6 true theme north wide left true; home; shot 41-auto-theme 8
+expected=$(python3 "$HERE/sun.py" -6.1864 106.8238)
+say "Auto theme: at $(date -u +%H:%M) UTC it is $expected in Jakarta, so 41-auto-theme.png should show the $expected theme (day: Light, night: Midnight Drive)"
+sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; shot 44-settings-auto-theme 3
+sh_ input keyevent KEYCODE_BACK
+prefs 6 true theme north wide; home; sleep 4
+adb logcat -c
+sh_ input tap 70 113; sleep 4
+say "Home button: $(adb logcat -d | grep -o -m1 'act=android.intent.action.VIEW dat=google.navigation[^ ]*' || echo 'no navigation started')"
+home; sleep 3
+sh_ input swipe 175 113 175 113 1200; shot 43-set-work-place 3
+sh_ input keyevent KEYCODE_BACK; sh_ input keyevent KEYCODE_BACK
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
 home; sleep 3
 say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'FATAL EXCEPTION')"

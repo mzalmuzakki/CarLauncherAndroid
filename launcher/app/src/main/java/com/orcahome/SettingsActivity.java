@@ -45,7 +45,7 @@ public class SettingsActivity extends Activity {
     }
 
     private void build() {
-        ui = new Ui(this, prefs.theme());
+        ui = new Ui(this, prefs.activeTheme(this));
         ui.applyWindow(this);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -56,22 +56,14 @@ public class SettingsActivity extends Activity {
         col.addView(title);
 
         header(col, "Theme");
-        LinearLayout swatches = new LinearLayout(this);
-        for (int i = 0; i < Ui.THEME_NAMES.length; i++) {
-            final int t = i;
-            Ui u = new Ui(this, i);
-            TextView s = ui.label(this, 13, u.text, t == prefs.theme());
-            s.setText(Ui.THEME_NAMES[i]);
-            s.setGravity(Gravity.CENTER);
-            android.graphics.drawable.GradientDrawable g = u.box(u.panel, ui.dp(12));
-            g.setStroke(ui.dp(t == prefs.theme() ? 3 : 1), t == prefs.theme() ? u.accent : u.tile);
-            s.setBackground(g);
-            s.setOnClickListener(v -> { if (t != prefs.theme()) { prefs.setTheme(t); build(); } });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ui.dp(56), 1f);
-            lp.rightMargin = ui.dp(8);
-            swatches.addView(s, lp);
+        check(col, "Automatic day/night (switches at sunrise and sunset, worked out from the GPS position)",
+                prefs.autoTheme(), on -> { prefs.setAutoTheme(on); build(); });
+        if (prefs.autoTheme()) {
+            swatches(col, "Day", prefs.dayTheme(), t -> { prefs.setDayTheme(t); build(); });
+            swatches(col, "Night", prefs.nightTheme(), t -> { prefs.setNightTheme(t); build(); });
+        } else {
+            swatches(col, null, prefs.theme(), t -> { prefs.setTheme(t); build(); });
         }
-        col.addView(swatches);
 
         header(col, "Left panel");
         RadioGroup mode = new RadioGroup(this);
@@ -102,6 +94,10 @@ public class SettingsActivity extends Activity {
         ms.check("classic".equals(prefs.mapStyle()) ? 401 : 400);
         ms.setOnCheckedChangeListener((g, id) -> prefs.setMapStyle(id == 401 ? "classic" : "theme"));
         col.addView(ms);
+        radios(col, "Panel side", new String[][]{
+                {"left", "Map or app grid on the left"},
+                {"right", "Map or app grid on the right (nearer the driver in right-hand-drive cars)"}},
+                prefs.panelSide(), prefs::setPanelSide, 700);
         radios(col, "Map direction", new String[][]{
                 {"north", "North up (the arrow turns)"},
                 {"heading", "Driving direction up (the map turns, the arrow always points up)"}},
@@ -160,7 +156,7 @@ public class SettingsActivity extends Activity {
             Toast.makeText(this, "Home tiles reset", Toast.LENGTH_SHORT).show();
         });
         TextView tip = ui.label(this, 14, ui.sub, false);
-        tip.setText("Long-press a tile to move or remove it. Long-press an app in \"All apps\" to add it. Long-press the gear in the dock for Android settings.");
+        tip.setText("Long-press a tile to move or remove it. Long-press an app in \"All apps\" to add it. Long-press Home or Work above the map to change the place. Long-press the gear in the dock for Android settings.");
         col.addView(tip);
 
         header(col, "Launcher");
@@ -179,7 +175,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.4 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
+        about.setText("Orca Home 2.5 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);
@@ -212,6 +208,33 @@ public class SettingsActivity extends Activity {
 
     private interface Setter { void set(boolean b); }
     private interface Chooser { void set(String value); }
+    private interface ThemeChooser { void set(int theme); }
+
+    /** One row of the 7 themes, optionally labelled (Day / Night). */
+    private void swatches(LinearLayout col, String label, int current, ThemeChooser c) {
+        if (label != null) {
+            TextView l = ui.label(this, 13, ui.sub, true);
+            l.setText(label);
+            l.setPadding(0, ui.dp(6), 0, ui.dp(4));
+            col.addView(l);
+        }
+        LinearLayout row = new LinearLayout(this);
+        for (int i = 0; i < Ui.THEME_NAMES.length; i++) {
+            final int t = i;
+            Ui u = new Ui(this, i);
+            TextView s = ui.label(this, 13, u.text, t == current);
+            s.setText(Ui.THEME_NAMES[i]);
+            s.setGravity(Gravity.CENTER);
+            android.graphics.drawable.GradientDrawable g = u.box(u.panel, ui.dp(12));
+            g.setStroke(ui.dp(t == current ? 3 : 1), t == current ? u.accent : u.tile);
+            s.setBackground(g);
+            s.setOnClickListener(v -> { if (t != current) c.set(t); });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ui.dp(label != null ? 46 : 56), 1f);
+            lp.rightMargin = ui.dp(8);
+            row.addView(s, lp);
+        }
+        col.addView(row);
+    }
 
     /** A heading and one radio button per {value, label}; ids start at idBase. */
     private void radios(LinearLayout col, String title, String[][] options, String current, Chooser c, int idBase) {

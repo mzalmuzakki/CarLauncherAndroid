@@ -25,7 +25,7 @@ public class AllAppsActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         prefs = new Prefs(this);
-        Ui ui = new Ui(this, prefs.theme());
+        Ui ui = new Ui(this, prefs.activeTheme(this));
         ui.applyWindow(this);
 
         LinearLayout root = new LinearLayout(this);

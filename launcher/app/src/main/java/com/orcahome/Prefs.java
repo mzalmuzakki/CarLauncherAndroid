@@ -16,6 +16,21 @@ final class Prefs {
     }
 
     int theme() { return sp.getInt("theme7", Ui.DEFAULT_THEME); }
+    /** Automatic day/night: the day theme from sunrise to sunset, the night theme otherwise. */
+    boolean autoTheme() { return sp.getBoolean("autotheme", true); }
+    int dayTheme() { return sp.getInt("daytheme", 0); }
+    int nightTheme() { return sp.getInt("nighttheme", Ui.DEFAULT_THEME); }
+    /** The theme to show now. */
+    int activeTheme(Context c) {
+        if (!autoTheme()) return theme();
+        return DayNight.isNight(c, System.currentTimeMillis()) ? nightTheme() : dayTheme();
+    }
+    /** Which side the map (or app grid) panel is on: "left", or "right" (nearer the driver
+     *  in right-hand-drive cars). */
+    String panelSide() { return sp.getString("side", "left"); }
+    /** One-tap destinations: an address, a place name or "lat,lng"; empty = not set. */
+    String homePlace() { return sp.getString("home", ""); }
+    String workPlace() { return sp.getString("work", ""); }
     boolean showWeather() { return sp.getBoolean("weather", true); }
     boolean showGauge() { return sp.getBoolean("gauge", true); }
     boolean showNavCard() { return sp.getBoolean("navcard", true); }
@@ -39,6 +54,12 @@ final class Prefs {
     void setMapLayout(String l) { sp.edit().putString("maplayout", l).putLong("stamp", System.nanoTime()).apply(); }
 
     void setTheme(int t) { sp.edit().putInt("theme7", t).putLong("stamp", System.nanoTime()).apply(); }
+    void setAutoTheme(boolean b) { put("autotheme", b); }
+    void setDayTheme(int t) { sp.edit().putInt("daytheme", t).putLong("stamp", System.nanoTime()).apply(); }
+    void setNightTheme(int t) { sp.edit().putInt("nighttheme", t).putLong("stamp", System.nanoTime()).apply(); }
+    void setPanelSide(String s) { sp.edit().putString("side", s).putLong("stamp", System.nanoTime()).apply(); }
+    void setHomePlace(String p) { sp.edit().putString("home", p).putLong("stamp", System.nanoTime()).apply(); }
+    void setWorkPlace(String p) { sp.edit().putString("work", p).putLong("stamp", System.nanoTime()).apply(); }
     void setShowWeather(boolean b) { put("weather", b); }
     void setShowGauge(boolean b) { put("gauge", b); }
     void setShowNavCard(boolean b) { put("navcard", b); }

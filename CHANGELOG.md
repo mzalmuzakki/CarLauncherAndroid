@@ -4,6 +4,14 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.5 — in testing
+- Automatic day/night theme (on by default: Light by day, Midnight Drive at night),
+  switching at sunrise and sunset worked out on the unit from the GPS position.
+- Home and Work buttons above the map start Google Maps / Waze navigation in one tap
+  (long-press to set: an address, a place name, or where the car is now); Gas stations stays.
+- Bigger music buttons, titles and app icons for use while driving.
+- Panel side: map (or app grid) on the left or on the right, nearer the driver.
+
 ## 2.4 — in testing
 - Keyboard closes when tapping outside the search bar, when opening another app and when
   coming back home.

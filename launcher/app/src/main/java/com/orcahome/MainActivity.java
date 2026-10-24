@@ -64,14 +64,12 @@ import java.util.Locale;
  */
 public class MainActivity extends Activity implements NavState.Listener {
     private static final String[] PHONE_APPS = {"com.nwd.android.phone", "com.android.dialer", "com.google.android.dialer"};
-    private static final String[][] PLACES = {
-        {"Gas stations", "gas station"}, {"ATMs", "ATM"}, {"Restaurants", "restaurant"}, {"Hotels", "hotel"},
-    };
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private Prefs prefs;
     private Ui ui;
     private long builtStamp = -1;
+    private int builtTheme = -1;
     private boolean appsChanged, visible;
 
     private TileAdapter tiles;
@@ -127,8 +125,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         super.onResume();
         visible = true;
         shown = true;
-        if (prefs.stamp() != builtStamp) { build(); appsChanged = false; }
+        if (prefs.stamp() != builtStamp || prefs.activeTheme(this) != builtTheme) { build(); appsChanged = false; }
         else if (appsChanged) reloadApps.run();
+        scheduleThemeSwitch();
         IntentFilter t = new IntentFilter(Intent.ACTION_DATE_CHANGED);
         t.addAction(Intent.ACTION_TIME_CHANGED);
         t.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -150,6 +149,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         visible = false;
         shown = false;
         hideKeyboard();
+        main.removeCallbacks(themeSwitch);
         unregisterReceiver(dateChanged);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
@@ -201,7 +201,8 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private void build() {
         builtStamp = prefs.stamp();
-        ui = new Ui(this, prefs.theme());
+        builtTheme = prefs.activeTheme(this);
+        ui = new Ui(this, builtTheme);
         ui.applyWindow(this);
 
         LinearLayout root = new LinearLayout(this);
@@ -212,13 +213,22 @@ public class MainActivity extends Activity implements NavState.Listener {
         content.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(8));
         root.addView(content, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        // The map (or app grid) panel on the left, or on the right nearer the driver.
+        boolean mapRight = "right".equals(prefs.panelSide());
         View mainPanel = mainPanel();
-        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 62f));
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 38f);
-        rlp.leftMargin = ui.dp(10);
-        content.addView(right, rlp);
+        LinearLayout.LayoutParams mlp0 = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 62f);
+        if (mapRight) {
+            mlp0.leftMargin = ui.dp(10);
+            content.addView(right, rlp);
+            content.addView(mainPanel, mlp0);
+        } else {
+            rlp.leftMargin = ui.dp(10);
+            content.addView(mainPanel, mlp0);
+            content.addView(right, rlp);
+        }
         right.addView(infoRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(104)));
         LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
         mlp.topMargin = ui.dp(10);
@@ -338,7 +348,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             box.addView(favRow, fl);
         } else {
             box.addView(mapFrame(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(74));
+            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(82));
             fl.topMargin = ui.dp(6);
             box.addView(favRow, fl);
         }
@@ -489,8 +499,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         t.setOrientation(LinearLayout.VERTICAL);
         t.setGravity(Gravity.CENTER);
         ImageView icon = new ImageView(this);
-        int s = ui.dp(40);
-        TextView name = ui.label(this, 11, ui.text, false);
+        int s = ui.dp(46);
+        TextView name = ui.label(this, 12, ui.text, false);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setGravity(Gravity.CENTER);
@@ -549,22 +559,104 @@ public class MainActivity extends Activity implements NavState.Listener {
         HorizontalScrollView hs = new HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
         LinearLayout chips = new LinearLayout(this);
-        for (String[] place : PLACES) {
-            TextView c = ui.label(this, 13, ui.text, false);
-            c.setText(place[0]);
-            c.setGravity(Gravity.CENTER);
-            c.setPadding(ui.dp(12), 0, ui.dp(12), 0);
-            c.setBackground(ui.box(ui.tile, ui.dp(15)));
-            c.setOnClickListener(v -> searchPlace(place[1]));
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(30));
-            clp.rightMargin = ui.dp(8);
-            chips.addView(c, clp);
-        }
+        chips.addView(placeChip(R.drawable.ic_home, "Home", true));
+        chips.addView(placeChip(R.drawable.ic_work, "Work", false));
+        TextView gas = chip(null, "Gas stations", ui.text);
+        gas.setOnClickListener(v -> searchPlace("gas station"));
+        chips.addView(gas);
         hs.addView(chips);
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         hlp.topMargin = ui.dp(8);
         col.addView(hs, hlp);
         return col;
+    }
+
+    private TextView chip(Integer icon, String text, int color) {
+        TextView c = ui.label(this, 14, color, false);
+        c.setText(text);
+        c.setGravity(Gravity.CENTER);
+        c.setPadding(ui.dp(14), 0, ui.dp(14), 0);
+        c.setBackground(ui.box(ui.tile, ui.dp(17)));
+        if (icon != null) {
+            Drawable d = getDrawable(icon).mutate();
+            d.setTint(color);
+            d.setBounds(0, 0, ui.dp(18), ui.dp(18));
+            c.setCompoundDrawables(d, null, null, null);
+            c.setCompoundDrawablePadding(ui.dp(6));
+        }
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(34));
+        clp.rightMargin = ui.dp(8);
+        c.setLayoutParams(clp);
+        return c;
+    }
+
+    /** Home / Work: one tap starts navigation; long-press (or first tap) to set the place. */
+    private View placeChip(int icon, String name, boolean home) {
+        String place = home ? prefs.homePlace() : prefs.workPlace();
+        TextView c = chip(icon, place.isEmpty() ? "Set " + name : name, place.isEmpty() ? ui.sub : ui.text);
+        c.setOnClickListener(v -> {
+            String p = home ? prefs.homePlace() : prefs.workPlace();
+            if (p.isEmpty()) askPlace(name, home); else navigateTo(p);
+        });
+        c.setOnLongClickListener(v -> { askPlace(name, home); return true; });
+        return c;
+    }
+
+    private void askPlace(String name, boolean home) {
+        EditText in = new EditText(this);
+        in.setSingleLine(true);
+        in.setHint("Address or place name");
+        in.setText(home ? prefs.homePlace() : prefs.workPlace());
+        int pad = ui.dp(20);
+        FrameLayout box = new FrameLayout(this);
+        box.setPadding(pad, ui.dp(8), pad, 0);
+        box.addView(in);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(name)
+                .setView(box)
+                .setPositiveButton("Save", (d, w) -> savePlace(home, in.getText().toString().trim()))
+                .setNeutralButton("Where the car is now", (d, w) -> {
+                    Location l = lastLocation();
+                    if (l == null) { Toast.makeText(this, "No GPS position yet", Toast.LENGTH_SHORT).show(); return; }
+                    savePlace(home, String.format(Locale.US, "%.6f,%.6f", l.getLatitude(), l.getLongitude()));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void savePlace(boolean home, String p) {
+        if (home) prefs.setHomePlace(p); else prefs.setWorkPlace(p);
+        hideKeyboard();
+        build();
+        onNavChanged();
+    }
+
+    private Location lastLocation() {
+        Location best = null;
+        try {
+            for (String pr : location.getProviders(true)) {
+                Location l = location.getLastKnownLocation(pr);
+                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+            }
+        } catch (SecurityException ignored) {
+        }
+        return best;
+    }
+
+    /** Starts turn-by-turn navigation in the maps app (Google Maps or Waze), else a search. */
+    private void navigateTo(String dest) {
+        String pkg = NavApps.preferred(this, prefs);
+        Uri uri = NavState.MAPS.equals(pkg) ? Uri.parse("google.navigation:q=" + Uri.encode(dest))
+                : NavState.WAZE.equals(pkg) ? Uri.parse("https://waze.com/ul?q=" + Uri.encode(dest) + "&navigate=yes")
+                : null;
+        if (uri != null) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri).setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                return;
+            } catch (ActivityNotFoundException ignored) {
+            }
+        }
+        searchPlace(dest);
     }
 
     private View navCard() {
@@ -706,14 +798,14 @@ public class MainActivity extends Activity implements NavState.Listener {
         p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
         p.addView(musicArt, new LinearLayout.LayoutParams(ui.dp(120), ui.dp(120)));
 
-        musicTitle = ui.label(this, 15, ui.text, true);
+        musicTitle = ui.label(this, 17, ui.text, true);
         musicTitle.setSingleLine(true);
         musicTitle.setEllipsize(TextUtils.TruncateAt.END);
         musicTitle.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tlp.topMargin = ui.dp(8);
         p.addView(musicTitle, tlp);
-        musicArtist = ui.label(this, 13, ui.sub, false);
+        musicArtist = ui.label(this, 14, ui.sub, false);
         musicArtist.setSingleLine(true);
         musicArtist.setEllipsize(TextUtils.TruncateAt.END);
         musicArtist.setGravity(Gravity.CENTER);
@@ -762,12 +854,13 @@ public class MainActivity extends Activity implements NavState.Listener {
         ImageButton b = new ImageButton(this);
         b.setImageResource(icon);
         b.setColorFilter(primary ? ui.onAccent : ui.text);
-        b.setBackground(ui.box(primary ? ui.accent : ui.tile, ui.dp(24)));
-        b.setPadding(ui.dp(10), ui.dp(10), ui.dp(10), ui.dp(10));
+        b.setBackground(ui.box(primary ? ui.accent : ui.tile, ui.dp(33)));
+        b.setPadding(ui.dp(14), ui.dp(14), ui.dp(14), ui.dp(14));
         b.setScaleType(ImageView.ScaleType.FIT_CENTER);
         b.setOnClickListener(l);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(primary ? 52 : 44), ui.dp(primary ? 52 : 44));
-        lp.leftMargin = lp.rightMargin = ui.dp(12);
+        // Big enough to hit while driving.
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(primary ? 66 : 54), ui.dp(primary ? 66 : 54));
+        lp.leftMargin = lp.rightMargin = ui.dp(14);
         b.setLayoutParams(lp);
         return b;
     }
@@ -994,6 +1087,22 @@ public class MainActivity extends Activity implements NavState.Listener {
         @Override public void onProviderEnabled(String p) { showGpsState(true); }
         @Override public void onProviderDisabled(String p) { showGpsState(false); }
     };
+
+    // ---- automatic day/night theme ---------------------------------------------------
+
+    /** At sunrise / sunset while home is showing: rebuild in the other theme. */
+    private final Runnable themeSwitch = () -> {
+        if (visible && prefs.activeTheme(this) != builtTheme) recreate();
+        else scheduleThemeSwitch();
+    };
+
+    private void scheduleThemeSwitch() {
+        main.removeCallbacks(themeSwitch);
+        if (!prefs.autoTheme()) return;
+        long now = System.currentTimeMillis();
+        long wait = DayNight.nextChange(this, now) - now + 30_000;
+        main.postDelayed(themeSwitch, Math.max(60_000, Math.min(wait, 6 * 3600 * 1000L)));
+    }
 
     // ---- keyboard ----------------------------------------------------------------
 
