@@ -1,10 +1,8 @@
 --------- beginning of main
 --------- beginning of system
-10-24 23:44:44.257 12171 12171 D OrcaHome: night brightness (test build): dim=true dimmed=false
-10-24 23:44:44.259 12171 12171 I OrcaHome: night brightness: dimmed to 30%
-10-24 23:44:48.968 12657 12657 D OrcaHome: night brightness (test build): dim=true dimmed=false
-10-24 23:44:48.976 12657 12657 I OrcaHome: night brightness: dimmed to 30%
-10-24 23:44:57.133 12657 12657 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-24 23:45:00.507 12657 12657 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-24 23:45:06.671 12657 12657 D OrcaHome: night brightness (test build): dim=false dimmed=true
-10-24 23:45:06.674 12657 12657 I OrcaHome: night brightness: back to 77
+10-24 23:59:52.536  9714  9714 D OrcaHome: night brightness (test build): dim=true dimmed=false
+10-24 23:59:52.541  9714  9714 I OrcaHome: night brightness: dimmed to 30%
+10-24 23:59:59.928  9714  9714 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-25 00:00:03.146  9714  9714 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-25 00:00:09.295  9714  9714 D OrcaHome: night brightness (test build): dim=false dimmed=true
+10-25 00:00:09.300  9714  9714 I OrcaHome: night brightness: back to 200
