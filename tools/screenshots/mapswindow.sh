@@ -21,6 +21,8 @@ sh_ pm grant "$PKG" android.permission.ACCESS_FINE_LOCATION
 sh_ cmd notification allow_listener "$PKG/$PKG.MediaListener"
 sh_ cmd package set-home-activity "$PKG/.MainActivity" > /dev/null
 sh_ settings put global enable_freeform_support 1
+sleep 8   # Android saves settings a moment later; rebooting at once loses them
+say "  freeform setting before reboot: $(sh_ settings get global enable_freeform_support)"
 adb reboot; sleep 10; adb wait-for-device
 for i in $(seq 1 60); do
     [ "$(timeout 10 adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && break

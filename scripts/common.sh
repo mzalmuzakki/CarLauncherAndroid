@@ -353,6 +353,8 @@ maps_window() { # on|off; for on, true once the unit has it
       echo "$v" > "$STATE_DIR/maps-window.txt"
     fi
     dev settings put global enable_freeform_support 1 >/dev/null
+    # Android writes settings to storage a moment later; a reboot straight away loses them.
+    sleep 5
     [ "$(dev settings get global enable_freeform_support)" = 1 ]
   else
     v=$(cat "$STATE_DIR/maps-window.txt" 2>/dev/null)
