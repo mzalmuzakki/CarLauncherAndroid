@@ -8,6 +8,8 @@
     <!-- Only for BootReceiver: open Orca Home over a firmware "Select a Home app" box at boot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Night brightness only: dim at sunset, back at sunrise (granted by scripts/launcher.sh). -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <application
         android:allowBackup="false"
@@ -64,5 +66,9 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".Brightness$Alarm"
+            android:exported="false" />
     </application>
 </manifest>

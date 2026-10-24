@@ -83,6 +83,11 @@ final class MapPanel extends View implements MapTiles.Listener {
 
     int zoom() { return zoom; }
 
+    void setZoom(int z) {
+        z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+        if (z != zoom) { zoom = z; invalidate(); }
+    }
+
     void zoomBy(int d) {
         int z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + d));
         if (z != zoom) { zoom = z; invalidate(); }

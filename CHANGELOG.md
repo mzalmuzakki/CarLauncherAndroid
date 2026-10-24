@@ -4,6 +4,19 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.6 — in testing
+- Night brightness (on by default): the screen dims at sunset (30 %, adjustable in settings)
+  and goes back to the day brightness and auto/manual mode at sunrise. Turning it up by hand
+  at night keeps your level until sunrise. launcher.sh allows it ("modify system settings");
+  'off' / restore.sh take it back.
+- Speed alert: the speed bubble and gauge turn red above a limit you choose (off, 60–120 km/h).
+- The map zooms with speed (closer in town, further out on fast roads); + / − shift it.
+- Dock: long-press the phone, music, navigation or browser button to put any app there
+  (e.g. ZLink); pick the first entry to go back.
+- Music card: Spotify, YouTube Music, YouTube and radio buttons while nothing plays.
+- The last 5 places typed in the search bar appear as buttons after Gas stations
+  (tap to navigate, long-press to remove).
+
 ## 2.5 — in testing
 - Automatic day/night theme (on by default: Light by day, Midnight Drive at night),
   switching at sunrise and sunset worked out on the unit from the GPS position.

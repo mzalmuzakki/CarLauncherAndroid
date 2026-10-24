@@ -53,6 +53,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * The home screen. Main panel: destination search (or the turn-by-turn card
@@ -85,6 +86,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private GaugeView gauge;
     private MapPanel map;
     private TextView speedBubble, mapHint;
+    private LinearLayout chipRow, musicApps;
+    private int speedBand = -1;
     private LinearLayout favRow;
     private TextView calMonth, calDay, calPrev, calToday, calNext;
     private TextView wCond, wTemp, wCity, wIcon;
@@ -128,6 +131,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (prefs.stamp() != builtStamp || prefs.activeTheme(this) != builtTheme) { build(); appsChanged = false; }
         else if (appsChanged) reloadApps.run();
         scheduleThemeSwitch();
+        Brightness.apply(this);
         IntentFilter t = new IntentFilter(Intent.ACTION_DATE_CHANGED);
         t.addAction(Intent.ACTION_TIME_CHANGED);
         t.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -362,7 +366,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         frame.setClipToOutline(true);
         String style = "classic".equals(prefs.mapStyle()) ? MapTiles.STYLE_CLASSIC
                 : (ui.light ? MapTiles.STYLE_LIGHT : MapTiles.STYLE_DARK);
-        map = new MapPanel(this, ui, style, prefs.mapZoom(), "heading".equals(prefs.mapDirection()));
+        map = new MapPanel(this, ui, style, prefs.autoZoom() ? speedZoom() : prefs.mapZoom(), "heading".equals(prefs.mapDirection()));
         map.setOnClickListener(v -> {
             if (!locationAllowed() || !location.isProviderEnabled(LocationManager.GPS_PROVIDER)) askLocation();
             else openNavigation();
@@ -450,10 +454,32 @@ public class MainActivity extends Activity implements NavState.Listener {
         b.setBackground(ui.box(ui.panel, ui.dp(20)));
         b.setLayoutParams(new LinearLayout.LayoutParams(ui.dp(40), ui.dp(40)));
         b.setOnClickListener(v -> {
+            if (prefs.autoZoom()) { // +/- shift the speed zoom, in town and on the toll road alike
+                int base = speedZoom() - prefs.zoomOffset();
+                prefs.setZoomOffset(Math.max(MapPanel.MIN_ZOOM - base, Math.min(MapPanel.MAX_ZOOM - base, prefs.zoomOffset() + delta)));
+                map.setZoom(speedZoom());
+                return;
+            }
             map.zoomBy(delta);
             prefs.setMapZoom(map.zoom());
         });
         return b;
+    }
+
+    private static final int[] BAND_KMH = {30, 70, 100};
+
+    /** Speed bands for the map zoom; 5 km/h either side of an edge so it doesn't flicker. */
+    static int speedBand(int kmh, int band) {
+        if (band < 0) { band = 0; while (band < BAND_KMH.length && kmh >= BAND_KMH[band]) band++; return band; }
+        while (band < BAND_KMH.length && kmh >= BAND_KMH[band] + 5) band++;
+        while (band > 0 && kmh < BAND_KMH[band - 1] - 5) band--;
+        return band;
+    }
+
+    /** Zoom 17 in town, 16 on main roads, 15 on fast roads, 14 above 100 km/h, plus the +/- offset. */
+    private int speedZoom() {
+        int z = 17 - Math.max(0, speedBand) + prefs.zoomOffset();
+        return Math.max(MapPanel.MIN_ZOOM, Math.min(MapPanel.MAX_ZOOM, z));
     }
 
     /** Shows where the car was last seen right away, before the first new GPS fix. */
@@ -547,7 +573,13 @@ public class MainActivity extends Activity implements NavState.Listener {
         q.setOnEditorActionListener((v, action, ev) -> {
             boolean go = action == EditorInfo.IME_ACTION_SEARCH
                     || (ev != null && ev.getKeyCode() == KeyEvent.KEYCODE_ENTER && ev.getAction() == KeyEvent.ACTION_DOWN);
-            if (go && q.getText().length() > 0) { searchPlace(q.getText().toString()); q.setText(""); }
+            if (go && q.getText().toString().trim().length() > 0) {
+                String place = q.getText().toString().trim();
+                prefs.addRecent(place);
+                fillChips();
+                searchPlace(place);
+                q.setText("");
+            }
             if (go) hideKeyboard();
             return go;
         });
@@ -558,17 +590,40 @@ public class MainActivity extends Activity implements NavState.Listener {
 
         HorizontalScrollView hs = new HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
-        LinearLayout chips = new LinearLayout(this);
-        chips.addView(placeChip(R.drawable.ic_home, "Home", true));
-        chips.addView(placeChip(R.drawable.ic_work, "Work", false));
-        TextView gas = chip(null, "Gas stations", ui.text);
-        gas.setOnClickListener(v -> searchPlace("gas station"));
-        chips.addView(gas);
-        hs.addView(chips);
+        chipRow = new LinearLayout(this);
+        fillChips();
+        hs.addView(chipRow);
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         hlp.topMargin = ui.dp(8);
         col.addView(hs, hlp);
         return col;
+    }
+
+    /** Home, Work, Gas stations, then the last places typed in the search bar. */
+    private void fillChips() {
+        if (chipRow == null) return;
+        chipRow.removeAllViews();
+        chipRow.addView(placeChip(R.drawable.ic_home, "Home", true));
+        chipRow.addView(placeChip(R.drawable.ic_work, "Work", false));
+        TextView gas = chip(null, "Gas stations", ui.text);
+        gas.setOnClickListener(v -> searchPlace("gas station"));
+        chipRow.addView(gas);
+        for (String place : prefs.recent()) {
+            TextView r = chip(R.drawable.ic_recent, place, ui.text);
+            r.setSingleLine(true);
+            r.setEllipsize(TextUtils.TruncateAt.END);
+            r.setMaxWidth(ui.dp(190));
+            r.setOnClickListener(v -> navigateTo(place));
+            r.setOnLongClickListener(v -> {
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle(place)
+                        .setPositiveButton("Remove from recent", (d, w) -> { prefs.removeRecent(place); fillChips(); })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                return true;
+            });
+            chipRow.addView(r);
+        }
     }
 
     private TextView chip(Integer icon, String text, int color) {
@@ -797,6 +852,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         // Square cover with flexible space around it, so any card height looks balanced.
         p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
         p.addView(musicArt, new LinearLayout.LayoutParams(ui.dp(120), ui.dp(120)));
+        musicApps = musicShortcuts();
+        if (musicApps != null) p.addView(musicApps, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(120)));
 
         musicTitle = ui.label(this, 17, ui.text, true);
         musicTitle.setSingleLine(true);
@@ -850,6 +907,46 @@ public class MainActivity extends Activity implements NavState.Listener {
         return p;
     }
 
+    private static final String[] MUSIC_APPS = {
+        "com.spotify.music", "com.google.android.apps.youtube.music", "com.google.android.youtube",
+    };
+
+    /** Shown in the music card while nothing plays: Spotify, YouTube Music, YouTube and the radio. */
+    private LinearLayout musicShortcuts() {
+        List<Apps.Entry> found = new ArrayList<>();
+        List<Apps.Entry> all = Apps.all(this);
+        for (String pkg : MUSIC_APPS)
+            for (Apps.Entry e : all) if (e.cn.getPackageName().equals(pkg)) { found.add(e); break; }
+        for (Apps.Entry e : all) {
+            String l = e.label.toLowerCase(Locale.ROOT);
+            if (l.contains("radio") || l.equals("fm")) { found.add(e); break; }
+        }
+        if (found.isEmpty()) return null;
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER);
+        for (Apps.Entry e : found) {
+            LinearLayout b = new LinearLayout(this);
+            b.setOrientation(LinearLayout.VERTICAL);
+            b.setGravity(Gravity.CENTER_HORIZONTAL);
+            b.setPadding(ui.dp(4), ui.dp(8), ui.dp(4), ui.dp(6));
+            b.setBackground(ui.box(ui.tile, ui.dp(12)));
+            ImageView icon = new ImageView(this);
+            Apps.icon(icon, e);
+            b.addView(icon, new LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)));
+            TextView label = ui.label(this, 11, ui.text, false);
+            label.setText(e.label);
+            label.setSingleLine(true);
+            label.setEllipsize(TextUtils.TruncateAt.END);
+            label.setGravity(Gravity.CENTER);
+            b.addView(label, wrapTop(5));
+            b.setOnClickListener(v -> Apps.launch(this, e.cn));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(74), ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.leftMargin = lp.rightMargin = ui.dp(4);
+            row.addView(b, lp);
+        }
+        return row;
+    }
+
     private ImageButton mediaButton(int icon, boolean primary, View.OnClickListener l) {
         ImageButton b = new ImageButton(this);
         b.setImageResource(icon);
@@ -870,24 +967,56 @@ public class MainActivity extends Activity implements NavState.Listener {
         d.setGravity(Gravity.CENTER_VERTICAL);
         d.setPadding(ui.dp(12), 0, ui.dp(12), ui.dp(4));
         dockButton(d, R.drawable.ic_home, true, v -> { if (grid != null) grid.smoothScrollToPosition(0); }, null);
-        dockButton(d, R.drawable.ic_phone, false, v -> openPhone(), null);
+        Map<String, Apps.Entry> apps = Apps.byKey(this);
+        dockSlot(d, apps, "phone", "Phone", R.drawable.ic_phone, v -> openPhone());
         dockButton(d, R.drawable.ic_apps, false, v -> startActivity(new Intent(this, AllAppsActivity.class)), null);
-        dockButton(d, R.drawable.ic_music, false, v -> openMusic(), null);
-        dockButton(d, R.drawable.ic_navigation, false, v -> openNavigation(), null);
-        dockButton(d, R.drawable.ic_globe, false, v -> open(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))), null);
+        dockSlot(d, apps, "music", "Music", R.drawable.ic_music, v -> openMusic());
+        dockSlot(d, apps, "nav", "Navigation", R.drawable.ic_navigation, v -> openNavigation());
+        dockSlot(d, apps, "web", "Browser", R.drawable.ic_globe, v -> open(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))));
         dockButton(d, R.drawable.ic_settings, false, v -> startActivity(new Intent(this, SettingsActivity.class)),
                 v -> { open(new Intent(Settings.ACTION_SETTINGS)); return true; });
         d.addView(ui.logo(this, 30, false), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(30)));
         return d;
     }
 
-    private void dockButton(LinearLayout d, int icon, boolean active, View.OnClickListener l, View.OnLongClickListener ll) {
+    private ImageView dockButton(LinearLayout d, int icon, boolean active, View.OnClickListener l, View.OnLongClickListener ll) {
         ImageView b = ui.icon(this, icon, active ? ui.accent : ui.text);
         b.setPadding(ui.dp(14), ui.dp(12), ui.dp(14), ui.dp(12));
         b.setScaleType(ImageView.ScaleType.FIT_CENTER);
         b.setOnClickListener(l);
         if (ll != null) b.setOnLongClickListener(ll);
         d.addView(b, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        return b;
+    }
+
+    /** A dock button that can be changed to any app with a long press (e.g. ZLink instead of the browser). */
+    private void dockSlot(LinearLayout d, Map<String, Apps.Entry> apps, String slot, String name, int icon, View.OnClickListener own) {
+        Apps.Entry app = apps.get(prefs.dockApp(slot));
+        ImageView b = dockButton(d, icon, false, app == null ? own : v -> Apps.launch(this, app.cn), v -> {
+            chooseDockApp(slot, name);
+            return true;
+        });
+        if (app != null) { // the app's own icon, a little smaller than the line icons' box
+            b.clearColorFilter();
+            b.setPadding(ui.dp(14), ui.dp(9), ui.dp(14), ui.dp(9));
+            Apps.icon(b, app);
+        }
+    }
+
+    private void chooseDockApp(String slot, String name) {
+        List<Apps.Entry> all = Apps.all(this);
+        String[] items = new String[all.size() + 1];
+        items[0] = name + " (Orca Home's own button)";
+        for (int i = 0; i < all.size(); i++) items[i + 1] = all.get(i).label;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Dock button: " + name)
+                .setItems(items, (dlg, which) -> {
+                    prefs.setDockApp(slot, which == 0 ? "" : all.get(which - 1).key());
+                    build();
+                    onNavChanged();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ---- tiles ---------------------------------------------------------------
@@ -1070,17 +1199,26 @@ public class MainActivity extends Activity implements NavState.Listener {
                 map.setLocation(l);
                 if (mapHint.length() > 0) mapHint.setText("");
             }
-            if (speedBubble != null && l.hasSpeed()) {
+            if (l.hasSpeed()) {
                 int kmh = Math.round(l.getSpeed() * 3.6f);
-                speedBubble.setText((kmh < 2 ? 0 : kmh) + "\nkm/h");
-            }
-            if (gauge != null) {
-                if (l.hasSpeed()) {
-                    int kmh = Math.round(l.getSpeed() * 3.6f);
-                    gauge.setSpeed(kmh < 2 ? 0 : kmh);
+                if (kmh < 2) kmh = 0;
+                boolean over = prefs.speedLimit() > 0 && kmh > prefs.speedLimit();
+                if (speedBubble != null) {
+                    speedBubble.setText(kmh + "\nkm/h");
+                    if (over != Boolean.TRUE.equals(speedBubble.getTag())) {
+                        speedBubble.setTag(over);
+                        speedBubble.setTextColor(over ? 0xFFFFFFFF : ui.text);
+                        speedBubble.setBackground(ui.box(over ? GaugeView.ALERT : ui.panel, ui.dp(36)));
+                    }
                 }
-                gauge.setHint("GPS");
+                if (gauge != null) { gauge.setSpeed(kmh); gauge.setAlert(over); }
+                int band = speedBand(kmh, speedBand);
+                if (band != speedBand) {
+                    speedBand = band;
+                    if (map != null && prefs.autoZoom()) map.setZoom(speedZoom());
+                }
             }
+            if (gauge != null) gauge.setHint("GPS");
             if (prefs.showWeather()) Weather.refreshIfStale(MainActivity.this, prefs, MainActivity.this::showWeather);
         }
         @Override public void onStatusChanged(String p, int s, Bundle b) { }
@@ -1092,13 +1230,14 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** At sunrise / sunset while home is showing: rebuild in the other theme. */
     private final Runnable themeSwitch = () -> {
+        Brightness.apply(this);
         if (visible && prefs.activeTheme(this) != builtTheme) recreate();
         else scheduleThemeSwitch();
     };
 
     private void scheduleThemeSwitch() {
         main.removeCallbacks(themeSwitch);
-        if (!prefs.autoTheme()) return;
+        if (!prefs.autoTheme() && !prefs.nightDim()) return;
         long now = System.currentTimeMillis();
         long wait = DayNight.nextChange(this, now) - now + 30_000;
         main.postDelayed(themeSwitch, Math.max(60_000, Math.min(wait, 6 * 3600 * 1000L)));
@@ -1261,12 +1400,18 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (musicTitle == null) return;
         MediaController c = controller;
         MediaMetadata m = meta;
+        boolean idle = c == null && m == null;
+        if (musicApps != null) {
+            musicApps.setVisibility(idle ? View.VISIBLE : View.GONE);
+            musicArt.setVisibility(idle ? View.GONE : View.VISIBLE);
+        }
         if (c == null || m == null) {
             shownMeta = null;
             main.removeCallbacks(progressTick);
             musicSourceIcon.setImageDrawable(null);
             musicSource.setText(sessionsListening ? "NOTHING PLAYING" : "MUSIC CARD IS OFF – ALLOW IN SETTINGS");
-            musicTitle.setText(c != null ? appLabel(c.getPackageName()) : "Start Spotify, YouTube or radio");
+            musicTitle.setText(c != null ? appLabel(c.getPackageName())
+                    : musicApps != null ? "Tap an app to start" : "Start Spotify, YouTube or radio");
             musicArtist.setText("");
             musicArt.setImageResource(R.drawable.ic_music);
             musicArt.setScaleType(ImageView.ScaleType.CENTER_INSIDE);

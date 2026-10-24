@@ -36,6 +36,8 @@ fi
 
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
+  pkg_installed com.orcahome && orca_brightness off \
+    && ok "Orca Home no longer changes the brightness (if the screen is dim, turn it up in the unit's settings)"
   nwd_home_back
   maps_pip back
   prev=$(cat "$STATE_DIR/home-before.txt" 2>/dev/null)
@@ -100,6 +102,8 @@ elif current_home | grep -q '^com.orcahome/'; then
 else
   warn "press Home on the unit and choose \"Orca Home\" -> Always"
 fi
+if orca_brightness on; then ok "night brightness on: the screen dims at sunset (Orca Home settings to change)"
+else warn "couldn't allow night brightness; Orca Home settings has a button to allow it by hand"; fi
 if maps_pip off; then ok "Google Maps' floating window off: Orca Home shows the guidance itself"
 else warn "couldn't switch off Google Maps' floating window (it may cover the home screen while navigating)"; fi
 dev input keyevent KEYCODE_HOME

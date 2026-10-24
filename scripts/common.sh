@@ -269,6 +269,17 @@ orca_boot() { # on|off; for on, true once the unit has it
   fi
 }
 
+orca_brightness() { # on|off; Orca Home's night brightness ("modify system settings")
+  if [ "$1" = on ]; then
+    dev appops set com.orcahome WRITE_SETTINGS allow >/dev/null
+    dev appops write-settings >/dev/null
+    dev appops get com.orcahome WRITE_SETTINGS | grep -q allow
+  else
+    dev appops set com.orcahome WRITE_SETTINGS default >/dev/null
+    dev appops write-settings >/dev/null
+  fi
+}
+
 # ---- home screen (launcher.sh, restore.sh) ----
 
 current_home() {

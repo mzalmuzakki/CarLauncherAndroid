@@ -58,6 +58,7 @@ done
 say "Home tiles: $FAVS"
 
 prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/heading] [layout wide/tall] [side left/right] [autotheme false/true]
+            # EXTRA="<xml lines>" adds or overrides settings (2.6 features are off unless given here)
     local xml b64
     xml="<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
@@ -70,6 +71,10 @@ prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/hea
     <boolean name=\"autotheme\" value=\"${7:-false}\" />
     <string name=\"home\">Monas, Jakarta</string>
     <string name=\"favorites\">$FAVS</string>
+    <int name=\"speedlimit\" value=\"0\" />
+    <boolean name=\"autozoom\" value=\"false\" />
+    <boolean name=\"nightdim\" value=\"false\" />
+    ${EXTRA:-}
     <long name=\"stamp\" value=\"$RANDOM$RANDOM\" />
 </map>"
     b64=$(printf '%s' "$xml" | base64 | tr -d '\n')
@@ -147,7 +152,51 @@ say "Home button: $(adb logcat -d | grep -o -m1 'act=android.intent.action.VIEW 
 home; sleep 3
 sh_ input swipe 175 113 175 113 1200; shot 43-set-work-place 3
 sh_ input keyevent KEYCODE_BACK; sh_ input keyevent KEYCODE_BACK
+
+# 2.6: speed alert, map zoom with speed, dock buttons, recent places, music shortcuts, settings.
+EXTRA='<int name="speedlimit" value="40" />' prefs 6 true theme north wide; home; shot 50-speed-alert 8
+EXTRA='<int name="speedlimit" value="40" />' prefs 0 false theme; home; shot 51-speed-alert-gauge 6
+EXTRA='<boolean name="autozoom" value="true" />' prefs 6 true theme north wide; home; shot 52-zoom-with-speed 10
+WEB_APP=${FAVS%%;*}
+EXTRA="<string name=\"dock_web\">$WEB_APP</string>" prefs 6 true theme north wide; home; shot 53-dock-custom-app 6
+say "Dock browser button set to $WEB_APP for 53-dock-custom-app.png"
+sh_ input swipe 738 520 738 520 1200; shot 54-dock-chooser 3
+sh_ input keyevent KEYCODE_BACK
+EXTRA='<string name="recent">Bundaran HI&#10;Blok M Plaza</string>' prefs 6 true theme north wide; home; sleep 4
+sh_ input tap 300 66; sleep 2
+sh_ input text "Kota%sTua"; sh_ input keyevent KEYCODE_ENTER; sleep 5
+home; shot 55-recent-places 5
+say "Recent places saved: $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o '<string name="recent">[^<]*' | sed 's/.*>//')"
+EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide; home; sleep 3
+sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; shot 57-settings-night-brightness 3
+sh_ input swipe 512 520 512 120 400; sh_ input swipe 512 520 512 120 400; shot 58-settings-zoom 2
+sh_ input swipe 512 520 512 120 400; shot 59-settings-speed-alert 2
+sh_ input keyevent KEYCODE_BACK
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
+home; sleep 3
+
+# 2.6 night brightness: put the car where it is night now, then where it is day.
+sh_ appops set "$PKG" WRITE_SETTINGS allow
+sh_ settings put system screen_brightness_mode 0
+sh_ settings put system screen_brightness 200
+if [ "$(python3 "$HERE/sun.py" -6.1864 106.8238)" = night ]; then NIGHT="106.8238 -6.1864" DAY="-73.18 -6.19"
+else NIGHT="-73.18 -6.19" DAY="106.8238 -6.1864"; fi
+bright() { echo "$(sh_ settings get system screen_brightness) (mode $(sh_ settings get system screen_brightness_mode))"; }
+adb emu geo fix $NIGHT > /dev/null; sleep 4
+EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide; home; sleep 4
+say "Night brightness, car at $NIGHT ($(python3 "$HERE/sun.py" ${NIGHT#* } ${NIGHT% *})): brightness $(bright), expected 77 (30 %)"
+sh_ settings put system screen_brightness 120  # turned up by hand at night: must stay
+sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 2; home; sleep 3
+say "  turned up by hand to 120, after going home again: $(bright), expected 120"
+adb emu geo fix $DAY > /dev/null; sleep 4
+sh_ am start -W -n com.android.settings/.Settings > /dev/null; sleep 2; home; sleep 3
+say "  car at $DAY ($(python3 "$HERE/sun.py" ${DAY#* } ${DAY% *})): $(bright), expected 200 (mode 0)"
+adb emu geo fix 106.8238 -6.1864 > /dev/null
+sh_ appops set "$PKG" WRITE_SETTINGS default
+
+# Music shortcuts: nothing playing (the demo player stopped).
+sh_ am force-stop com.orcahome.demoplayer
+prefs 6 true theme north wide; home; shot 56-music-shortcuts 8
 home; sleep 3
 say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'FATAL EXCEPTION')"
 adb logcat -b crash -d > "$OUT/crash-debug.txt"

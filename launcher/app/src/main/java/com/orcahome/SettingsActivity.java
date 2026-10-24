@@ -19,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +66,38 @@ public class SettingsActivity extends Activity {
             swatches(col, null, prefs.theme(), t -> { prefs.setTheme(t); build(); });
         }
 
+        header(col, "Night brightness");
+        check(col, "Dim the screen from sunset to sunrise (back to your day brightness in the morning)",
+                prefs.nightDim(), on -> { prefs.setNightDim(on); Brightness.apply(this); build(); });
+        if (prefs.nightDim()) {
+            TextView level = ui.label(this, 14, ui.text, false);
+            level.setText("Night level: " + prefs.nightLevel() + "%");
+            level.setPadding(0, ui.dp(6), 0, 0);
+            col.addView(level);
+            SeekBar bar = new SeekBar(this);
+            bar.setMax(70); // 10 % to 80 %
+            bar.setProgress(prefs.nightLevel() - 10);
+            bar.setProgressTintList(ColorStateList.valueOf(ui.accent));
+            bar.setThumbTintList(ColorStateList.valueOf(ui.accent));
+            bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar s, int p, boolean user) {
+                    level.setText("Night level: " + (p + 10) + "%");
+                    if (user) { prefs.setNightLevel(p + 10); Brightness.levelChanged(SettingsActivity.this); }
+                }
+                @Override public void onStartTrackingTouch(SeekBar s) { }
+                @Override public void onStopTrackingTouch(SeekBar s) { }
+            });
+            col.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(44)));
+            if (!Brightness.allowed(this)) {
+                button(col, "Allow Orca Home to change the brightness", () ->
+                        open(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()))));
+            }
+            TextView dimNote = ui.label(this, 13, ui.sub, false);
+            dimNote.setText(prefs.dimmed() ? "Dimmed now. Changing the brightness by hand keeps your level until sunrise."
+                    : "Changing the brightness by hand at night keeps your level until sunrise.");
+            col.addView(dimNote);
+        }
+
         header(col, "Main panel");
         RadioGroup mode = new RadioGroup(this);
         String[][] modes = {{"map", "Live map (follows your GPS position)"}, {"grid", "App grid with clock and speed gauge"}};
@@ -107,6 +140,9 @@ public class SettingsActivity extends Activity {
                 {"tall", "Square map, apps in two columns beside it"}},
                 prefs.mapLayout(), prefs::setMapLayout, 600);
 
+        check(col, "Zoom with speed: closer in town, further out on fast roads (+ / \u2212 on the map shift it)",
+                prefs.autoZoom(), prefs::setAutoZoom);
+
         TextView mapNote = ui.label(this, 13, ui.sub, false);
         mapNote.setText("Map tiles are downloaded only while the home screen is visible and kept on the unit (max 50 MB), so roads you drive often need no data.");
         mapNote.setPadding(0, ui.dp(4), 0, 0);
@@ -116,6 +152,10 @@ public class SettingsActivity extends Activity {
         check(col, "Weather (Open-Meteo, internet, refreshed at most every 30 min)", prefs.showWeather(), prefs::setShowWeather);
         check(col, "Speed (gauge, or a bubble on the map)", prefs.showGauge(), prefs::setShowGauge);
         check(col, "Navigation card while Google Maps / Waze navigates", prefs.showNavCard(), prefs::setShowNavCard);
+
+        radios(col, "Speed alert (the speed turns red above it)", new String[][]{
+                {"0", "Off"}, {"60", "60 km/h"}, {"80", "80 km/h"}, {"100", "100 km/h"}, {"110", "110 km/h"}, {"120", "120 km/h"}},
+                String.valueOf(prefs.speedLimit()), v -> prefs.setSpeedLimit(Integer.parseInt(v)), 800);
 
         header(col, "Maps app (navigation button, map tap, destination search)");
         RadioGroup nav = new RadioGroup(this);
@@ -156,7 +196,7 @@ public class SettingsActivity extends Activity {
             Toast.makeText(this, "Home tiles reset", Toast.LENGTH_SHORT).show();
         });
         TextView tip = ui.label(this, 14, ui.sub, false);
-        tip.setText("Long-press a tile to move or remove it. Long-press an app in \"All apps\" to add it. Long-press Home or Work above the map to change the place. Long-press the gear in the dock for Android settings.");
+        tip.setText("Long-press a tile to move or remove it. Long-press an app in \"All apps\" to add it. Long-press Home or Work above the map to change the place, or a recent place to remove it. Long-press the phone, music, navigation or browser button in the dock to put any app there (e.g. ZLink). Long-press the gear in the dock for Android settings.");
         col.addView(tip);
 
         header(col, "Launcher");
@@ -175,7 +215,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.5 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
+        about.setText("Orca Home 2.6 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);

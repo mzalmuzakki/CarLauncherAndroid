@@ -20,6 +20,8 @@ final class GaugeView extends View {
     private final RectF arc = new RectF();
     private int speed = -1; // -1 = no GPS fix yet
     private String hint = "";
+    static final int ALERT = 0xFFE53935;
+    private int accent;
 
     GaugeView(Context c, Ui ui) {
         super(c);
@@ -30,6 +32,7 @@ final class GaugeView extends View {
         track.setColor(ui.panel); // the gauge sits on a ui.tile background
         fill.set(track);
         fill.setColor(ui.accent);
+        accent = ui.accent;
         big.setColor(ui.text);
         big.setTextAlign(Paint.Align.CENTER);
         big.setTypeface(Typeface.DEFAULT_BOLD);
@@ -40,6 +43,14 @@ final class GaugeView extends View {
     void setSpeed(int kmh) {
         if (kmh == speed) return;
         speed = kmh;
+        invalidate();
+    }
+
+    /** Over the speed limit: the arc turns red. */
+    void setAlert(boolean on) {
+        int c = on ? ALERT : accent;
+        if (fill.getColor() == c) return;
+        fill.setColor(c);
         invalidate();
     }
 

@@ -2,6 +2,7 @@ package com.orcahome;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,27 @@ final class Prefs {
     /** One-tap destinations: an address, a place name or "lat,lng"; empty = not set. */
     String homePlace() { return sp.getString("home", ""); }
     String workPlace() { return sp.getString("work", ""); }
+    /** Speed bubble / gauge turn red above this (km/h); 0 = off. */
+    int speedLimit() { return sp.getInt("speedlimit", 0); }
+    /** The map zooms with speed; +/- shift that by zoomOffset levels. */
+    boolean autoZoom() { return sp.getBoolean("autozoom", true); }
+    int zoomOffset() { return sp.getInt("zoomoffset", 0); }
+    /** Night brightness: dim to nightLevel % from sunset to sunrise (needs WRITE_SETTINGS). */
+    boolean nightDim() { return sp.getBoolean("nightdim", true); }
+    int nightLevel() { return sp.getInt("nightlevel", 30); }
+    /** True while Orca Home has dimmed the screen; dayBrightness/dayMode is what to go back to. */
+    boolean dimmed() { return sp.getBoolean("dimmed", false); }
+    int dayBrightness() { return sp.getInt("daybright", 128); }
+    int dayMode() { return sp.getInt("daymode", 0); }
+    /** A dock button changed to an app (flattened component); empty = the button's own job. */
+    String dockApp(String slot) { return sp.getString("dock_" + slot, ""); }
+    /** Last destinations typed in the search bar, newest first (at most 5). */
+    List<String> recent() {
+        String s = sp.getString("recent", "");
+        List<String> l = new ArrayList<>();
+        for (String r : s.split("\n")) if (!r.trim().isEmpty()) l.add(r);
+        return l;
+    }
     boolean showWeather() { return sp.getBoolean("weather", true); }
     boolean showGauge() { return sp.getBoolean("gauge", true); }
     boolean showNavCard() { return sp.getBoolean("navcard", true); }
@@ -60,6 +82,27 @@ final class Prefs {
     void setPanelSide(String s) { sp.edit().putString("side", s).putLong("stamp", System.nanoTime()).apply(); }
     void setHomePlace(String p) { sp.edit().putString("home", p).putLong("stamp", System.nanoTime()).apply(); }
     void setWorkPlace(String p) { sp.edit().putString("work", p).putLong("stamp", System.nanoTime()).apply(); }
+    void setSpeedLimit(int kmh) { sp.edit().putInt("speedlimit", kmh).apply(); }
+    void setAutoZoom(boolean b) { put("autozoom", b); }
+    void setZoomOffset(int o) { sp.edit().putInt("zoomoffset", o).apply(); }
+    void setNightDim(boolean b) { sp.edit().putBoolean("nightdim", b).apply(); }
+    void setNightLevel(int pct) { sp.edit().putInt("nightlevel", pct).apply(); }
+    void setDimmed(boolean dimmed, int dayBrightness, int dayMode) {
+        sp.edit().putBoolean("dimmed", dimmed).putInt("daybright", dayBrightness).putInt("daymode", dayMode).apply();
+    }
+    void setDockApp(String slot, String component) { sp.edit().putString("dock_" + slot, component).putLong("stamp", System.nanoTime()).apply(); }
+    void addRecent(String place) {
+        List<String> l = recent();
+        l.remove(place);
+        l.add(0, place.replace('\n', ' '));
+        while (l.size() > 5) l.remove(l.size() - 1);
+        sp.edit().putString("recent", TextUtils.join("\n", l)).apply(); // the chips refresh themselves
+    }
+    void removeRecent(String place) {
+        List<String> l = recent();
+        l.remove(place);
+        sp.edit().putString("recent", TextUtils.join("\n", l)).apply(); // the chips refresh themselves
+    }
     void setShowWeather(boolean b) { put("weather", b); }
     void setShowGauge(boolean b) { put("gauge", b); }
     void setShowNavCard(boolean b) { put("navcard", b); }

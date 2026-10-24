@@ -255,12 +255,13 @@ version is too old to sign in to Google.
 ## Going back from Orca Home
 - `./scripts/launcher.sh off` (or `./scripts/restore.sh`): factory launcher back as the home
   screen, the unit's own launcher setting back (NWD firmware), Orca Home no longer opens at
-  start-up. Works even without the records in `backup/` (another computer, a fresh clone).
+  start-up or changes the brightness. Works even without the records in `backup/` (another computer, a fresh clone).
 - By hand, if the scripts aren't at hand (any adb, e.g. Termux on the phone):
   ```
   adb exec-out setprop persist.nwd.launcher.default com.android.launchertheme
   adb exec-out cmd package set-home-activity com.android.launchertheme/com.android.launcher2.Launcher
   adb exec-out appops set com.orcahome SYSTEM_ALERT_WINDOW default
+  adb exec-out appops set com.orcahome WRITE_SETTINGS default
   adb exec-out appops set com.google.android.apps.maps PICTURE_IN_PICTURE default
   adb exec-out appops write-settings
   ```
