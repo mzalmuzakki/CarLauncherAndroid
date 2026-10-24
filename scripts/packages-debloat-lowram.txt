@@ -1,0 +1,8 @@
+# Extra apps disabled with --lowram --debloat (reversible). Each one costs
+# 100–300 MB of RAM. Delete a line to keep that app; apps in packages-keep.txt
+# are never disabled.
+com.google.android.googlequicksearchbox   # Google app / Discover feed; "Hey Google" on the unit stops working
+com.google.android.apps.youtube.music     # keep if you use YouTube Music instead of Spotify
+com.google.android.youtube.tv
+com.google.android.partnersetup
+com.google.android.apps.restore

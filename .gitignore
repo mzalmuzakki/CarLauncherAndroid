@@ -1,0 +1,7 @@
+backup/
+dist/
+__pycache__/
+tools/screenshots/demoplayer/.gradle/
+tools/screenshots/demoplayer/**/build/
+*.jks
+*.keystore

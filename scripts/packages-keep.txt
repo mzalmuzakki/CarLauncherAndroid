@@ -1,0 +1,9 @@
+# Apps that optimize.sh will never disable, whatever the other lists say.
+# Add the package name of any app you use (find it with: adb shell pm list packages | grep <name>).
+com.spotify.music
+com.google.android.youtube
+com.google.android.apps.youtube.kids
+com.netflix.mediaclient
+com.google.android.tts                    # Google voice, used by other apps for speech
+com.zjinnova.zlink
+tstudio.nfc.ceksaldo                      # "Cek Saldo": e-money card balance via NFC

@@ -1,0 +1,107 @@
+name: Orca Home screenshots
+
+# Installs Orca Home on an Android 10 emulator shaped like the head unit (1024x600, 160 dpi),
+# takes screenshots and checks crashes, memory and what runs while it is hidden.
+# The emulator is a PC, not the head unit's ARM chip: it shows looks and behaviour, not speed.
+# Started by hand only (Actions tab > Run workflow): one run takes ~15 of the account's
+# monthly Actions minutes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shoot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug launcher and demo player
+        run: |
+          gradle -p launcher assembleDebug --no-daemon
+          gradle -p tools/screenshots/demoplayer assembleDebug --no-daemon
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Create a 1024x600 Android 10 emulator
+        run: |
+          IMG="system-images;android-29;google_apis_playstore;x86"
+          SDKM=$ANDROID_HOME/cmdline-tools/latest/bin
+          yes | $SDKM/sdkmanager --install emulator platform-tools "$IMG" > /dev/null
+          echo no | $SDKM/avdmanager create avd -n hu -k "$IMG" --force
+          CFG=$(find ~/.android ~/.config/.android -path '*hu.avd/config.ini' 2>/dev/null | head -1)
+          # Tell the emulator where avdmanager put it (it may not be ~/.android/avd).
+          echo "ANDROID_AVD_HOME=$(dirname "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+          ls "$(dirname "$(dirname "$CFG")")"
+          sed -i -E '/^(hw\.lcd\.|hw\.keyboard|hw\.ramSize|hw\.mainKeys|disk\.dataPartition|skin\.)/d' "$CFG"
+          printf '%s\n' hw.lcd.width=1024 hw.lcd.height=600 hw.lcd.density=160 hw.keyboard=yes \
+            hw.mainKeys=no hw.ramSize=3072 disk.dataPartition.size=4G hw.gps=yes >> "$CFG"
+          cat "$CFG"
+          : > ~/.emulator_console_auth_token
+
+      - name: Boot emulator
+        run: |
+          $ANDROID_HOME/emulator/emulator -accel-check || true
+          $ANDROID_HOME/emulator/emulator -avd hu -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -camera-back none -camera-front none -accel on > emulator.log 2>&1 &
+          EMU=$!
+          export PATH=$ANDROID_HOME/platform-tools:$PATH
+          booted=
+          for i in $(seq 1 90); do
+            [ "$(timeout 10 adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && { booted=1; break; }
+            kill -0 $EMU 2>/dev/null || { echo "Emulator exited"; break; }
+            sleep 5
+          done
+          if [ -z "$booted" ]; then
+            echo "Emulator did not boot in time"; tail -50 emulator.log; adb devices; exit 1
+          fi
+          echo "Booted after about $((i * 5)) s"
+          sleep 30
+
+      - name: Screenshots and checks
+        run: |
+          export PATH=$ANDROID_HOME/platform-tools:$PATH
+          rm -rf docs/screenshots
+          tools/screenshots/shoot.sh \
+            launcher/app/build/outputs/apk/debug/app-debug.apk \
+            launcher/orca-home.apk \
+            tools/screenshots/demoplayer/app/build/outputs/apk/debug/app-debug.apk \
+            docs/screenshots
+          tools/screenshots/boottest.sh launcher/orca-home.apk docs/screenshots
+          tools/screenshots/scripttest.sh docs/screenshots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: |
+            docs/screenshots
+            emulator.log
+
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A docs/screenshots
+          git commit -m "Orca Home emulator screenshots [skip ci]" || exit 0
+          git pull --rebase
+          git push

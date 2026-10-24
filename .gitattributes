@@ -1,0 +1,4 @@
+*.sh text eol=lf
+magisk/module/** text eol=lf
+*.txt text eol=lf
+*.prop text eol=lf

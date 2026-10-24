@@ -1,0 +1,64 @@
+# Apps optimize.sh --debloat disables (pm disable-user: reversible, not uninstalled).
+# Only listed apps that are actually installed are touched. Delete a line to keep that app.
+# Car-critical packages (CAN bus, NFC, Bluetooth, launcher, ZLink/CarPlay, Android Auto,
+# Google Play services/Store, WebView) are always protected even if added here.
+
+# Google extras rarely used in a car
+com.google.android.apps.photos
+com.google.android.apps.docs
+com.google.android.apps.docs.editors.docs
+com.google.android.apps.docs.editors.sheets
+com.google.android.apps.docs.editors.slides
+com.google.android.gm
+com.google.android.apps.tachyon          # Duo / Meet
+com.google.android.videos                # Play Movies / Google TV
+com.google.android.music
+com.google.android.play.games
+com.google.android.apps.magazines        # Google News
+com.google.android.apps.books
+com.google.android.talk
+com.google.android.keep
+com.google.android.feedback
+com.google.android.marvin.talkback
+com.google.android.apps.wellbeing
+com.google.android.apps.subscriptions.red  # Google One
+
+# Stock AOSP extras
+com.android.email
+com.android.calendar
+com.android.contacts.ext
+com.android.printspooler
+com.android.bips
+com.android.bookmarkprovider
+com.android.dreams.basic
+com.android.dreams.phototable
+com.android.wallpaper.livepicker
+com.android.galaxy4
+com.android.noisefield
+com.android.phasebeam
+com.android.egg
+com.android.stk                          # SIM toolkit (keep if you use a SIM/4G card)
+com.android.calllogbackup
+com.android.wallpaperbackup
+com.android.htmlviewer
+com.android.browser                      # use Chrome instead
+
+# Preinstalled third-party / Chinese app stores and promo apps
+com.facebook.katana
+com.facebook.appmanager
+com.facebook.system
+com.facebook.services
+com.tencent.android.qqdownloader
+com.baidu.searchbox
+com.UCMobile.intl
+com.uc.browser.en
+com.opera.browser
+com.estrongs.android.pop
+com.cleanmaster.mguard
+com.cleanmaster.security
+
+# TXZ voice assistant (~13% CPU and ~230 MB while idle). Use Siri / Google
+# Assistant through ZLink (CarPlay / Android Auto) instead. Delete these two
+# lines if your steering-wheel voice button needs TXZ.
+com.txznet.txz
+com.txznet.smartadapter

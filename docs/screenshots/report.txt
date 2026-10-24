@@ -1,0 +1,32 @@
+Screen: Physical size: 1024x600, Physical density: 160
+Android: 10 (SDK 29), x86
+Home tiles: com.google.android.youtube/.app.honeycomb.Shell$HomeActivity;com.google.android.apps.maps/com.google.android.maps.MapsActivity;com.android.chrome/com.google.android.apps.chrome.Main;com.google.android.apps.photos/.home.HomeActivity;com.android.vending/.AssetBrowserActivity;com.android.settings/.Settings
+GPS seen by Android:     gps: Location[gps -6.198400,106.822958 hAcc=20 et=+1m41s228ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+Debug-build crashes: 1
+
+Release APK: versionName=2.3
+Home screen visible for 25 s, process 9681
+  memory (TOTAL PSS): 25482 KB
+  CPU over 10 s: 1.0%
+  location requests from Orca Home: 2
+Another app in front for 20 s:
+  process still there: 9681
+  CPU over 10 s: 0.0%
+  location requests from Orca Home: 0
+  memory (TOTAL PSS): 74381 KB
+Back home: location requests from Orca Home: 2
+Release-APK crashes: 0
+Done.
+
+Boot test (two home apps, no default):
+  install: Success
+  home apps: com.google.android.apps.nexuslauncher/.NexusLauncherActivity com.orcahome/.MainActivity com.android.settings/.FallbackHome
+  default home: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+  helper off: SYSTEM_ALERT_WINDOW: default
+  helper off, after reboot: mResumedActivity: ActivityRecord{92c258a u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t21}
+  helper on: SYSTEM_ALERT_WINDOW: allow
+  helper on: Orca Home in front after about 75 s
+  helper on, after reboot:  mResumedActivity: ActivityRecord{6b4f4f1 u0 com.orcahome/.MainActivity t22}
+  after reboot: SYSTEM_ALERT_WINDOW: allow; time=+14s197ms ago
+  RESULT: Orca Home opened by itself over the chooser
+  crashes: 0

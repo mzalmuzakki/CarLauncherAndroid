@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.orcahome'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.orcahome'
+        minSdk 29
+        // Sideloaded on an Android 10 head unit; 29 keeps package queries and
+        // background rules simple.
+        targetSdk 29
+        versionCode 5
+        versionName '2.3'
+    }
+
+    // The signing key is never in the repository: the build workflow writes it from the
+    // ORCAHOME_KEYSTORE_B64 secret and passes its path and password in these variables.
+    // The same key every time, so new builds install as updates over Orca Home.
+    def keystore = System.getenv('ORCAHOME_KEYSTORE')
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv('ORCAHOME_KEY_PASSWORD')
+                keyAlias 'orcahome'
+                keyPassword System.getenv('ORCAHOME_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (keystore) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

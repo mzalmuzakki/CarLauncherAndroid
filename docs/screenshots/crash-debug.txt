@@ -1,0 +1,15 @@
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: FATAL EXCEPTION: SysUiBg
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: Process: com.android.systemui, PID: 2051
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: com.android.systemui.shared.plugins.PluginManagerImpl$CrashWhilePluginActiveException: java.util.ConcurrentModificationException
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at com.android.systemui.shared.plugins.PluginManagerImpl$PluginExceptionHandler.uncaughtException(PluginManagerImpl.java:426)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at java.lang.Thread.dispatchUncaughtException(Thread.java:2181)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: Caused by: java.util.ConcurrentModificationException
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at java.util.HashMap$HashIterator.nextNode(HashMap.java:1441)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at java.util.HashMap$KeyIterator.next(HashMap.java:1465)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at com.android.systemui.tuner.TunerServiceImpl.clearAllFromUser(TunerServiceImpl.java:250)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at com.android.systemui.tuner.TunerServiceImpl.lambda$upgradeTuner$0$TunerServiceImpl(TunerServiceImpl.java:138)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at com.android.systemui.tuner.-$$Lambda$TunerServiceImpl$SZ83wU1GcnmYXjZCH1hfw7pCVvY.run(Unknown Source:4)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:883)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:214)
+10-24 18:03:15.347  2051  2229 E AndroidRuntime: 	at android.os.HandlerThread.run(HandlerThread.java:67)

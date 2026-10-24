@@ -1,0 +1,21 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.orcahome.demoplayer'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.orcahome.demoplayer'
+        minSdk 29
+        targetSdk 29
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}

@@ -1,0 +1,20 @@
+# --lowram: these apps may still be opened normally, but can no longer run in
+# the background (they eat RAM and wake up on their own). Undone by restore.sh.
+# Music/navigation/projection apps are deliberately NOT listed so they keep
+# playing and guiding while you use another app.
+com.netflix.mediaclient
+com.facebook.katana
+com.facebook.orca
+com.instagram.android
+com.zhiliaoapp.musically       # TikTok
+com.ss.android.ugc.trill       # TikTok
+com.twitter.android
+com.android.chrome
+com.google.android.gm
+com.google.android.apps.photos
+com.shopee.id
+com.tokopedia.tkpd
+com.lazada.android
+com.gojek.app
+com.grabtaxi.passenger
+com.android.vending            # Play Store: stops auto-updates hogging RAM while driving

@@ -1,0 +1,4 @@
+# Install/update apps faster: only verify the app at install time and let the
+# idle background job compile it later (run scripts/app-speed.sh --fix for
+# apps you want fully compiled right away). Remove this line for stock behaviour.
+pm.dexopt.install=verify

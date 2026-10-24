@@ -1,0 +1,6 @@
+id=orca_headunit_optim
+name=Head Unit Optimizer (2 GB)
+version=v1.0
+versionCode=1
+author=CAKRA Labs
+description=zram (compressed RAM), memory and eMMC tuning, faster app installs for low-RAM Android head units. Log: /data/local/tmp/headunit_optim.log
