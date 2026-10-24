@@ -434,7 +434,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     /** Where Android's freeform windows are switched on (scripts/launcher.sh maps-window). */
     private boolean mapsWindowOn() {
         return map != null && prefs.mapsWindow()
-                && Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_ENABLE_FREEFORM_WINDOWS_SUPPORT, 0) != 0;
+                && Settings.Global.getInt(getContentResolver(), "enable_freeform_support", 0) != 0;
     }
 
     /** Opens the navigation app as a window exactly over the map panel. */
