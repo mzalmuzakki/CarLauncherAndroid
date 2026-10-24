@@ -1,25 +1,25 @@
-10-24 15:43:25.118  1920  3203 I BootReceiver: Copied 0 worth of audits to DropBox
-10-24 15:43:25.120  1920  3203 I BootReceiver: Checking for fsck errors
-10-24 15:43:25.120  1920  3203 I BootReceiver: fs_stat, partition:vdc stat:0xb
-10-24 15:43:25.758  3321  3321 D DMIntentReceiver: action intent: android.intent.action.BOOT_COMPLETED, subId: 1
-10-24 15:43:25.760  3321  3321 D DMIntentReceiver: Ignoring Intent.ACTION_BOOT_COMPLETED
-10-24 15:43:25.807  2169  2169 I VvmSimStateTracker: android.intent.action.BOOT_COMPLETED
-10-24 15:43:26.292  3427  3427 V AngleReceiver: Received intent: 'android.intent.action.BOOT_COMPLETED'
-10-24 15:43:26.327  1920  2189 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 (has extras) } to com.google.android.apps.docs/com.google.android.libraries.internal.growth.growthkit.inject.GrowthKitBootCompletedBroadcastReceiver requires android.permission.RECEIVE_BOOT_COMPLETED due to sender null (uid 1000)
-10-24 15:43:29.014  1920  1946 I ActivityManager: Start proc 3712:com.google.android.apps.tachyon/u0a101 for broadcast {com.google.android.apps.tachyon/com.google.android.apps.tachyon.common.applifecycle.BootReceiver}
-10-24 15:43:30.934  3913  3913 I AlarmClock: AlarmInitReceiver android.intent.action.BOOT_COMPLETED
-10-24 15:43:31.228  3939  3939 W Gmail   : EasBundling:ExchangeUpgradeReceiver: action=android.intent.action.BOOT_COMPLETED data=null
-10-24 15:43:31.431  3414  3414 I CarrierServices: [2] RcsAutoStartReceiver.a: RcsAutoStartReceiver triggered. Fetching RCS State. Action: android.intent.action.BOOT_COMPLETED
-10-24 15:43:32.048  4096  4096 I GH.FzeroReceiver: Handling intent android.intent.action.BOOT_COMPLETED
-10-24 15:43:32.067  1920  1946 I ActivityManager: Start proc 4129:com.google.android.projection.gearhead:projection/u0a117 for broadcast {com.google.android.projection.gearhead/com.google.android.apps.auto.components.notifications.listener.impl.BootReceiver}
-10-24 15:43:32.213  1920  1946 I ActivityManager: Start proc 4180:com.google.android.setupwizard/u0a108 for broadcast {com.google.android.setupwizard/com.google.android.setupwizard.deferred.PostSetupLifecycleBootReceiver}
-10-24 15:43:32.391  4180  4180 I SetupWizard: [PostSetupLifecycleBootReceiver] [pre-deferred] in progress before reboot. Restarting lifecycle.
-10-24 15:43:32.828  2560  4274 I Auth    : [SupervisedAccountIntentOperation] onHandleIntent(): android.intent.action.BOOT_COMPLETED
-10-24 15:43:32.899  2560  4306 I Authzen : [AuthZenEventHandler] Handling event: android.intent.action.BOOT_COMPLETED
-10-24 15:43:33.099  1920  1946 I ActivityManager: Start proc 4363:com.google.android.youtube/u0a145 for broadcast {com.google.android.youtube/com.google.android.libraries.youtube.mdx.background.MdxBackgroundScanBootReceiver}
-10-24 15:43:33.166  2560  2910 I ChromeSync: [Sync,SyncIntentOperation] Handling the intent: Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.google.android.gms/.chimera.GmsIntentOperationService (has extras) }.
-10-24 15:43:33.266  2560  4300 I constellation: [intent_handler] on init with intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.google.android.gms/.chimera.GmsIntentOperationService (has extras) }
-10-24 15:43:34.931  2776  2776 I OrcaHome: start-up: opening Orca Home
-10-24 15:43:34.932  1920  2691 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 10150
-10-24 15:43:35.781  2776  2828 I com.orcahome: NativeAlloc concurrent copying GC freed 7485(451KB) AllocSpace objects, 7(140KB) LOS objects, 49% free, 1598KB/3196KB, paused 616us total 201.542ms
-10-24 15:43:36.688  1920  1944 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +1s751ms
+10-24 16:13:31.265  1915  3169 I BootReceiver: fs_stat, partition:vdc found quota warning:[QUOTA WARNING] Usage inconsistent for ID 10106:actual (75190272, 401) != expected (75194368, 401)
+10-24 16:13:31.265  1915  3169 I BootReceiver: fs_stat, partition:vdc found quota warning:[QUOTA WARNING] Usage inconsistent for ID 10106:actual (7163904, 348) != expected (7168000, 348)
+10-24 16:13:31.265  1915  3169 I BootReceiver: fs_stat, partition:vdc fix ignored
+10-24 16:13:31.265  1915  3169 I BootReceiver: fs_stat, partition:vdc stat:0xb
+10-24 16:13:31.265  1915  3169 I BootReceiver: Copying /dev/fscklogs/log to DropBox (SYSTEM_FSCK)
+10-24 16:13:34.116  3330  3330 D DMIntentReceiver: action intent: android.intent.action.BOOT_COMPLETED, subId: 1
+10-24 16:13:34.117  3330  3330 D DMIntentReceiver: Ignoring Intent.ACTION_BOOT_COMPLETED
+10-24 16:13:34.233  2289  2289 I VvmSimStateTracker: android.intent.action.BOOT_COMPLETED
+10-24 16:13:37.532  3437  3463 I Finsky  : [220] RECEIVER_BOOT_COMPLETED#logWorkEndAndFinishGoAsync: SUCCESS
+10-24 16:13:38.071  3509  3509 V AngleReceiver: Received intent: 'android.intent.action.BOOT_COMPLETED'
+10-24 16:13:38.128  1915  2466 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 (has extras) } to com.google.android.apps.docs/com.google.android.libraries.internal.growth.growthkit.inject.GrowthKitBootCompletedBroadcastReceiver requires android.permission.RECEIVE_BOOT_COMPLETED due to sender null (uid 1000)
+10-24 16:13:49.368  1915  1941 I ActivityManager: Start proc 3987:com.google.android.apps.tachyon/u0a101 for broadcast {com.google.android.apps.tachyon/com.google.android.apps.tachyon.common.applifecycle.BootReceiver}
+10-24 16:14:00.157  4285  4285 I AlarmClock: AlarmInitReceiver android.intent.action.BOOT_COMPLETED
+10-24 16:14:00.212  3627  3627 W Gmail   : EasBundling:ExchangeUpgradeReceiver: action=android.intent.action.BOOT_COMPLETED data=null
+10-24 16:14:01.785  2779  2779 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.google.android.googlequicksearchbox/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
+10-24 16:14:01.851  3409  3409 I CarrierServices: [2] RcsAutoStartReceiver.a: RcsAutoStartReceiver triggered. Fetching RCS State. Action: android.intent.action.BOOT_COMPLETED
+10-24 16:14:04.789  4506  4506 I GH.FzeroReceiver: Handling intent android.intent.action.BOOT_COMPLETED
+10-24 16:14:04.832  1915  1941 I ActivityManager: Start proc 4555:com.google.android.projection.gearhead:projection/u0a116 for broadcast {com.google.android.projection.gearhead/com.google.android.apps.auto.components.notifications.listener.impl.BootReceiver}
+10-24 16:14:05.696  1915  1941 I ActivityManager: Start proc 4616:com.google.android.setupwizard/u0a107 for broadcast {com.google.android.setupwizard/com.google.android.setupwizard.deferred.PostSetupLifecycleBootReceiver}
+10-24 16:14:06.366  4616  4616 I SetupWizard: [PostSetupLifecycleBootReceiver] [pre-deferred] in progress before reboot. Restarting lifecycle.
+10-24 16:14:07.738  1915  1941 I ActivityManager: Start proc 4734:com.google.android.youtube/u0a146 for broadcast {com.google.android.youtube/com.google.android.libraries.youtube.mdx.background.MdxBackgroundScanBootReceiver}
+10-24 16:14:13.408  2766  2766 I OrcaHome: start-up: opening Orca Home
+10-24 16:14:13.409  1915  4392 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 10150
+10-24 16:14:13.409  1915  4392 W ActivityTaskManager: Background activity start for com.orcahome allowed because SYSTEM_ALERT_WINDOW permission is granted.
+10-24 16:14:15.613  1915  1939 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +2s196ms

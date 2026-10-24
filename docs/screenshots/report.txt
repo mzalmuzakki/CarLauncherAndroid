@@ -1,23 +1,28 @@
 Screen: Physical size: 1024x600, Physical density: 160
 Android: 10 (SDK 29), x86
 Home tiles: com.google.android.youtube/.app.honeycomb.Shell$HomeActivity;com.google.android.apps.maps/com.google.android.maps.MapsActivity;com.android.chrome/com.google.android.apps.chrome.Main;com.google.android.apps.photos/.home.HomeActivity;com.android.vending/.AssetBrowserActivity;com.android.settings/.Settings
-GPS seen by Android:     gps: Location[gps -6.186398,106.824398 hAcc=20 et=+1m16s634ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
-Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m39s771ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+GPS seen by Android: 
+Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m57s82ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
 Keyboard shown after coming back: mInputShown=false
-Auto theme: at 15:39 UTC it is night in Jakarta, so 41-auto-theme.png should show the night theme (day: Light, night: Midnight Drive)
+Auto theme: at 16:06 UTC it is night in Jakarta, so 41-auto-theme.png should show the night theme (day: Light, night: Midnight Drive)
 Home button: act=android.intent.action.VIEW dat=google.navigation:q=Monas,
-Debug-build crashes: 0
+Dock browser button set to com.google.android.youtube/.app.honeycomb.Shell$HomeActivity for 53-dock-custom-app.png
+Recent places saved: Kota Tua&#10;Bundaran HI&#10;Blok M Plaza
+Night brightness, car at 106.8238 -6.1864 (night): brightness 77 (mode 0), expected 77 (30 %)
+  turned up by hand to 120, after going home again: 120 (mode 0), expected 120
+  car at -73.18 -6.19 (day): 120 (mode 0), expected 200 (mode 0)
+Debug-build crashes: 1
 
-Release APK: versionName=2.5
-Home screen visible for 25 s, process 9344
-  memory (TOTAL PSS): 24146 KB
-  CPU over 10 s: 0.7%
+Release APK: versionName=2.6
+Home screen visible for 25 s, process 11540
+  memory (TOTAL PSS): 27644 KB
+  CPU over 10 s: 0.0%
   location requests from Orca Home: 2
 Another app in front for 20 s:
-  process still there: 9344
+  process still there: 11540
   CPU over 10 s: 0.0%
   location requests from Orca Home: 0
-  memory (TOTAL PSS): 21823 KB
+  memory (TOTAL PSS): 25697 KB
 Back home: location requests from Orca Home: 2
 Release-APK crashes: 0
 Done.
@@ -25,22 +30,22 @@ Done.
 Boot test (two home apps, no default):
   install: Success
   home apps: com.google.android.apps.nexuslauncher/.NexusLauncherActivity com.orcahome/.MainActivity com.android.settings/.FallbackHome
-  default home: android/com.android.internal.app.ResolverActivity
+  default home: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
   helper off: SYSTEM_ALERT_WINDOW: default
-  helper off, after reboot: mResumedActivity: ActivityRecord{208e7b3 u0 android/com.android.internal.app.ResolverActivity t33}
+  helper off, after reboot: mResumedActivity: ActivityRecord{492320e u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t37}
   helper on: SYSTEM_ALERT_WINDOW: allow
-  helper on: Orca Home in front after about 20 s
-  helper on, after reboot:  mResumedActivity: ActivityRecord{95471cf u0 com.orcahome/.MainActivity t34}
-  after reboot: SYSTEM_ALERT_WINDOW: allow
+  helper on: Orca Home in front after about 60 s
+  helper on, after reboot:  mResumedActivity: ActivityRecord{2b3efbb u0 com.orcahome/.MainActivity t38}
+  after reboot: SYSTEM_ALERT_WINDOW: allow; time=+4s527ms ago
   RESULT: Orca Home opened by itself over the chooser
   crashes: 0
 
 Script test (real launcher.sh / off / restore.sh on the emulator):
-  OK   before: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=allow
-  OK   launcher.sh: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=allow
-  OK   launcher.sh off: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, overlay=default
-  OK   launcher.sh again: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=default
-  OK   restore.sh: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=default
-  OK   launcher.sh, records deleted: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=default
-  OK   restore.sh without records: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=default
+  OK   before: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=allow, brightness=default
+  OK   launcher.sh: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=allow, brightness=allow
+  OK   launcher.sh off: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, overlay=default, brightness=default
+  OK   launcher.sh again: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=default, brightness=allow
+  OK   restore.sh: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=default, brightness=default
+  OK   launcher.sh, records deleted: home=com.orcahome/.MainActivity, in front=com.orcahome/.MainActivity, overlay=default, brightness=allow
+  OK   restore.sh without records: home=com.google.android.apps.nexuslauncher/.NexusLauncherActivity, in front=com.orcahome/.MainActivity, overlay=default, brightness=default
   crashes: 0
