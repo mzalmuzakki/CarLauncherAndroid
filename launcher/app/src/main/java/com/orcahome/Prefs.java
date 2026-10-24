@@ -31,6 +31,10 @@ final class Prefs {
     String mapDirection() { return sp.getString("mapdir", "north"); }
     /** "wide": map with the apps in a row below; "tall": squarer map, apps in a column beside it. */
     String mapLayout() { return sp.getString("maplayout", "wide"); }
+    /** Experimental: live Google Maps in a window over the map panel while it navigates
+     *  (only where Android's freeform windows are on: scripts/launcher.sh maps-window). */
+    boolean mapsWindow() { return sp.getBoolean("mapswindow", true); }
+    void setMapsWindow(boolean b) { sp.edit().putBoolean("mapswindow", b).apply(); }
 
     void setShowMap(boolean b) { put("map", b); }
     void setMapStyle(String st) { sp.edit().putString("mapstyle", st).putLong("stamp", System.nanoTime()).apply(); }

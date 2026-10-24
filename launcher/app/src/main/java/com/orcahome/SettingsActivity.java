@@ -108,8 +108,12 @@ public class SettingsActivity extends Activity {
                 prefs.mapDirection(), prefs::setMapDirection, 500);
         radios(col, "Map layout", new String[][]{
                 {"wide", "Wide map, apps in a row below"},
-                {"tall", "Square map, apps in a column beside it"}},
+                {"tall", "Square map, apps in two columns beside it"}},
                 prefs.mapLayout(), prefs::setMapLayout, 600);
+
+        header(col, "Navigation (experimental)");
+        check(col, "Live Google Maps over the map panel while it navigates (needs: scripts/launcher.sh maps-window)",
+                prefs.mapsWindow(), prefs::setMapsWindow);
 
         TextView mapNote = ui.label(this, 13, ui.sub, false);
         mapNote.setText("Map tiles are downloaded only while the home screen is visible and kept on the unit (max 50 MB), so roads you drive often need no data.");

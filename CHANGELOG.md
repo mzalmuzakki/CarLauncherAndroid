@@ -13,7 +13,8 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - The notification reader reconnects when the home screen opens (NWD firmware could keep it
   from connecting at boot, so the nav card never showed).
 - Settings: map direction (north up, or driving direction up with the map turning) and map
-  layout (wide map with apps below, or square map with apps in a column).
+  layout (wide map with apps below, or square map with apps in two columns beside it; same
+  left/right split as before).
 
 ## 2.3 — first version working in the car (24 Oct 2026)
 `releases/orca-home-2.3.apk`, built from commit fb4d62f.

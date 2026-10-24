@@ -2,6 +2,7 @@ package com.orcahome;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -12,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
@@ -82,6 +84,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private View navBanner;
     private ImageView bannerArrow;
     private TextView bannerDistance, bannerInstruction, bannerEta;
+    private boolean navWasActive;
     private ImageView navArrow;
     private TextView navDistance, navInstruction, navEta;
     private GaugeView gauge;
@@ -212,13 +215,11 @@ public class MainActivity extends Activity implements NavState.Listener {
         content.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(8));
         root.addView(content, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        // The square-map layout gives the map half the width; its apps go in a column beside it.
-        boolean tall = prefs.showMap() && "tall".equals(prefs.mapLayout());
         View mainPanel = mainPanel();
-        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 45f : 62f));
+        content.addView(mainPanel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 62f));
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, tall ? 55f : 38f);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 38f);
         rlp.leftMargin = ui.dp(10);
         content.addView(right, rlp);
         right.addView(infoRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(104)));
@@ -322,7 +323,7 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /**
      * Live map with a speed bubble and zoom buttons, and the favourite apps: in a row below
-     * (wide layout) or in a column beside it (square-map layout).
+     * (wide layout), or in two columns beside a square map (square-map layout).
      */
     private View mapBody() {
         boolean tall = "tall".equals(prefs.mapLayout());
@@ -332,9 +333,11 @@ public class MainActivity extends Activity implements NavState.Listener {
         favRow.setOrientation(tall ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
         favRow.setGravity(Gravity.CENTER);
         if (tall) {
-            box.addView(mapFrame(), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ui.dp(76), ViewGroup.LayoutParams.MATCH_PARENT);
-            fl.leftMargin = ui.dp(6);
+            FrameLayout square = new SquareFrame(this);
+            square.addView(mapFrame(), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            box.addView(square, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+            fl.leftMargin = ui.dp(8);
             box.addView(favRow, fl);
         } else {
             box.addView(mapFrame(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -422,8 +425,42 @@ public class MainActivity extends Activity implements NavState.Listener {
         col.addView(bannerDistance);
         col.addView(bannerInstruction, wrapTop(2));
         c.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        c.setOnClickListener(v -> openNavApp());
+        c.setOnClickListener(v -> { if (mapsWindowOn()) openMapsWindow(); else openNavApp(); });
         return c;
+    }
+
+    // ---- experimental: Google Maps in a window over the map panel ----------------------
+
+    /** Where Android's freeform windows are switched on (scripts/launcher.sh maps-window). */
+    private boolean mapsWindowOn() {
+        return map != null && prefs.mapsWindow()
+                && Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_ENABLE_FREEFORM_WINDOWS_SUPPORT, 0) != 0;
+    }
+
+    /** Opens the navigation app as a window exactly over the map panel. */
+    private void openMapsWindow() {
+        View frame = (View) map.getParent();
+        int[] at = new int[2];
+        frame.getLocationOnScreen(at);
+        Rect r = new Rect(at[0], at[1], at[0] + frame.getWidth(), at[1] + frame.getHeight());
+        String pkg = NavState.pkg;
+        if (NavState.testApp && !NavState.isRealNavApp(pkg)) pkg = NavState.MAPS; // emulator test guidance
+        Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+        if (i == null) { openNavApp(); return; }
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(i, ActivityOptions.makeBasic().setLaunchBounds(r).toBundle());
+        } catch (ActivityNotFoundException | SecurityException e) {
+            openNavApp();
+        }
+    }
+
+    /** Navigation ended: Orca Home to the front, so the Maps window goes behind it. */
+    private void homeToFront() {
+        Intent i = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                .setComponent(new ComponentName(this, MainActivity.class))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try { startActivity(i); } catch (RuntimeException ignored) { }
     }
 
     private void openNavApp() {
@@ -464,10 +501,24 @@ public class MainActivity extends Activity implements NavState.Listener {
     /** The favourite apps beside the map (as many as fit), then "All apps". */
     private void fillFavRow() {
         favRow.removeAllViews();
-        List<Apps.Entry> favs = Apps.favorites(this, prefs);
+        List<Apps.Entry> favs = new ArrayList<>(Apps.favorites(this, prefs));
         int max = Apps.mapTiles(prefs);
-        for (int i = 0; i < favs.size() && i < max; i++) favRow.addView(favTile(favs.get(i)));
-        favRow.addView(favTile(null));
+        if (favs.size() > max) favs = favs.subList(0, max);
+        favs.add(null); // "All apps"
+        if (favRow.getOrientation() == LinearLayout.HORIZONTAL) {
+            for (Apps.Entry e : favs) favRow.addView(favTile(e));
+            return;
+        }
+        // Square-map layout: rows of two, always four rows so the tiles keep their size.
+        for (int r = 0; r < 4; r++) {
+            LinearLayout row = new LinearLayout(this);
+            for (int c = 0; c < 2; c++) {
+                int i = r * 2 + c;
+                if (i < favs.size()) row.addView(favTile(favs.get(i)));
+                else row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+            }
+            favRow.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        }
     }
 
     private View favTile(Apps.Entry e) {
@@ -497,9 +548,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nl.topMargin = ui.dp(4);
         t.addView(name, nl);
-        boolean column = favRow.getOrientation() == LinearLayout.VERTICAL;
-        t.setLayoutParams(column ? new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
-                : new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        t.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         return t;
     }
 
@@ -920,6 +969,13 @@ public class MainActivity extends Activity implements NavState.Listener {
     @Override
     public void onNavChanged() {
         boolean show = prefs.showNavCard() && NavState.active;
+        // Experimental Maps window: opened once when navigation starts (not on every return
+        // home, so Orca Home stays usable), and put behind Orca Home when it ends.
+        if (show != navWasActive && mapsWindowOn()) {
+            if (show) main.postDelayed(() -> { if (NavState.active && map != null) openMapsWindow(); }, 600);
+            else homeToFront();
+        }
+        navWasActive = show;
         if (navBanner != null) {
             // Map layouts: the search bar steps aside and the guidance goes big over the map.
             topArea.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -1249,6 +1305,20 @@ public class MainActivity extends Activity implements NavState.Listener {
             return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
         } catch (PackageManager.NameNotFoundException e) {
             return pkg;
+        }
+    }
+
+    /** As wide as it is tall (the square map). */
+    private static final class SquareFrame extends FrameLayout {
+        SquareFrame(Context c) { super(c); }
+
+        @Override
+        protected void onMeasure(int widthSpec, int heightSpec) {
+            int side = MeasureSpec.getSize(heightSpec);
+            int max = MeasureSpec.getSize(widthSpec);
+            if (MeasureSpec.getMode(widthSpec) != MeasureSpec.UNSPECIFIED && max > 0) side = Math.min(side, max);
+            int exact = MeasureSpec.makeMeasureSpec(side, MeasureSpec.EXACTLY);
+            super.onMeasure(exact, exact);
         }
     }
 }

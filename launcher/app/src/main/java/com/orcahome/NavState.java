@@ -37,7 +37,9 @@ final class NavState {
     static volatile boolean testApp;
     private static final String TEST_APP = "com.orcahome.demoplayer";
 
-    static boolean isNavApp(String p) { return MAPS.equals(p) || WAZE.equals(p) || (testApp && TEST_APP.equals(p)); }
+    static boolean isRealNavApp(String p) { return MAPS.equals(p) || WAZE.equals(p); }
+
+    static boolean isNavApp(String p) { return isRealNavApp(p) || (testApp && TEST_APP.equals(p)); }
 
     static void setListener(Listener l) { listener = l; }
 
