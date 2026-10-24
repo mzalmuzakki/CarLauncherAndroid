@@ -11,7 +11,7 @@ say() { echo "$*" | tee -a "$REPORT"; }
 sh_() { adb shell "$@" | tr -d '\r'; }
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
 front() { sh_ dumpsys activity activities | grep -m1 -E 'mResumedActivity' | grep -o '[a-z][a-zA-Z0-9_.]*/[a-zA-Z0-9_.$]*'; }
-maps_window() { sh_ dumpsys activity activities | grep -B2 -A12 "realActivity=.*$MAPS" | grep -m2 -o -E 'mBounds=Rect\([^)]*\)|windowingMode=[a-z]*' | xargs; }
+maps_window() { sh_ dumpsys activity activities | grep -A3 "Task id.*$MAPS\|affinity=.*$MAPS" | grep -m2 -o -E 'mBounds=Rect\([^)]*\)|mWindowingMode=[a-z]*' | xargs; }
 
 say ""
 say "Maps window test (experimental, freeform windows):"
@@ -27,6 +27,9 @@ for i in $(seq 1 60); do
     sleep 5
 done
 sleep 30
+# Android saves the default home app lazily: set it again after the reboot.
+sh_ cmd package set-home-activity "$PKG/.MainActivity" > /dev/null
+sh_ input keyevent KEYCODE_HOME; sleep 5
 say "  freeform setting after reboot: $(sh_ settings get global enable_freeform_support)"
 sh_ am start -W -n "$MAPS/com.google.android.maps.MapsActivity" > /dev/null
 sleep 10
@@ -35,6 +38,8 @@ shot 30-maps-window-before 6
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es nav on > /dev/null
 shot 31-maps-window-navigating 10
 say "  navigating: in front=$(front); Maps task: $(maps_window)"
+say "  freeform windows on screen: $(sh_ dumpsys activity activities | grep -c 'mWindowingMode=freeform')"
+adb logcat -d | grep -i -E "START u0.*maps|OrcaHome" | tail -5 >> "$OUT/maps-window-log.txt"
 sh_ dumpsys activity activities > "$OUT/maps-window-activities.txt"
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es nav off > /dev/null
 shot 32-maps-window-ended 8
