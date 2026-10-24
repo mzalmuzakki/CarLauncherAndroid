@@ -8,9 +8,9 @@
   [32m✓[0m Orca Home is now the home screen
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 30 MB, free RAM 1865 MB
-  Now   : Orca Home 25 MB, free RAM 1851 MB
-  [32m✓[0m Orca Home uses 5 MB less than the original launcher
+  Before: original launcher 36 MB, free RAM 1981 MB
+  Now   : Orca Home 30 MB, free RAM 1970 MB
+  [32m✓[0m Orca Home uses 6 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
@@ -24,9 +24,9 @@ Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
   [32m✓[0m Orca Home is now the home screen
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 31 MB, free RAM 1857 MB
-  Now   : Orca Home 27 MB, free RAM 1839 MB
-  [32m✓[0m Orca Home uses 4 MB less than the original launcher
+  Before: original launcher 36 MB, free RAM 1935 MB
+  Now   : Orca Home 24 MB, free RAM 1944 MB
+  [32m✓[0m Orca Home uses 12 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
@@ -40,8 +40,8 @@ Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
   [32m✓[0m Orca Home is now the home screen
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 39 MB, free RAM 1831 MB
-  Now   : Orca Home 78 MB, free RAM 1826 MB
+  Before: original launcher 33 MB, free RAM 1936 MB
+  Now   : Orca Home 75 MB, free RAM 1933 MB
   [33m![0m Orca Home uses more memory than the original launcher. Switch back: ./scripts/launcher.sh off
 
 Check again any time: ./scripts/launcher.sh check
