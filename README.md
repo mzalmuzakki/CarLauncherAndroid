@@ -263,7 +263,6 @@ version is too old to sign in to Google.
   adb exec-out appops set com.orcahome SYSTEM_ALERT_WINDOW default
   adb exec-out appops set com.google.android.apps.maps PICTURE_IN_PICTURE default
   adb exec-out appops write-settings
-  adb exec-out settings put global enable_freeform_support 0   # only if you used maps-window
   ```
   then press Home. (`com.android.launchertheme` is "UI Style", the factory launcher on the
   owner's unit; the other built-in one is `com.android.launcher`.)

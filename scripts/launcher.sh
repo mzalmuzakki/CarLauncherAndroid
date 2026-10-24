@@ -5,9 +5,6 @@
 #   ./scripts/launcher.sh        install or update, switch to it, compare memory
 #   ./scripts/launcher.sh check  memory now: Orca Home vs the original launcher, free RAM
 #   ./scripts/launcher.sh off    switch back to the original launcher (Orca Home stays installed)
-#   ./scripts/launcher.sh maps-window [off]
-#                                experimental: live Google Maps in a window over the map panel
-#                                while it navigates (turns on Android's freeform windows; reboot)
 . "$(dirname "$0")/common.sh"
 require_device
 APK="$(dirname "$0")/../launcher/orca-home.apk"
@@ -37,25 +34,10 @@ if [ "${1:-}" = check ]; then
   exit 0
 fi
 
-if [ "${1:-}" = maps-window ]; then
-  if [ "${2:-on}" = off ]; then
-    maps_window off
-  elif maps_window on; then
-    ok "freeform windows on: while Google Maps navigates, Orca Home opens it over the map panel"
-    echo "  Reboot the unit to finish (turn the volume down first): adb exec-out reboot"
-    echo "  Undo: ./scripts/launcher.sh maps-window off   (then reboot)"
-  else
-    warn "the unit didn't accept the freeform-windows setting"
-    exit 1
-  fi
-  exit 0
-fi
-
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
   nwd_home_back
   maps_pip back
-  maps_window off
   prev=$(cat "$STATE_DIR/home-before.txt" 2>/dev/null)
   real_home "$prev" || prev=$(original_home)
   if [ -n "$prev" ] && dev cmd package set-home-activity "$prev" | grep -qi success; then

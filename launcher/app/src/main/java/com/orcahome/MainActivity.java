@@ -2,7 +2,6 @@ package com.orcahome;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -13,7 +12,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
@@ -84,7 +82,6 @@ public class MainActivity extends Activity implements NavState.Listener {
     private View navBanner;
     private ImageView bannerArrow;
     private TextView bannerDistance, bannerInstruction, bannerEta;
-    private boolean navWasActive;
     private ImageView navArrow;
     private TextView navDistance, navInstruction, navEta;
     private GaugeView gauge;
@@ -425,42 +422,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         col.addView(bannerDistance);
         col.addView(bannerInstruction, wrapTop(2));
         c.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        c.setOnClickListener(v -> { if (mapsWindowOn()) openMapsWindow(); else openNavApp(); });
+        c.setOnClickListener(v -> openNavApp());
         return c;
-    }
-
-    // ---- experimental: Google Maps in a window over the map panel ----------------------
-
-    /** Where Android's freeform windows are switched on (scripts/launcher.sh maps-window). */
-    private boolean mapsWindowOn() {
-        return map != null && prefs.mapsWindow()
-                && Settings.Global.getInt(getContentResolver(), "enable_freeform_support", 0) != 0;
-    }
-
-    /** Opens the navigation app as a window exactly over the map panel. */
-    private void openMapsWindow() {
-        View frame = (View) map.getParent();
-        int[] at = new int[2];
-        frame.getLocationOnScreen(at);
-        Rect r = new Rect(at[0], at[1], at[0] + frame.getWidth(), at[1] + frame.getHeight());
-        String pkg = NavState.pkg;
-        if (NavState.testApp && !NavState.isRealNavApp(pkg)) pkg = NavState.MAPS; // emulator test guidance
-        Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (i == null) { openNavApp(); return; }
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(i, ActivityOptions.makeBasic().setLaunchBounds(r).toBundle());
-        } catch (ActivityNotFoundException | SecurityException e) {
-            openNavApp();
-        }
-    }
-
-    /** Navigation ended: Orca Home to the front, so the Maps window goes behind it. */
-    private void homeToFront() {
-        Intent i = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-                .setComponent(new ComponentName(this, MainActivity.class))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try { startActivity(i); } catch (RuntimeException ignored) { }
     }
 
     private void openNavApp() {
@@ -969,13 +932,6 @@ public class MainActivity extends Activity implements NavState.Listener {
     @Override
     public void onNavChanged() {
         boolean show = prefs.showNavCard() && NavState.active;
-        // Experimental Maps window: opened once when navigation starts (not on every return
-        // home, so Orca Home stays usable), and put behind Orca Home when it ends.
-        if (show != navWasActive && mapsWindowOn()) {
-            if (show) main.postDelayed(() -> { if (NavState.active && map != null) openMapsWindow(); }, 600);
-            else homeToFront();
-        }
-        navWasActive = show;
         if (navBanner != null) {
             // Map layouts: the search bar steps aside and the guidance goes big over the map.
             topArea.setVisibility(show ? View.GONE : View.VISIBLE);

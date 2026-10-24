@@ -341,35 +341,6 @@ maps_pip() { # off|back; for off, true once the unit has it
   fi
 }
 
-# Experimental: Google Maps in its own window over Orca Home's map panel while it
-# navigates. Needs Android's hidden "freeform windows" setting, active after a reboot.
-# The original value is in maps-window.txt; 'launcher.sh maps-window off', 'off' and
-# restore.sh put it back.
-maps_window() { # on|off; for on, true once the unit has it
-  local v
-  if [ "$1" = on ]; then
-    if [ ! -f "$STATE_DIR/maps-window.txt" ]; then
-      v=$(ask settings get global enable_freeform_support) || return 1
-      echo "$v" > "$STATE_DIR/maps-window.txt"
-    fi
-    dev settings put global enable_freeform_support 1 >/dev/null
-    # Android writes settings to storage a moment later; a reboot straight away loses them.
-    sleep 5
-    [ "$(dev settings get global enable_freeform_support)" = 1 ]
-  else
-    v=$(cat "$STATE_DIR/maps-window.txt" 2>/dev/null)
-    if [ -z "$v" ]; then
-      # No record: only undo what 'maps-window on' does.
-      [ "$(dev settings get global enable_freeform_support)" = 1 ] || return 0
-      v=0
-    fi
-    if [ "$v" = null ]; then dev settings delete global enable_freeform_support >/dev/null
-    else dev settings put global enable_freeform_support "$v" >/dev/null; fi
-    rm -f "$STATE_DIR/maps-window.txt"
-    ok "Google Maps window over the map: off (freeform windows back as before after a reboot)"
-  fi
-}
-
 put_prop() { # name value
   local old
   mkdir -p "$STATE_DIR"

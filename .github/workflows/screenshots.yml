@@ -88,7 +88,6 @@ jobs:
             docs/screenshots
           tools/screenshots/boottest.sh launcher/orca-home.apk docs/screenshots
           tools/screenshots/scripttest.sh docs/screenshots
-          tools/screenshots/mapswindow.sh launcher/app/build/outputs/apk/debug/app-debug.apk docs/screenshots
 
       - uses: actions/upload-artifact@v4
         if: always()
