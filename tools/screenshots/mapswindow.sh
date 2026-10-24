@@ -33,8 +33,9 @@ sleep 30
 sh_ cmd package set-home-activity "$PKG/.MainActivity" > /dev/null
 sh_ input keyevent KEYCODE_HOME; sleep 5
 say "  freeform setting after reboot: $(sh_ settings get global enable_freeform_support)"
-sh_ am start -W -n "$MAPS/com.google.android.maps.MapsActivity" > /dev/null
-sleep 10
+# Maps not running yet, so Orca Home's request starts it fresh (Android only puts a
+# newly started app in a window; an already-open Maps stays full-screen).
+sh_ am force-stop "$MAPS"
 sh_ input keyevent KEYCODE_HOME
 shot 30-maps-window-before 6
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es nav on > /dev/null
