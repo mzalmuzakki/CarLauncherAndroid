@@ -65,7 +65,7 @@ public class SettingsActivity extends Activity {
             swatches(col, null, prefs.theme(), t -> { prefs.setTheme(t); build(); });
         }
 
-        header(col, "Left panel");
+        header(col, "Main panel");
         RadioGroup mode = new RadioGroup(this);
         String[][] modes = {{"map", "Live map (follows your GPS position)"}, {"grid", "App grid with clock and speed gauge"}};
         for (int i = 0; i < modes.length; i++) {
