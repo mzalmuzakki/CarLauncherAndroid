@@ -1,0 +1,5 @@
+10-24 14:32:40.409  5188  5188 I dex2oat : /apex/com.android.runtime/bin/dex2oat --input-vdex-fd=-1 --output-vdex-fd=10 --resolve-startup-const-strings=true --max-image-block-size=524288 --compiler-filter=verify --debuggable --classpath-dir=/data/app/com.orcahome-rOR7iaSiHiyE-PwjM_gJxw== --class-loader-context=PCL[] --generate-mini-debug-info --compact-dex-level=none --compilation-reason=boot
+10-24 14:32:40.455  1796  1796 V installd: DexInv: --- END '/data/app/com.orcahome-rOR7iaSiHiyE-PwjM_gJxw==/base.apk' (success) ---
+10-24 14:32:40.460  1925  5185 I BackgroundDexOptService: Pinning optimized code {com.orcahome}
+10-24 14:32:42.603  1925  4894 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.orcahome.demoplayer/.DemoActivity (has extras)} from uid 2000
+10-24 14:32:42.625  1925  1951 I ActivityManager: Start proc 5204:com.orcahome.demoplayer/u0a147 for activity {com.orcahome.demoplayer/com.orcahome.demoplayer.DemoActivity}
