@@ -1,7 +1,7 @@
 ACTIVITY MANAGER ACTIVITIES (dumpsys activity activities)
 Display #0 (activities from top to bottom):
 
-  Stack #0: type=home mode=fullscreen
+  Stack #1: type=standard mode=fullscreen
   isSleeping=false
   mBounds=Rect(0, 0 - 0, 0)
     Task id #30
@@ -9,133 +9,24 @@ Display #0 (activities from top to bottom):
     mMinWidth=-1
     mMinHeight=-1
     mLastNonFullscreenBounds=null
-    * TaskRecord{bf38087 #30 A=com.orcahome U=0 StackId=0 sz=1}
-      userId=0 effectiveUid=u0a151 mCallingUid=0 mUserSetupComplete=true mCallingPackage=null
-      affinity=com.orcahome
-      intent={act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10800100 cmp=com.orcahome/.MainActivity}
-      mActivityComponent=com.orcahome/.MainActivity
-      autoRemoveRecents=false isPersistable=false numFullscreen=1 activityType=2
-      rootWasReset=false mNeverRelinquishIdentity=true mReuseTask=false mLockTaskAuth=LOCK_TASK_AUTH_PINNABLE
-      Activities=[ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}]
-      askedCompatMode=false inRecents=true isAvailable=true
-      stackId=0
-      hasBeenVisible=true mResizeMode=RESIZE_MODE_UNRESIZEABLE mSupportsPictureInPicture=false isResizeable=false lastActiveTime=71812 (inactive for 10s)
-      * Hist #0: ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
-          packageName=com.orcahome processName=com.orcahome
-          launchedFromUid=0 launchedFromPackage=null userId=0
-          app=ProcessRecord{7410bb4 2816:com.orcahome/u0a151}
-          Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10800100 cmp=com.orcahome/.MainActivity (has extras) }
-          frontOfTask=true task=TaskRecord{bf38087 #30 A=com.orcahome U=0 StackId=0 sz=1}
-          taskAffinity=com.orcahome
-          mActivityComponent=com.orcahome/.MainActivity
-          baseDir=/data/app/com.orcahome-rOR7iaSiHiyE-PwjM_gJxw==/base.apk
-          dataDir=/data/user/0/com.orcahome
-          stateNotNeeded=true componentSpecified=false mActivityType=home
-          compat={160dpi always-compat} labelRes=0x0 icon=0x7f010007 theme=0x103022e
-          mLastReportedConfigurations:
-           mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.12}
-           mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
-          CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
-          RequestedOverrideConfiguration={0.0 ?mcc?mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ?long ?ldr ?wideColorGamut ?orien ?uimode ?night ?touch ?keyb/?/? ?nav/? winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=null mWindowingMode=undefined mDisplayWindowingMode=undefined mActivityType=home mAlwaysOnTop=undefined mRotation=undefined}}
-          taskDescription: label="null" icon=null iconResource=0 iconFilename=null primaryColor=ff212121
-           backgroundColor=ff303030
-           statusBarColor=ff000000
-           navigationBarColor=ff000000
-          launchFailed=false launchCount=0 lastLaunchTime=-34s45ms
-          haveState=false icicle=null
-          state=RESUMED stopped=false delayedResume=false finishing=false
-          keysPaused=false inHistory=true visible=true sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_SHOWN
-          fullscreen=true noDisplay=false immersive=false launchMode=2
-          frozenBeforeDestroy=false forceNewConfig=false
-          mActivityType=home
-           nowVisible=true lastVisibleTime=-16s357ms
-          resizeMode=RESIZE_MODE_UNRESIZEABLE
-          mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
-    Task id #29
-    mBounds=Rect(0, 0 - 0, 0)
-    mMinWidth=-1
-    mMinHeight=-1
-    mLastNonFullscreenBounds=null
-    * TaskRecord{a833d27 #29 I=com.google.android.apps.nexuslauncher/.NexusLauncherActivity U=0 StackId=0 sz=1}
-      userId=0 effectiveUid=u0a102 mCallingUid=0 mUserSetupComplete=true mCallingPackage=null
-      intent={act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.google.android.apps.nexuslauncher/.NexusLauncherActivity}
-      mActivityComponent=com.google.android.apps.nexuslauncher/.NexusLauncherActivity
-      autoRemoveRecents=false isPersistable=true numFullscreen=1 activityType=2
-      rootWasReset=false mNeverRelinquishIdentity=true mReuseTask=false mLockTaskAuth=LOCK_TASK_AUTH_PINNABLE
-      Activities=[ActivityRecord{cc74fbb u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t29}]
-      askedCompatMode=false inRecents=true isAvailable=true
-      mRootProcess=ProcessRecord{fbdcc89 2296:com.google.android.apps.nexuslauncher/u0a102}
-      stackId=0
-      hasBeenVisible=true mResizeMode=RESIZE_MODE_RESIZEABLE mSupportsPictureInPicture=false isResizeable=true lastActiveTime=48423 (inactive for 34s)
-      * Hist #0: ActivityRecord{cc74fbb u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t29}
-          packageName=com.google.android.apps.nexuslauncher processName=com.google.android.apps.nexuslauncher
-          launchedFromUid=0 launchedFromPackage=null userId=0
-          app=ProcessRecord{fbdcc89 2296:com.google.android.apps.nexuslauncher/u0a102}
-          Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.google.android.apps.nexuslauncher/.NexusLauncherActivity }
-          frontOfTask=true task=TaskRecord{a833d27 #29 I=com.google.android.apps.nexuslauncher/.NexusLauncherActivity U=0 StackId=0 sz=1}
-          taskAffinity=null
-          mActivityComponent=com.google.android.apps.nexuslauncher/.NexusLauncherActivity
-          baseDir=/system/product/priv-app/NexusLauncherRelease/NexusLauncherRelease.apk
-          dataDir=/data/user/0/com.google.android.apps.nexuslauncher
-          stateNotNeeded=true componentSpecified=false mActivityType=home
-          compat={160dpi always-compat} labelRes=0x7f11004b icon=0x7f0700a6 theme=0x7f12000a
-          mLastReportedConfigurations:
-           mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.17}
-           mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
-          CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
-          RequestedOverrideConfiguration={0.0 ?mcc?mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ?long ?ldr ?wideColorGamut ?orien ?uimode ?night ?touch ?keyb/?/? ?nav/? winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=null mWindowingMode=undefined mDisplayWindowingMode=undefined mActivityType=home mAlwaysOnTop=undefined mRotation=undefined}}
-          taskDescription: label="null" icon=null iconResource=0 iconFilename=null primaryColor=fff5f5f5
-           backgroundColor=fffafafa
-           statusBarColor=0
-           navigationBarColor=0
-          launchFailed=false launchCount=0 lastLaunchTime=-1m7s944ms
-          haveState=true icicle=Bundle[mParcelledData.dataSize=3028]
-          state=STOPPED stopped=true delayedResume=false finishing=false
-          keysPaused=false inHistory=true visible=false sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_NOT_SHOWN
-          fullscreen=true noDisplay=false immersive=false launchMode=2
-          frozenBeforeDestroy=false forceNewConfig=false
-          mActivityType=home
-           nowVisible=false lastVisibleTime=-1m6s885ms
-          connections=com.android.server.wm.ActivityServiceConnectionsHolder@97b03dd
-          resizeMode=RESIZE_MODE_RESIZEABLE
-          mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
-
-    Running activities (most recent first):
-      TaskRecord{bf38087 #30 A=com.orcahome U=0 StackId=0 sz=1}
-        Run #1: ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
-      TaskRecord{a833d27 #29 I=com.google.android.apps.nexuslauncher/.NexusLauncherActivity U=0 StackId=0 sz=1}
-        Run #0: ActivityRecord{cc74fbb u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t29}
-
-    mResumedActivity: ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
-    mLastPausedActivity: ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
-
-  Stack #1: type=standard mode=fullscreen
-  isSleeping=false
-  mBounds=Rect(0, 0 - 0, 0)
-
-    Task id #31
-    mBounds=Rect(0, 0 - 0, 0)
-    mMinWidth=-1
-    mMinHeight=-1
-    mLastNonFullscreenBounds=null
-    * TaskRecord{e7c2b52 #31 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
-      userId=0 effectiveUid=u0a127 mCallingUid=2000 mUserSetupComplete=true mCallingPackage=null
+    * TaskRecord{513ea44 #30 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
+      userId=0 effectiveUid=u0a126 mCallingUid=u0a151 mUserSetupComplete=true mCallingPackage=com.orcahome
       affinity=com.google.android.apps.maps
       intent={flg=0x10000000 cmp=com.google.android.apps.maps/com.google.android.maps.MapsActivity}
       mActivityComponent=com.google.android.apps.maps/com.google.android.maps.MapsActivity
       autoRemoveRecents=false isPersistable=true numFullscreen=1 activityType=1
       rootWasReset=false mNeverRelinquishIdentity=true mReuseTask=false mLockTaskAuth=LOCK_TASK_AUTH_PINNABLE
-      Activities=[ActivityRecord{2c71a49 u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t31}]
+      Activities=[ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}]
       askedCompatMode=false inRecents=true isAvailable=true
-      mRootProcess=ProcessRecord{44a1dea 4760:com.google.android.apps.maps/u0a127}
+      mRootProcess=ProcessRecord{18b10ae 4754:com.google.android.apps.maps/u0a126}
       stackId=1
-      hasBeenVisible=true mResizeMode=RESIZE_MODE_RESIZEABLE mSupportsPictureInPicture=true isResizeable=true lastActiveTime=65397 (inactive for 17s)
-      * Hist #0: ActivityRecord{2c71a49 u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t31}
+      hasBeenVisible=true mResizeMode=RESIZE_MODE_RESIZEABLE mSupportsPictureInPicture=true isResizeable=true lastActiveTime=59763 (inactive for 17s)
+      * Hist #0: ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}
           packageName=com.google.android.apps.maps processName=com.google.android.apps.maps
           launchedFromUid=2000 launchedFromPackage=null userId=0
-          app=ProcessRecord{44a1dea 4760:com.google.android.apps.maps/u0a127}
+          app=ProcessRecord{18b10ae 4754:com.google.android.apps.maps/u0a126}
           Intent { flg=0x10000000 cmp=com.google.android.apps.maps/com.google.android.maps.MapsActivity }
-          frontOfTask=true task=TaskRecord{e7c2b52 #31 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
+          frontOfTask=true task=TaskRecord{513ea44 #30 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
           taskAffinity=com.google.android.apps.maps
           mActivityComponent=com.google.android.apps.maps/com.google.android.maps.MapsActivity
           baseDir=/system/product/app/Maps/Maps.apk
@@ -150,36 +41,94 @@ Display #0 (activities from top to bottom):
            backgroundColor=fffafafa
            statusBarColor=ff757575
            navigationBarColor=ffffffff
-          launchFailed=false launchCount=0 lastLaunchTime=-28s996ms
-          haveState=true icicle=Bundle[mParcelledData.dataSize=7788]
-          state=STOPPED stopped=true delayedResume=false finishing=false
-          keysPaused=false inHistory=true visible=false sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_REMOVED
+          launchFailed=false launchCount=0 lastLaunchTime=-28s582ms
+          haveState=false icicle=null
+          state=RESUMED stopped=false delayedResume=false finishing=false
+          keysPaused=false inHistory=true visible=true sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_SHOWN
           fullscreen=true noDisplay=false immersive=false launchMode=2
           frozenBeforeDestroy=false forceNewConfig=false
           mActivityType=standard
-           nowVisible=false lastVisibleTime=-27s903ms
+           nowVisible=true lastVisibleTime=-9s475ms
           resizeMode=RESIZE_MODE_RESIZEABLE
           mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
           supportsPictureInPicture=true
           supportsEnterPipOnTaskSwitch: true
 
     Running activities (most recent first):
-      TaskRecord{e7c2b52 #31 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
-        Run #0: ActivityRecord{2c71a49 u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t31}
+      TaskRecord{513ea44 #30 A=com.google.android.apps.maps U=0 StackId=1 sz=1}
+        Run #0: ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}
 
-    mLastPausedActivity: ActivityRecord{2c71a49 u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t31}
+    mResumedActivity: ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}
 
- ResumedActivity:ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
+  Stack #0: type=home mode=fullscreen
+  isSleeping=false
+  mBounds=Rect(0, 0 - 0, 0)
 
-  ResumedActivity: ActivityRecord{d9c6f0f u0 com.orcahome/.MainActivity t30}
+    Task id #29
+    mBounds=Rect(0, 0 - 0, 0)
+    mMinWidth=-1
+    mMinHeight=-1
+    mLastNonFullscreenBounds=null
+    * TaskRecord{374e067 #29 A=com.orcahome U=0 StackId=0 sz=1}
+      userId=0 effectiveUid=u0a151 mCallingUid=0 mUserSetupComplete=true mCallingPackage=null
+      affinity=com.orcahome
+      intent={act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10800100 cmp=com.orcahome/.MainActivity}
+      mActivityComponent=com.orcahome/.MainActivity
+      autoRemoveRecents=false isPersistable=false numFullscreen=1 activityType=2
+      rootWasReset=false mNeverRelinquishIdentity=true mReuseTask=false mLockTaskAuth=LOCK_TASK_AUTH_PINNABLE
+      Activities=[ActivityRecord{ef325fe u0 com.orcahome/.MainActivity t29}]
+      askedCompatMode=false inRecents=true isAvailable=true
+      stackId=0
+      hasBeenVisible=true mResizeMode=RESIZE_MODE_UNRESIZEABLE mSupportsPictureInPicture=false isResizeable=false lastActiveTime=67022 (inactive for 9s)
+      * Hist #0: ActivityRecord{ef325fe u0 com.orcahome/.MainActivity t29}
+          packageName=com.orcahome processName=com.orcahome
+          launchedFromUid=0 launchedFromPackage=null userId=0
+          app=ProcessRecord{f73a72d 2797:com.orcahome/u0a151}
+          Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10800100 cmp=com.orcahome/.MainActivity }
+          frontOfTask=true task=TaskRecord{374e067 #29 A=com.orcahome U=0 StackId=0 sz=1}
+          taskAffinity=com.orcahome
+          mActivityComponent=com.orcahome/.MainActivity
+          baseDir=/data/app/com.orcahome-k3WuAzcGATd64ZQNTqSzjA==/base.apk
+          dataDir=/data/user/0/com.orcahome
+          stateNotNeeded=true componentSpecified=false mActivityType=home
+          compat={160dpi always-compat} labelRes=0x0 icon=0x7f010007 theme=0x103022e
+          mLastReportedConfigurations:
+           mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.12}
+           mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
+          CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw600dp w1024dp h528dp 160dpi lrg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1024, 600) mAppBounds=Rect(0, 0 - 1024, 552) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} s.2}
+          RequestedOverrideConfiguration={0.0 ?mcc?mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ?long ?ldr ?wideColorGamut ?orien ?uimode ?night ?touch ?keyb/?/? ?nav/? winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=null mWindowingMode=undefined mDisplayWindowingMode=undefined mActivityType=home mAlwaysOnTop=undefined mRotation=undefined}}
+          taskDescription: label="null" icon=null iconResource=0 iconFilename=null primaryColor=ff212121
+           backgroundColor=ff303030
+           statusBarColor=ff000000
+           navigationBarColor=ff000000
+          launchFailed=false launchCount=0 lastLaunchTime=-1m3s18ms
+          haveState=true icicle=Bundle[mParcelledData.dataSize=256]
+          state=STOPPED stopped=true delayedResume=false finishing=false
+          keysPaused=false inHistory=true visible=false sleeping=false idle=true mStartingWindowState=STARTING_WINDOW_SHOWN
+          fullscreen=true noDisplay=false immersive=false launchMode=2
+          frozenBeforeDestroy=false forceNewConfig=false
+          mActivityType=home
+           nowVisible=false lastVisibleTime=-16s409ms
+          resizeMode=RESIZE_MODE_UNRESIZEABLE
+          mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
+
+    Running activities (most recent first):
+      TaskRecord{374e067 #29 A=com.orcahome U=0 StackId=0 sz=1}
+        Run #0: ActivityRecord{ef325fe u0 com.orcahome/.MainActivity t29}
+
+    mLastPausedActivity: ActivityRecord{ef325fe u0 com.orcahome/.MainActivity t29}
+
+ ResumedActivity:ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}
+
+  ResumedActivity: ActivityRecord{5441e3b u0 com.google.android.apps.maps/com.google.android.maps.MapsActivity t30}
 
 ActivityStackSupervisor state:
-  topDisplayFocusedStack=ActivityStack{37d9e23 stackId=0 type=home mode=fullscreen visible=true translucent=false, 2 tasks}
+  topDisplayFocusedStack=ActivityStack{afc1462 stackId=1 type=standard mode=fullscreen visible=true translucent=false, 1 tasks}
   displayId=0 stacks=2
-   mHomeStack=ActivityStack{37d9e23 stackId=0 type=home mode=fullscreen visible=true translucent=false, 2 tasks}
-   mPreferredTopFocusableStack=ActivityStack{37d9e23 stackId=0 type=home mode=fullscreen visible=true translucent=false, 2 tasks}
-   mLastFocusedStack=ActivityStack{37d9e23 stackId=0 type=home mode=fullscreen visible=true translucent=false, 2 tasks}
-  mCurTaskIdForUser={0=32}
+   mHomeStack=ActivityStack{156b9f3 stackId=0 type=home mode=fullscreen visible=false translucent=true, 1 tasks}
+   mPreferredTopFocusableStack=ActivityStack{afc1462 stackId=1 type=standard mode=fullscreen visible=true translucent=false, 1 tasks}
+   mLastFocusedStack=ActivityStack{afc1462 stackId=1 type=standard mode=fullscreen visible=true translucent=false, 1 tasks}
+  mCurTaskIdForUser={0=31}
   mUserStackInFront={}
   isHomeRecentsComponent=false  KeyguardController:
     mKeyguardShowing=false
