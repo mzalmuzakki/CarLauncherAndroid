@@ -1,13 +1,13 @@
 Current Location Manager state:
-  Current System Time: 10-25 00:01:36.802, Current Elapsed Time: +8m47s204ms
+  Current System Time: 10-25 07:18:01.244, Current Elapsed Time: +9m25s345ms
   Current user: 0 [0]
   Location mode: true
   Battery Saver Location Mode: NO_CHANGE
   Location Listeners:
-    Reciever[d6202e4 listener UpdateRecord[passive com.google.android.gms(10111 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
-    Reciever[3146e02 listener UpdateRecord[passive android(1000 foreground) Request[POWER_NONE passive fastest=+30m0s0ms] null] monitoring location: true]
-    Reciever[c3a313 listener UpdateRecord[passive com.google.android.gms(10111 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
-    Reciever[2ae6950 listener UpdateRecord[passive android(1000 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
+    Reciever[66c23c2 listener UpdateRecord[passive android(1000 foreground) Request[POWER_NONE passive fastest=+30m0s0ms] null] monitoring location: true]
+    Reciever[832355d listener UpdateRecord[passive com.google.android.gms(10111 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
+    Reciever[8fc85d3 listener UpdateRecord[passive android(1000 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
+    Reciever[c913ed2 listener UpdateRecord[passive com.google.android.gms(10111 foreground) Request[POWER_NONE passive fastest=0] null] monitoring location: false]
   Active Records by Provider:
     gps:
     passive:
@@ -18,19 +18,21 @@ Current Location Manager state:
   Active GnssMeasurement Listeners:
   Active GnssNavigationMessage Listeners:
   Active GnssStatus Listeners:
-    2072 10111 com.google.android.gms: true
+    12363 10111 com.google.android.gms: true
   Historical Records by Provider:
-    com.google.android.gms: gps: Interval 1 seconds: Duration requested 0 total, 0 foreground, out of the last 3 minutes: Last active 2 minutes ago
-    android: passive: Min interval 0 seconds: Max interval 1800 seconds: Duration requested 8 total, 8 foreground, out of the last 8 minutes: Currently active
-    com.orcahome: gps: Interval 1 seconds: Duration requested 5 total, 5 foreground, out of the last 7 minutes: Last active 0 minutes ago
-    com.google.android.gms: passive: Interval 0 seconds: Duration requested 8 total, 8 foreground, out of the last 8 minutes: Currently active
-    com.google.android.apps.maps: gps: Interval 1 seconds: Duration requested 0 total, 0 foreground, out of the last 3 minutes: Last active 2 minutes ago
+    com.google.android.gms: gps: Interval 1 seconds: Duration requested 0 total, 0 foreground, out of the last 4 minutes: Last active 4 minutes ago
+    android: passive: Min interval 0 seconds: Max interval 1800 seconds: Duration requested 9 total, 9 foreground, out of the last 9 minutes: Currently active
+    com.orcahome: gps: Interval 1 seconds: Duration requested 6 total, 6 foreground, out of the last 8 minutes: Last active 0 minutes ago
+    com.google.android.gms: passive: Min interval 0 seconds: Max interval 9223372036854775 seconds: Duration requested 8 total, 8 foreground, out of the last 9 minutes: Currently active
+    com.google.android.apps.maps: gps: Interval 1 seconds: Duration requested 0 total, 0 foreground, out of the last 4 minutes: Last active 4 minutes ago
   Last Known Locations:
-    gps: Location[gps -6.186398,106.826678 hAcc=20 et=+8m16s387ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
-    passive: Location[gps -6.186398,106.826678 hAcc=20 et=+8m16s387ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+    fused: Location[fused -6.186398,106.826318 hAcc=20 et=+8m54s148ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=??? {Bundle[{noGPSLocation=Location[fused -6.186398,106.826318 hAcc=20 et=+8m54s148ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=???]}]}]
+    gps: Location[gps -6.186398,106.826318 hAcc=20 et=+8m54s148ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+    passive: Location[fused -6.186398,106.826318 hAcc=20 et=+8m54s148ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=??? {Bundle[{noGPSLocation=Location[fused -6.186398,106.826318 hAcc=20 et=+8m54s148ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=???]}]}]
   Last Known Locations Coarse Intervals:
-    gps: Location[gps -6.186398,106.826678 hAcc=20 et=+7m23s0ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
-    passive: Location[gps -6.186398,106.826678 hAcc=20 et=+7m23s0ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+    fused: Location[fused -6.186398,106.826318 hAcc=20 et=+7m7s231ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=??? {Bundle[{noGPSLocation=Location[fused -6.186398,106.826318 hAcc=20 et=+7m7s231ms alt=10.0 vel=13.3 bear=0.0 vAcc=40 sAcc=??? bAcc=???]}]}]
+    gps: Location[gps -6.186398,106.826318 hAcc=20 et=+7m7s231ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+    passive: Location[gps -6.186398,106.826318 hAcc=20 et=+7m7s231ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
   Geofences:
   mWhitelist=[] mBlacklist=[]
   Throttling Whitelisted Packages:
@@ -38,23 +40,23 @@ Current Location Manager state:
   Bypass Whitelisted Packages:
     com.google.android.dialer
     com.google.android.gms
-  fudger: offset: 190, -850 (meters)
+  fudger: offset: -271, -619 (meters)
   passive provider:
     useable=true
-    properties=com.android.internal.location.ProviderProperties@c396749
+    properties=com.android.internal.location.ProviderProperties@175e809
  report location=true
   network provider:
     useable=true
-    properties=com.android.internal.location.ProviderProperties@df9d4b8
+    properties=com.android.internal.location.ProviderProperties@1d2ea0
     service={com.google.android.gms/com.google.android.location.network.NetworkLocationService}@2
   fused provider:
     useable=true
-    properties=com.android.internal.location.ProviderProperties@7fd291
+    properties=com.android.internal.location.ProviderProperties@61ca59
     service={com.google.android.gms/com.google.android.location.fused.FusedLocationService}@1
   gps provider:
     useable=true
-    properties=com.android.internal.location.ProviderProperties@d5f684e
-  mStarted=false   (changed +30s446ms ago)
+    properties=com.android.internal.location.ProviderProperties@bdcba0e
+  mStarted=false   (changed +30s394ms ago)
   mFixInterval=1000
   mLowPowerMode=false
   mGnssMeasurementsProvider.isRegistered()=false
@@ -62,14 +64,14 @@ Current Location Manager state:
   mDisableGpsForPowerManager=false
   mTopHalCapabilities=0x0 ( )
 GNSS_KPI_START
-  KPI logging start time: +13s507ms
-  KPI logging end time: +8m47s204ms
-  Number of location reports: 314
-  Percentage location failure: 0.0
-  Number of TTFF reports: 31
+  KPI logging start time: +11s845ms
+  KPI logging end time: +9m25s346ms
+  Number of location reports: 359
+  Percentage location failure: 0.2785515320334262
+  Number of TTFF reports: 34
   TTFF mean (sec): 0.0
   TTFF standard deviation (sec): 0.0
-  Number of position accuracy reports: 314
+  Number of position accuracy reports: 358
   Position accuracy mean (m): 20.0
   Position accuracy standard deviation (m): 0.0
   Number of CN0 reports: 0
