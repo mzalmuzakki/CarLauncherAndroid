@@ -1520,8 +1520,13 @@ public class MainActivity extends Activity implements NavState.Listener {
             lastPlayed = LastPlayed.load(this);
             lastPlayedStale = false;
         }
-        if (lastPlayed != null && getPackageManager().getLaunchIntentForPackage(lastPlayed.pkg) == null) return null;
-        return lastPlayed;
+        if (lastPlayed == null) return null;
+        try {
+            getPackageManager().getApplicationInfo(lastPlayed.pkg, 0);
+            return lastPlayed;
+        } catch (PackageManager.NameNotFoundException uninstalled) {
+            return null;
+        }
     }
 
     private void showLastPlayed(LastPlayed last) {

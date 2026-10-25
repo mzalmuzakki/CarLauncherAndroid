@@ -252,7 +252,7 @@ pid=$(sh_ pidof "$PKG")
 say ""
 say "Release APK: $(sh_ dumpsys package "$PKG" | grep -m1 versionName | xargs)"
 say "Home screen visible for 25 s, process $pid"
-sh_ dumpsys meminfo "$PKG" > "$OUT/meminfo-visible.txt"
+sh_ dumpsys meminfo "$pid" > "$OUT/meminfo-visible.txt"
 say "  memory (TOTAL PSS): $(grep -m1 -E '^ +TOTAL' "$OUT/meminfo-visible.txt" | awk '{print $2}') KB"
 say "  CPU over 10 s: $(sh_ top -b -d 10 -n 2 -p "$pid" -o %CPU | tail -1 | xargs)%"
 say "  location requests from Orca Home: $(requests)"
@@ -265,7 +265,7 @@ say "  process still there: $(sh_ pidof "$PKG" || echo no)"
 say "  CPU over 10 s: $(sh_ top -b -d 10 -n 2 -p "$pid" -o %CPU | tail -1 | xargs)%"
 say "  location requests from Orca Home: $(requests)"
 sh_ dumpsys location > "$OUT/location-hidden.txt"
-sh_ dumpsys meminfo "$PKG" > "$OUT/meminfo-hidden.txt"
+sh_ dumpsys meminfo "$pid" > "$OUT/meminfo-hidden.txt"
 say "  memory (TOTAL PSS): $(grep -m1 -E '^ +TOTAL' "$OUT/meminfo-hidden.txt" | awk '{print $2}') KB"
 
 home; sleep 8
