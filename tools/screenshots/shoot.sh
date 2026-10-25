@@ -234,6 +234,8 @@ sh_ input tap 823 441; sleep 2
 sh_ input swipe 823 240 823 240 1200; sleep 2
 tap_text "Later +" "834 268"; sleep 1; tap_text "Later +" "834 268"; shot 66-lyrics-timing 2
 say "Lyrics timing saved: $(sh_ "run-as $PKG cat shared_prefs/lyricsoffset.xml" | grep -o 'value="[^"]*"' | tr '\n' ' ') (expected -1000 for Viva la Vida)"
+tap_text "Done" "960 268"; sleep 1
+tap_text "Lyrics" "960 182"; shot 67-lyrics-off 3   # back to the big cover
 sh_ am force-stop com.orcahome.demoplayer; sleep 2
 home; shot 64-last-played 5
 say "Remembered song: $(sh_ "run-as $PKG cat shared_prefs/lastplayed.xml" | grep -o 'name="title">[^<]*' | sed 's/.*>//'), cover saved: $(sh_ "run-as $PKG ls files/last-cover.jpg" 2>/dev/null | grep -c jpg)"

@@ -10,8 +10,10 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   unit doesn't let it start by itself). Spotify is first among the music buttons.
 - "Up next" on the music card: the next song in the playlist or album; tap for the list and
   pick a song (when the player shares its queue with Android).
-- Lyrics in the music card, line by line in time with the song (LRCLIB, free; one small
-  request per new song, kept on the unit). Lyrics button on the card, or off in settings.
+- Lyrics in the music card, in time with the song (LRCLIB, free; one small request per new
+  song, kept on the unit): while they show, the card trades its big cover for a small one
+  beside the title, so the line just sung, the current line (large) and about four lines
+  ahead fit; clock and weather stay as they are. Lyrics button on the card, or off in settings.
   Lyrics out of time with your version of a song: long-press them, then Earlier / Later
   (half a second a tap); remembered for that song.
 

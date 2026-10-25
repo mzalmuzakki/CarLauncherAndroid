@@ -96,7 +96,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private View musicCard;
     private ImageView musicArt, musicSourceIcon;
     private TextView musicSource, musicTitle, musicArtist, musicElapsed, musicDuration;
-    private TextView musicNext, lyricsChip, lyricPrev, lyricNow, lyricNext, lyricsShift;
+    private TextView musicNext, lyricsChip, lyricPrev, lyricNow, lyricsShift;
+    private TextView[] lyricAhead;
     private View lyricsBox, lyricsAdjust;
     private View progressFill;
     private ImageButton playPause;
@@ -250,7 +251,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         right.addView(infoRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(104)));
         LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
         mlp.topMargin = ui.dp(10);
-        right.addView(musicPanel(), mlp);
+        right.addView(musicPanel(wantsLyricsLayout()), mlp);
 
         root.addView(dock(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(60)));
         setContentView(root);
@@ -825,21 +826,30 @@ public class MainActivity extends Activity implements NavState.Listener {
         return lp;
     }
 
-    private View musicPanel() {
+    /** The music card as built: true = the lyrics layout (see musicPanel). */
+    private boolean lyricsLayout;
+
+    /** Lyrics showing for a song: the card trades its big cover for more lines of lyrics. */
+    private boolean wantsLyricsLayout() {
+        return prefs.showLyrics() && controller != null && meta != null;
+    }
+
+    /**
+     * The music card. Normal: header, cover (or app buttons), title, artist, progress, buttons.
+     * Lyrics layout: a small cover beside title and artist, the lyrics where the cover was
+     * (the line just sung, the current one large, five ahead), progress and times on one line,
+     * slightly smaller buttons. Clock and weather above stay as they are.
+     */
+    private View musicPanel(boolean lyricsLayout) {
+        this.lyricsLayout = lyricsLayout;
         LinearLayout p = panel(LinearLayout.VERTICAL);
         p.setGravity(Gravity.CENTER_HORIZONTAL);
         p.setPadding(ui.dp(14), ui.dp(10), ui.dp(14), ui.dp(10));
 
-        LinearLayout head = new LinearLayout(this);
-        head.setGravity(Gravity.CENTER_VERTICAL);
         musicSourceIcon = new ImageView(this);
-        head.addView(musicSourceIcon, new LinearLayout.LayoutParams(ui.dp(22), ui.dp(22)));
         musicSource = ui.label(this, 11, ui.sub, false);
         musicSource.setSingleLine(true);
         musicSource.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        hlp.leftMargin = ui.dp(8);
-        head.addView(musicSource, hlp);
         lyricsChip = ui.label(this, 12, ui.text, true);
         lyricsChip.setText("Lyrics");
         lyricsChip.setGravity(Gravity.CENTER);
@@ -848,38 +858,17 @@ public class MainActivity extends Activity implements NavState.Listener {
             prefs.setShowLyrics(!prefs.showLyrics());
             showTrack();
         });
-        head.addView(lyricsChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(24)));
-        p.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
         musicArt = new ImageView(this);
         musicArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        musicArt.setBackground(ui.box(ui.tile, ui.dp(10)));
+        musicArt.setBackground(ui.box(ui.tile, ui.dp(lyricsLayout ? 6 : 10)));
         musicArt.setClipToOutline(true);
-        // Square cover with flexible space around it, so any card height looks balanced.
-        // The cover, the app buttons (nothing playing) or the lyrics share one box.
-        p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
-        FrameLayout artBox = new FrameLayout(this);
-        artBox.addView(musicArt, new FrameLayout.LayoutParams(ui.dp(100), ui.dp(100), Gravity.CENTER));
-        musicApps = musicShortcuts();
-        if (musicApps != null) artBox.addView(musicApps, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        artBox.addView(lyricsView(), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        p.addView(artBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(100)));
-
-        musicTitle = ui.label(this, 17, ui.text, true);
-        musicTitle.setSingleLine(true);
-        musicTitle.setEllipsize(TextUtils.TruncateAt.END);
-        musicTitle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.topMargin = ui.dp(8);
-        p.addView(musicTitle, tlp);
-        musicArtist = ui.label(this, 14, ui.sub, false);
-        musicArtist.setSingleLine(true);
-        musicArtist.setEllipsize(TextUtils.TruncateAt.END);
-        musicArtist.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams alp2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        alp2.topMargin = ui.dp(3);
-        p.addView(musicArtist, alp2);
+        musicTitle = ui.label(this, lyricsLayout ? 15 : 17, ui.text, true);
+        musicArtist = ui.label(this, lyricsLayout ? 12 : 14, ui.sub, false);
+        for (TextView t : new TextView[]{musicTitle, musicArtist}) {
+            t.setSingleLine(true);
+            t.setEllipsize(TextUtils.TruncateAt.END);
+            t.setGravity(lyricsLayout ? Gravity.START : Gravity.CENTER);
+        }
         musicNext = ui.label(this, 12, ui.sub, false);
         musicNext.setSingleLine(true);
         musicNext.setEllipsize(TextUtils.TruncateAt.END);
@@ -887,8 +876,56 @@ public class MainActivity extends Activity implements NavState.Listener {
         musicNext.setPadding(ui.dp(8), ui.dp(4), ui.dp(8), ui.dp(3));
         musicNext.setOnClickListener(v -> queueDialog());
         musicNext.setVisibility(View.GONE);
-        p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
+
+        if (lyricsLayout) {
+            LinearLayout top = new LinearLayout(this);
+            top.setGravity(Gravity.CENTER_VERTICAL);
+            top.addView(musicArt, new LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)));
+            LinearLayout names = new LinearLayout(this);
+            names.setOrientation(LinearLayout.VERTICAL);
+            names.setPadding(ui.dp(10), 0, ui.dp(8), 0);
+            names.addView(musicTitle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            alp.topMargin = ui.dp(3);
+            names.addView(musicArtist, alp);
+            top.addView(names, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            top.addView(lyricsChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(24)));
+            p.addView(top, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+            llp.topMargin = ui.dp(8);
+            p.addView(lyricsView(5), llp);
+            musicApps = null;
+            p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        } else {
+            LinearLayout head = new LinearLayout(this);
+            head.setGravity(Gravity.CENTER_VERTICAL);
+            head.addView(musicSourceIcon, new LinearLayout.LayoutParams(ui.dp(22), ui.dp(22)));
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            hlp.leftMargin = ui.dp(8);
+            head.addView(musicSource, hlp);
+            head.addView(lyricsChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(24)));
+            p.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            // Square cover (or the app buttons when nothing plays) with flexible space around
+            // it, so any card height looks balanced.
+            p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
+            FrameLayout artBox = new FrameLayout(this);
+            artBox.addView(musicArt, new FrameLayout.LayoutParams(ui.dp(100), ui.dp(100), Gravity.CENTER));
+            musicApps = musicShortcuts();
+            if (musicApps != null) artBox.addView(musicApps, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+            p.addView(artBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(100)));
+            lyricsBox = lyricsAdjust = null;
+            lyricPrev = lyricNow = lyricsShift = null;
+            lyricAhead = null;
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tlp.topMargin = ui.dp(8);
+            p.addView(musicTitle, tlp);
+            LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            alp.topMargin = ui.dp(3);
+            p.addView(musicArtist, alp);
+            p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
+        }
 
         FrameLayout bar = new FrameLayout(this);
         View track = new View(this);
@@ -899,15 +936,28 @@ public class MainActivity extends Activity implements NavState.Listener {
         progressFill.setPivotX(0);
         progressFill.setScaleX(0);
         bar.addView(progressFill, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(4), Gravity.CENTER_VERTICAL));
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(12));
-        blp.topMargin = ui.dp(8);
-        p.addView(bar, blp);
-        LinearLayout times = new LinearLayout(this);
         musicElapsed = ui.label(this, 11, ui.sub, false);
         musicDuration = ui.label(this, 11, ui.sub, false);
-        times.addView(musicElapsed, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        times.addView(musicDuration);
-        p.addView(times, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (lyricsLayout) { // 0:59 ━━━━━━──── 4:26
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(musicElapsed);
+            LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(0, ui.dp(12), 1f);
+            blp.leftMargin = blp.rightMargin = ui.dp(8);
+            row.addView(bar, blp);
+            row.addView(musicDuration);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = ui.dp(4);
+            p.addView(row, rlp);
+        } else {
+            LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(12));
+            blp.topMargin = ui.dp(8);
+            p.addView(bar, blp);
+            LinearLayout times = new LinearLayout(this);
+            times.addView(musicElapsed, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            times.addView(musicDuration);
+            p.addView(times, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setGravity(Gravity.CENTER);
@@ -927,25 +977,47 @@ public class MainActivity extends Activity implements NavState.Listener {
         return p;
     }
 
-    /** Three lines: the one sung now in the middle, large. */
-    private View lyricsView() {
+    /** Swaps the music card between the normal and the lyrics layout, in place. */
+    private void relayoutMusic() {
+        ViewGroup parent = (ViewGroup) musicCard.getParent();
+        int i = parent.indexOfChild(musicCard);
+        ViewGroup.LayoutParams lp = musicCard.getLayoutParams();
+        main.removeCallbacks(progressTick);
+        main.removeCallbacks(lyricsTick);
+        main.removeCallbacks(hideLyricsAdjust);
+        parent.removeViewAt(i);
+        parent.addView(musicPanel(wantsLyricsLayout()), i, lp);
+    }
+
+    /** The line just sung, the one sung now (large), then `ahead` lines to come. */
+    private View lyricsView(int ahead) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
+        box.setGravity(Gravity.CENTER_HORIZONTAL);
         box.setBackground(ui.box(ui.tile, ui.dp(10)));
-        box.setPadding(ui.dp(10), ui.dp(6), ui.dp(10), ui.dp(6));
+        box.setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(6));
         lyricPrev = ui.label(this, 13, ui.sub, false);
-        lyricNow = ui.label(this, 17, ui.text, true);
-        lyricNext = ui.label(this, 13, ui.sub, false);
-        for (TextView t : new TextView[]{lyricPrev, lyricNow, lyricNext}) {
+        lyricNow = ui.label(this, 18, ui.text, true);
+        lyricAhead = new TextView[ahead];
+        List<TextView> all = new ArrayList<>();
+        all.add(lyricPrev);
+        all.add(lyricNow);
+        for (int i = 0; i < ahead; i++) {
+            // Further ahead, a little fainter.
+            lyricAhead[i] = ui.label(this, 14, i == 0 ? ui.text : ui.sub, false);
+            all.add(lyricAhead[i]);
+        }
+        for (TextView t : all) {
             t.setGravity(Gravity.CENTER);
             t.setEllipsize(TextUtils.TruncateAt.END);
             t.setMaxLines(t == lyricNow ? 2 : 1);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.topMargin = t == lyricPrev ? 0 : ui.dp(5);
+            lp.topMargin = t == lyricPrev ? 0 : ui.dp(t == lyricNow || t == lyricAhead[0] ? 6 : 4);
             box.addView(t, lp);
         }
-        box.addView(lyricsAdjustRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30)));
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30));
+        alp.topMargin = ui.dp(8);
+        box.addView(lyricsAdjustRow(), alp);
         box.setOnLongClickListener(v -> {
             Lyrics l = lyrics;
             if (l == null || !l.synced()) return false;
@@ -959,7 +1031,6 @@ public class MainActivity extends Activity implements NavState.Listener {
                         .setMessage(l.plain).setPositiveButton("Close", null).show();
             } else openPlayer();
         });
-        box.setVisibility(View.GONE);
         lyricsBox = box;
         return box;
     }
@@ -1009,11 +1080,13 @@ public class MainActivity extends Activity implements NavState.Listener {
         b.setImageResource(icon);
         b.setColorFilter(primary ? ui.onAccent : ui.text);
         b.setBackground(ui.box(primary ? ui.accent : ui.tile, ui.dp(33)));
-        b.setPadding(ui.dp(14), ui.dp(14), ui.dp(14), ui.dp(14));
+        int pad = lyricsLayout ? 12 : 14;
+        b.setPadding(ui.dp(pad), ui.dp(pad), ui.dp(pad), ui.dp(pad));
         b.setScaleType(ImageView.ScaleType.FIT_CENTER);
         b.setOnClickListener(l);
-        // Big enough to hit while driving.
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(primary ? 66 : 54), ui.dp(primary ? 66 : 54));
+        // Big enough to hit while driving (a little smaller beside the lyrics).
+        int size = lyricsLayout ? (primary ? 58 : 48) : (primary ? 66 : 54);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(size), ui.dp(size));
         lp.leftMargin = lp.rightMargin = ui.dp(14);
         b.setLayoutParams(lp);
         return b;
@@ -1460,14 +1533,14 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private void showTrack() {
         if (musicTitle == null) return;
+        if (wantsLyricsLayout() != lyricsLayout && musicCard.getParent() != null) { relayoutMusic(); return; }
         MediaController c = controller;
         MediaMetadata m = meta;
         LastPlayed last = c == null ? lastPlayed() : null;
         boolean idle = c == null && m == null && last == null;
         if (musicApps != null) musicApps.setVisibility(idle ? View.VISIBLE : View.GONE);
-        boolean lyricsOn = c != null && m != null && prefs.showLyrics();
-        lyricsBox.setVisibility(lyricsOn ? View.VISIBLE : View.GONE);
-        musicArt.setVisibility(idle && musicApps != null || lyricsOn ? View.GONE : View.VISIBLE);
+        boolean lyricsOn = lyricsLayout;
+        musicArt.setVisibility(idle && musicApps != null ? View.GONE : View.VISIBLE);
         lyricsChip.setVisibility(c != null && m != null ? View.VISIBLE : View.GONE);
         lyricsChip.setTextColor(prefs.showLyrics() ? ui.onAccent : ui.text);
         lyricsChip.setBackground(ui.box(prefs.showLyrics() ? ui.accent : ui.tile, ui.dp(14)));
@@ -1676,7 +1749,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (lyricsAdjust == null) return;
         lyricsAdjust.setVisibility(on ? View.VISIBLE : View.GONE);
         lyricPrev.setVisibility(on ? View.GONE : View.VISIBLE);
-        lyricNext.setVisibility(on ? View.GONE : View.VISIBLE);
+        for (TextView t : lyricAhead) t.setVisibility(on ? View.GONE : View.VISIBLE);
         if (on) {
             lyricsShift.setText(shiftText());
             main.postDelayed(hideLyricsAdjust, 8000);
@@ -1701,14 +1774,14 @@ public class MainActivity extends Activity implements NavState.Listener {
     /** The line for the current position; then waits exactly until the next line starts. */
     private void showLyricsLine() {
         main.removeCallbacks(lyricsTick);
-        if (lyricsBox == null || lyricsBox.getVisibility() != View.VISIBLE) return;
+        if (lyricsBox == null) return;
         Lyrics l = lyrics;
         if (l == null || !l.synced()) {
             lyricLine = -2;
             setIfChanged(lyricPrev, "");
             setIfChanged(lyricNow, lyricsLoading ? "Looking for lyrics\u2026"
                     : l != null ? "Lyrics without timing" : lyricsKey == null ? "No song title" : "No lyrics found");
-            setIfChanged(lyricNext, l != null ? "Tap to read" : "");
+            for (int k = 0; k < lyricAhead.length; k++) setIfChanged(lyricAhead[k], k == 0 && l != null ? "Tap to read" : "");
             return;
         }
         long pos = position() + lyricsOffset;
@@ -1717,7 +1790,10 @@ public class MainActivity extends Activity implements NavState.Listener {
             lyricLine = i;
             setIfChanged(lyricPrev, i > 0 ? l.lines[i - 1] : "");
             setIfChanged(lyricNow, i >= 0 ? l.lines[i] : "\u266A");
-            setIfChanged(lyricNext, i + 1 < l.lines.length ? l.lines[i + 1] : "");
+            for (int k = 0; k < lyricAhead.length; k++) {
+                int j = i + 1 + k;
+                setIfChanged(lyricAhead[k], j < l.lines.length ? l.lines[j] : "");
+            }
         }
         if (visible && isPlaying() && i + 1 < l.times.length) {
             long wait = (long) ((l.times[i + 1] - pos) / Math.max(0.5f, playback.getPlaybackSpeed()));
