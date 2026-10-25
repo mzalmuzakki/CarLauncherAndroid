@@ -1788,11 +1788,17 @@ public class MainActivity extends Activity implements NavState.Listener {
         int i = l.index(pos);
         if (i != lyricLine) {
             lyricLine = i;
-            setIfChanged(lyricPrev, i > 0 ? l.lines[i - 1] : "");
-            setIfChanged(lyricNow, i >= 0 ? l.lines[i] : "\u266A");
-            for (int k = 0; k < lyricAhead.length; k++) {
-                int j = i + 1 + k;
-                setIfChanged(lyricAhead[k], j < l.lines.length ? l.lines[j] : "");
+            // Before and after the current line only lines with words; a break shows as
+            // the current line only, while the music plays on.
+            int p = i - 1;
+            while (p >= 0 && Lyrics.BREAK.equals(l.lines[p])) p--;
+            setIfChanged(lyricPrev, p >= 0 ? l.lines[p] : "");
+            setIfChanged(lyricNow, i >= 0 ? l.lines[i] : Lyrics.BREAK);
+            int j = i + 1;
+            for (TextView t : lyricAhead) {
+                while (j < l.lines.length && Lyrics.BREAK.equals(l.lines[j])) j++;
+                setIfChanged(t, j < l.lines.length ? l.lines[j] : "");
+                j++;
             }
         }
         if (visible && isPlaying() && i + 1 < l.times.length) {

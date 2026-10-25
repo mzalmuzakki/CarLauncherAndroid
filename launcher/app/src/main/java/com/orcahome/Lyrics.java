@@ -52,6 +52,9 @@ final class Lyrics {
         this.plain = plain;
     }
 
+    /** A line without words (the music plays on). */
+    static final String BREAK = "\u266A";
+
     boolean synced() { return times.length > 0; }
 
     /** The line sung at pos, or -1 before the first one. */
@@ -186,7 +189,7 @@ final class Lyrics {
                 if (at.isEmpty()) continue;
                 String text = raw.substring(end).trim();
                 for (long t : at) { idx.add(new long[]{t, texts.size()}); }
-                texts.add(text.isEmpty() ? "♪" : text);
+                texts.add(text.isEmpty() ? BREAK : text);
             }
         }
         Collections.sort(idx, (x, y) -> Long.compare(x[0], y[0]));
