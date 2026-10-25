@@ -56,6 +56,8 @@ final class Prefs {
     boolean showWeather() { return sp.getBoolean("weather", true); }
     boolean showGauge() { return sp.getBoolean("gauge", true); }
     boolean showNavCard() { return sp.getBoolean("navcard", true); }
+    /** Synced lyrics in the music card (LRCLIB, internet). */
+    boolean showLyrics() { return sp.getBoolean("lyrics", true); }
     /** Package the dock's navigation button opens; empty = automatic. */
     String navApp() { return sp.getString("navapp", ""); }
     long stamp() { return sp.getLong("stamp", 0); }
@@ -106,6 +108,7 @@ final class Prefs {
     void setShowWeather(boolean b) { put("weather", b); }
     void setShowGauge(boolean b) { put("gauge", b); }
     void setShowNavCard(boolean b) { put("navcard", b); }
+    void setShowLyrics(boolean b) { sp.edit().putBoolean("lyrics", b).apply(); } // the card updates itself
     void setNavApp(String pkg) { sp.edit().putString("navapp", pkg).apply(); }
 
     // Last weather, so the card shows something immediately after a restart.

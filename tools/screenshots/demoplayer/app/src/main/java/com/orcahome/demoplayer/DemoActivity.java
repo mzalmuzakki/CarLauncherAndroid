@@ -14,11 +14,15 @@ import android.graphics.Shader;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.SystemClock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Screenshot helper only, never installed on the head unit: publishes one "playing" media
@@ -48,22 +52,60 @@ public class DemoActivity extends Activity {
             lat = Double.parseDouble(p[0]); lon = Double.parseDouble(p[1]); speed = 0f;
             drive(getApplicationContext(), true); finish(); return;
         }
-        if (session == null) {
-            session = new MediaSession(getApplicationContext(), "demo");
-            session.setCallback(new MediaSession.Callback() {
-                @Override public void onPlay() { state(PlaybackState.STATE_PLAYING); }
-                @Override public void onPause() { state(PlaybackState.STATE_PAUSED); }
-            });
-            session.setMetadata(new MediaMetadata.Builder()
-                    .putString(MediaMetadata.METADATA_KEY_TITLE, "Sunset Drive")
-                    .putString(MediaMetadata.METADATA_KEY_ARTIST, "Demo Artist")
-                    .putLong(MediaMetadata.METADATA_KEY_DURATION, 214000)
-                    .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art())
-                    .build());
-            state(PlaybackState.STATE_PLAYING);
+        // "--es song playlist": real songs with a queue, like Spotify playing a playlist
+        // (lyrics and "Up next" on the music card).
+        boolean playlist = "playlist".equals(getIntent().getStringExtra("song"));
+        if (session == null || playlist) {
+            if (session == null) {
+                session = new MediaSession(getApplicationContext(), "demo");
+                session.setCallback(new MediaSession.Callback() {
+                    @Override public void onPlay() { state(PlaybackState.STATE_PLAYING); }
+                    @Override public void onPause() { state(PlaybackState.STATE_PAUSED); }
+                    @Override public void onSkipToQueueItem(long id) { song((int) id); }
+                });
+            }
+            if (playlist) {
+                List<MediaSession.QueueItem> q = new ArrayList<>();
+                for (int i = 0; i < SONGS.length; i++) {
+                    q.add(new MediaSession.QueueItem(new MediaDescription.Builder()
+                            .setMediaId("song" + i).setTitle(SONGS[i][1]).setSubtitle(SONGS[i][0]).build(), i));
+                }
+                session.setQueue(q);
+                session.setQueueTitle("Road trip");
+                song(0);
+            } else {
+                session.setMetadata(new MediaMetadata.Builder()
+                        .putString(MediaMetadata.METADATA_KEY_TITLE, "Sunset Drive")
+                        .putString(MediaMetadata.METADATA_KEY_ARTIST, "Demo Artist")
+                        .putLong(MediaMetadata.METADATA_KEY_DURATION, 214000)
+                        .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art())
+                        .build());
+                state(PlaybackState.STATE_PLAYING);
+            }
             session.setActive(true);
         }
         finish();
+    }
+
+    /** artist, title, album, seconds */
+    private static final String[][] SONGS = {
+        {"Coldplay", "Yellow", "Parachutes", "266"},
+        {"Coldplay", "Viva la Vida", "Viva la Vida or Death and All His Friends", "242"},
+        {"Tulus", "Hati-Hati di Jalan", "Manusia", "242"},
+        {"Sheila On 7", "Dan", "Sheila On 7", "276"},
+    };
+    private static long active;
+
+    private static void song(int i) {
+        active = i;
+        session.setMetadata(new MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, SONGS[i][0])
+                .putString(MediaMetadata.METADATA_KEY_TITLE, SONGS[i][1])
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, SONGS[i][2])
+                .putLong(MediaMetadata.METADATA_KEY_DURATION, Long.parseLong(SONGS[i][3]) * 1000)
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art())
+                .build());
+        state(PlaybackState.STATE_PLAYING, 45000); // well into the first verse
     }
 
     private static volatile boolean driving;
@@ -142,10 +184,14 @@ public class DemoActivity extends Activity {
         return bm;
     }
 
-    private static void state(int s) {
+    private static void state(int s) { state(s, 83000); }
+
+    private static void state(int s, long position) {
         session.setPlaybackState(new PlaybackState.Builder()
-                .setActions(PlaybackState.ACTION_PLAY_PAUSE | PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE)
-                .setState(s, 83000, 1f, SystemClock.elapsedRealtime())
+                .setActions(PlaybackState.ACTION_PLAY_PAUSE | PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
+                        | PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM)
+                .setActiveQueueItemId(active)
+                .setState(s, position, 1f, SystemClock.elapsedRealtime())
                 .build());
     }
 

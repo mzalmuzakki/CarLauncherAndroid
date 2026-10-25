@@ -80,6 +80,20 @@ prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/hea
     b64=$(printf '%s' "$xml" | base64 | tr -d '\n')
     sh_ am force-stop "$PKG"
     sh_ "run-as $PKG sh -c 'mkdir -p shared_prefs && echo $b64 | base64 -d > shared_prefs/orcahome.xml'"
+    # No remembered "last played" song unless a test plays one.
+    sh_ "run-as $PKG rm -f shared_prefs/lastplayed.xml files/last-cover.jpg"
+}
+
+# Taps the middle of the first view whose text starts with $1, else at $2 (x y).
+tap_text() {
+    local at
+    sh_ uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
+    at=$(sh_ cat /sdcard/ui.xml | python3 -c '
+import re, sys
+m = re.search(r"text=\"" + re.escape(sys.argv[1]) + r"[^\"]*\"[^>]*?bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read())
+print("%d %d" % ((int(m[1]) + int(m[3])) // 2, (int(m[2]) + int(m[4])) // 2) if m else "")' "$1")
+    [ -n "$at" ] || { say "  (\"$1\" not found on screen, tapping at $2)"; at=$2; }
+    sh_ input tap $at
 }
 
 # --- Screenshots (debug build) -----------------------------------------------------------
@@ -203,9 +217,29 @@ sh_ dumpsys location | grep -E 'Last Known Locations|^ +[a-z]+: Location\[' > "$
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
 sh_ appops set "$PKG" WRITE_SETTINGS default
 
+# 2.7: lyrics, "Up next" from the player's queue, the last song kept for the next start.
+prefs 6 true theme north wide
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es song playlist > /dev/null; sleep 2
+adb logcat -c
+home; shot 61-lyrics 12
+say "Lyrics: $(adb logcat -d -s OrcaHome:I | grep -o 'lyrics for .*' | tr '\n' ';')"
+sh_ input tap 823 441; sleep 2   # pause, so the screen is still for the next tap
+tap_text "Up next" "823 351"; shot 62-up-next 3
+tap_text "Viva la Vida" "512 256"; sleep 1
+home; shot 63-next-song-lyrics 12
+say "After picking from Up next: $(sh_ dumpsys media_session | grep -m1 -o 'description=[^,]*')"
+say "Lyrics: $(adb logcat -d -s OrcaHome:I | grep -o 'lyrics for .*' | tr '\n' ';')"
+sh_ am force-stop com.orcahome.demoplayer; sleep 2
+home; shot 64-last-played 5
+say "Remembered song: $(sh_ "run-as $PKG cat shared_prefs/lastplayed.xml" | grep -o 'name="title">[^<]*' | sed 's/.*>//'), cover saved: $(sh_ "run-as $PKG ls files/last-cover.jpg" 2>/dev/null | grep -c jpg)"
+sh_ input tap 823 441; sleep 7   # play: the demo app has no media button receiver, so Orca Home opens it
+home; shot 65-play-last-played 5
+say "After play on the last song: $(sh_ dumpsys media_session | grep -m1 -o 'package=com.orcahome.demoplayer') $(sh_ dumpsys media_session | grep -m1 -o 'state=PlaybackState {state=[0-9]*')"
+
 # Music shortcuts: nothing playing (the demo player stopped).
 sh_ am force-stop com.orcahome.demoplayer
 prefs 6 true theme north wide; home; shot 56-music-shortcuts 8
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity > /dev/null   # the session the release checks expect
 home; sleep 3
 say "Debug-build crashes: $(adb logcat -b crash -d | grep -c 'Process: com.orcahome,') (other apps: $(adb logcat -b crash -d | grep 'Process: ' | grep -vc 'Process: com.orcahome,'))"
 adb logcat -b crash -d > "$OUT/crash-debug.txt"

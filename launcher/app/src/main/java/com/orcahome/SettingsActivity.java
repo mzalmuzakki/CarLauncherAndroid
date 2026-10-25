@@ -152,6 +152,12 @@ public class SettingsActivity extends Activity {
         check(col, "Weather (Open-Meteo, internet, refreshed at most every 30 min)", prefs.showWeather(), prefs::setShowWeather);
         check(col, "Speed (gauge, or a bubble on the map)", prefs.showGauge(), prefs::setShowGauge);
         check(col, "Navigation card while Google Maps / Waze navigates", prefs.showNavCard(), prefs::setShowNavCard);
+        check(col, "Song lyrics in the music card, in time with the music (from LRCLIB, internet; also the Lyrics button on the card)",
+                prefs.showLyrics(), prefs::setShowLyrics);
+        TextView musicNote = ui.label(this, 13, ui.sub, false);
+        musicNote.setText("The music card keeps the last Spotify song: it shows when the car starts, and the play button carries on with it. \"Up next\" appears when the player shares its queue (the rest of the playlist or album); tap it to pick a song.");
+        musicNote.setPadding(0, ui.dp(4), 0, 0);
+        col.addView(musicNote);
 
         radios(col, "Speed alert (the speed turns red above it)", new String[][]{
                 {"0", "Off"}, {"60", "60 km/h"}, {"80", "80 km/h"}, {"100", "100 km/h"}, {"110", "110 km/h"}, {"120", "120 km/h"}},
@@ -215,7 +221,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.6 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather and map tiles.");
+        about.setText("Orca Home 2.7 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather, map tiles and song lyrics.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);

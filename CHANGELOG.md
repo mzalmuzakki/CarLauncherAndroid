@@ -4,6 +4,15 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.7 — in testing
+- The music card keeps the last Spotify song (title, artist, cover): it shows as soon as the
+  car starts, and the play button carries on with it in Spotify (or opens Spotify if the
+  unit doesn't let it start by itself). Spotify is first among the music buttons.
+- "Up next" on the music card: the next song in the playlist or album; tap for the list and
+  pick a song (when the player shares its queue with Android).
+- Lyrics in the music card, line by line in time with the song (LRCLIB, free; one small
+  request per new song, kept on the unit). Lyrics button on the card, or off in settings.
+
 ## 2.6 — in testing
 - Night brightness (on by default): the screen dims at sunset (30 %, adjustable in settings)
   and goes back to the day brightness and auto/manual mode at sunrise. Turning it up by hand

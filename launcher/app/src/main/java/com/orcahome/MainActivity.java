@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -18,6 +19,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.net.Uri;
@@ -94,6 +96,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private View musicCard;
     private ImageView musicArt, musicSourceIcon;
     private TextView musicSource, musicTitle, musicArtist, musicElapsed, musicDuration;
+    private TextView musicNext, lyricsChip, lyricPrev, lyricNow, lyricNext;
+    private View lyricsBox;
     private View progressFill;
     private ImageButton playPause;
 
@@ -106,7 +110,16 @@ public class MainActivity extends Activity implements NavState.Listener {
     // controller.getMetadata() is a call into the system that copies the album art.
     private MediaMetadata meta, shownMeta;
     private PlaybackState playback;
+    private List<MediaSession.QueueItem> queue;
     private boolean sessionsListening;
+    // The last Spotify song, shown while Spotify has no session (e.g. right after the car starts).
+    private LastPlayed lastPlayed;
+    private boolean lastPlayedStale = true;
+    // Lyrics of the song on the card: lyricsKey says which song they are (or are being looked up) for.
+    private Lyrics lyrics;
+    private String lyricsKey;
+    private boolean lyricsLoading;
+    private int lyricLine = -2;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -826,6 +839,15 @@ public class MainActivity extends Activity implements NavState.Listener {
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         hlp.leftMargin = ui.dp(8);
         head.addView(musicSource, hlp);
+        lyricsChip = ui.label(this, 12, ui.text, true);
+        lyricsChip.setText("Lyrics");
+        lyricsChip.setGravity(Gravity.CENTER);
+        lyricsChip.setPadding(ui.dp(12), 0, ui.dp(12), 0);
+        lyricsChip.setOnClickListener(v -> {
+            prefs.setShowLyrics(!prefs.showLyrics());
+            showTrack();
+        });
+        head.addView(lyricsChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(24)));
         p.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         musicArt = new ImageView(this);
@@ -833,10 +855,15 @@ public class MainActivity extends Activity implements NavState.Listener {
         musicArt.setBackground(ui.box(ui.tile, ui.dp(10)));
         musicArt.setClipToOutline(true);
         // Square cover with flexible space around it, so any card height looks balanced.
+        // The cover, the app buttons (nothing playing) or the lyrics share one box.
         p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
-        p.addView(musicArt, new LinearLayout.LayoutParams(ui.dp(120), ui.dp(120)));
+        FrameLayout artBox = new FrameLayout(this);
+        artBox.addView(musicArt, new FrameLayout.LayoutParams(ui.dp(100), ui.dp(100), Gravity.CENTER));
         musicApps = musicShortcuts();
-        if (musicApps != null) p.addView(musicApps, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(120)));
+        if (musicApps != null) artBox.addView(musicApps, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        artBox.addView(lyricsView(), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        p.addView(artBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(100)));
 
         musicTitle = ui.label(this, 17, ui.text, true);
         musicTitle.setSingleLine(true);
@@ -852,6 +879,14 @@ public class MainActivity extends Activity implements NavState.Listener {
         LinearLayout.LayoutParams alp2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         alp2.topMargin = ui.dp(3);
         p.addView(musicArtist, alp2);
+        musicNext = ui.label(this, 12, ui.sub, false);
+        musicNext.setSingleLine(true);
+        musicNext.setEllipsize(TextUtils.TruncateAt.END);
+        musicNext.setGravity(Gravity.CENTER);
+        musicNext.setPadding(ui.dp(8), ui.dp(4), ui.dp(8), ui.dp(3));
+        musicNext.setOnClickListener(v -> queueDialog());
+        musicNext.setVisibility(View.GONE);
+        p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
 
         FrameLayout bar = new FrameLayout(this);
@@ -886,8 +921,39 @@ public class MainActivity extends Activity implements NavState.Listener {
         p.setOnClickListener(v -> openPlayer());
         musicCard = p;
         shownMeta = null;
+        lyricLine = -2;
         showTrack();
         return p;
+    }
+
+    /** Three lines: the one sung now in the middle, large. */
+    private View lyricsView() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setBackground(ui.box(ui.tile, ui.dp(10)));
+        box.setPadding(ui.dp(10), ui.dp(6), ui.dp(10), ui.dp(6));
+        lyricPrev = ui.label(this, 13, ui.sub, false);
+        lyricNow = ui.label(this, 17, ui.text, true);
+        lyricNext = ui.label(this, 13, ui.sub, false);
+        for (TextView t : new TextView[]{lyricPrev, lyricNow, lyricNext}) {
+            t.setGravity(Gravity.CENTER);
+            t.setEllipsize(TextUtils.TruncateAt.END);
+            t.setMaxLines(t == lyricNow ? 2 : 1);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.topMargin = t == lyricPrev ? 0 : ui.dp(5);
+            box.addView(t, lp);
+        }
+        box.setOnClickListener(v -> {
+            Lyrics l = lyrics;
+            if (l != null && !l.synced()) { // only plain lyrics: show them all
+                new android.app.AlertDialog.Builder(this).setTitle(musicTitle.getText())
+                        .setMessage(l.plain).setPositiveButton("Close", null).show();
+            } else openPlayer();
+        });
+        box.setVisibility(View.GONE);
+        lyricsBox = box;
+        return box;
     }
 
     private static final String[] MUSIC_APPS = {
@@ -1313,6 +1379,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private final MediaController.Callback trackCallback = new MediaController.Callback() {
         @Override public void onMetadataChanged(MediaMetadata m) { meta = m; showTrack(); }
         @Override public void onPlaybackStateChanged(PlaybackState s) { playback = s; showState(); }
+        @Override public void onQueueChanged(List<MediaSession.QueueItem> q) { queue = q; showNext(); }
         @Override public void onSessionDestroyed() { pickController(null); }
     };
 
@@ -1338,12 +1405,14 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private void stopMusic() {
         main.removeCallbacks(progressTick);
+        main.removeCallbacks(lyricsTick);
         if (sessionsListening) sessions.removeOnActiveSessionsChangedListener(sessionsChanged);
         sessionsListening = false;
         if (controller != null) controller.unregisterCallback(trackCallback);
         controller = null;
         meta = shownMeta = null;
         playback = null;
+        queue = null;
     }
 
     private void pickController(List<MediaController> list) {
@@ -1370,6 +1439,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         controller = c;
         meta = c != null ? c.getMetadata() : null;
         playback = c != null ? c.getPlaybackState() : null;
+        queue = c != null ? c.getQueue() : null;
         shownMeta = null;
         if (controller != null) controller.registerCallback(trackCallback);
         showTrack();
@@ -1383,14 +1453,20 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (musicTitle == null) return;
         MediaController c = controller;
         MediaMetadata m = meta;
-        boolean idle = c == null && m == null;
-        if (musicApps != null) {
-            musicApps.setVisibility(idle ? View.VISIBLE : View.GONE);
-            musicArt.setVisibility(idle ? View.GONE : View.VISIBLE);
-        }
+        LastPlayed last = c == null ? lastPlayed() : null;
+        boolean idle = c == null && m == null && last == null;
+        if (musicApps != null) musicApps.setVisibility(idle ? View.VISIBLE : View.GONE);
+        boolean lyricsOn = c != null && m != null && prefs.showLyrics();
+        lyricsBox.setVisibility(lyricsOn ? View.VISIBLE : View.GONE);
+        musicArt.setVisibility(idle && musicApps != null || lyricsOn ? View.GONE : View.VISIBLE);
+        lyricsChip.setVisibility(c != null && m != null ? View.VISIBLE : View.GONE);
+        lyricsChip.setTextColor(prefs.showLyrics() ? ui.onAccent : ui.text);
+        lyricsChip.setBackground(ui.box(prefs.showLyrics() ? ui.accent : ui.tile, ui.dp(14)));
         if (c == null || m == null) {
             shownMeta = null;
             main.removeCallbacks(progressTick);
+            main.removeCallbacks(lyricsTick);
+            musicNext.setVisibility(View.GONE);
             musicSourceIcon.setImageDrawable(null);
             musicSource.setText(sessionsListening ? "NOTHING PLAYING" : "MUSIC CARD IS OFF – ALLOW IN SETTINGS");
             musicTitle.setText(c != null ? appLabel(c.getPackageName())
@@ -1403,10 +1479,15 @@ public class MainActivity extends Activity implements NavState.Listener {
             progressFill.setScaleX(0);
             setIfChanged(musicElapsed, "");
             setIfChanged(musicDuration, "");
+            if (last != null) showLastPlayed(last);
             return;
         }
         if (m != shownMeta) { // a new song (or a new player): texts, art and app icon once
             shownMeta = m;
+            if (LastPlayed.remembers(this, c.getPackageName())) {
+                LastPlayed.save(this, c.getPackageName(), m);
+                lastPlayedStale = true;
+            }
             try { musicSourceIcon.setImageDrawable(getPackageManager().getApplicationIcon(c.getPackageName())); }
             catch (PackageManager.NameNotFoundException e) { musicSourceIcon.setImageDrawable(null); }
             String app = appLabel(c.getPackageName());
@@ -1428,7 +1509,145 @@ public class MainActivity extends Activity implements NavState.Listener {
                 musicArt.setColorFilter(ui.sub);
             }
         }
+        if (lyricsOn) { findLyrics(m); lyricLine = -2; }
+        showNext();
         showState();
+    }
+
+    /** The remembered Spotify song while Spotify has no session; null if none (or uninstalled). */
+    private LastPlayed lastPlayed() {
+        if (lastPlayedStale) {
+            lastPlayed = LastPlayed.load(this);
+            lastPlayedStale = false;
+        }
+        if (lastPlayed != null && getPackageManager().getLaunchIntentForPackage(lastPlayed.pkg) == null) return null;
+        return lastPlayed;
+    }
+
+    private void showLastPlayed(LastPlayed last) {
+        try { musicSourceIcon.setImageDrawable(getPackageManager().getApplicationIcon(last.pkg)); }
+        catch (PackageManager.NameNotFoundException e) { musicSourceIcon.setImageDrawable(null); }
+        musicSource.setText(("Last played on " + appLabel(last.pkg)).toUpperCase(Locale.getDefault()));
+        musicTitle.setText(last.title);
+        musicArtist.setText(last.artist);
+        if (last.art != null) {
+            musicArt.clearColorFilter();
+            musicArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            musicArt.setImageBitmap(last.art);
+        }
+    }
+
+    /** Sends "play" to the app's media button receiver: Spotify carries on with the last song. */
+    private void resumeLast(LastPlayed last) {
+        List<ResolveInfo> r = getPackageManager().queryBroadcastReceivers(
+                new Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(last.pkg), 0);
+        if (r.isEmpty()) { launchPackage(last.pkg); return; }
+        ComponentName cn = new ComponentName(last.pkg, r.get(0).activityInfo.name);
+        long t = SystemClock.uptimeMillis();
+        for (int action : new int[]{KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_BUTTON).setComponent(cn)
+                    .putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(t, t, action, KeyEvent.KEYCODE_MEDIA_PLAY, 0)));
+        }
+        musicSource.setText(("Starting " + appLabel(last.pkg) + "\u2026").toUpperCase(Locale.getDefault()));
+        // Not playing a few seconds later (the firmware may keep it from starting): open the app.
+        main.postDelayed(() -> {
+            boolean playing = controller != null && last.pkg.equals(controller.getPackageName()) && isPlaying();
+            if (visible && !playing) launchPackage(last.pkg);
+        }, 4000);
+    }
+
+    // ---- up next (the player's queue: the rest of the playlist or album) ----------------
+
+    private int queuePosition() {
+        List<MediaSession.QueueItem> q = queue;
+        PlaybackState s = playback;
+        if (q == null || s == null) return -1;
+        long id = s.getActiveQueueItemId();
+        for (int i = 0; i < q.size(); i++) if (q.get(i).getQueueId() == id) return i;
+        return -1;
+    }
+
+    private void showNext() {
+        if (musicNext == null) return;
+        List<MediaSession.QueueItem> q = queue;
+        int i = queuePosition();
+        if (controller == null || q == null || i < 0 || i + 1 >= q.size()) { musicNext.setVisibility(View.GONE); return; }
+        setIfChanged(musicNext, "Up next: " + queueLabel(q.get(i + 1)) + "  \u203A");
+        musicNext.setVisibility(View.VISIBLE);
+    }
+
+    private static String queueLabel(MediaSession.QueueItem item) {
+        CharSequence t = item.getDescription().getTitle(), a = item.getDescription().getSubtitle();
+        return TextUtils.isEmpty(a) ? String.valueOf(t) : t + " \u00B7 " + a;
+    }
+
+    private void queueDialog() {
+        List<MediaSession.QueueItem> q = queue;
+        MediaController c = controller;
+        if (q == null || c == null) return;
+        int from = queuePosition() + 1;
+        List<MediaSession.QueueItem> next = new ArrayList<>(q.subList(from, Math.min(q.size(), from + 30)));
+        String[] items = new String[next.size()];
+        for (int i = 0; i < items.length; i++) items[i] = queueLabel(next.get(i));
+        CharSequence title = c.getQueueTitle();
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(TextUtils.isEmpty(title) ? "Up next" : "Up next in " + title)
+                .setItems(items, (d, w) -> c.getTransportControls().skipToQueueItem(next.get(w).getQueueId()))
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
+    // ---- lyrics -------------------------------------------------------------------
+
+    private void findLyrics(MediaMetadata m) {
+        String title = m.getString(MediaMetadata.METADATA_KEY_TITLE);
+        String artist = m.getString(MediaMetadata.METADATA_KEY_ARTIST);
+        if (TextUtils.isEmpty(artist)) artist = m.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
+        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(artist)) { lyricsKey = null; lyrics = null; lyricsLoading = false; return; }
+        String key = Lyrics.key(artist, title);
+        if (key.equals(lyricsKey)) return;
+        lyricsKey = key;
+        lyrics = null;
+        lyricsLoading = true;
+        lyricLine = -2;
+        Lyrics.get(this, artist, title, m.getString(MediaMetadata.METADATA_KEY_ALBUM),
+                m.getLong(MediaMetadata.METADATA_KEY_DURATION), l -> {
+                    if (!key.equals(lyricsKey)) return; // the song changed meanwhile
+                    lyrics = l;
+                    lyricsLoading = false;
+                    lyricLine = -2;
+                    showLyricsLine();
+                });
+        showLyricsLine();
+    }
+
+    private final Runnable lyricsTick = this::showLyricsLine;
+
+    /** The line for the current position; then waits exactly until the next line starts. */
+    private void showLyricsLine() {
+        main.removeCallbacks(lyricsTick);
+        if (lyricsBox == null || lyricsBox.getVisibility() != View.VISIBLE) return;
+        Lyrics l = lyrics;
+        if (l == null || !l.synced()) {
+            lyricLine = -2;
+            setIfChanged(lyricPrev, "");
+            setIfChanged(lyricNow, lyricsLoading ? "Looking for lyrics\u2026"
+                    : l != null ? "Lyrics without timing" : lyricsKey == null ? "No song title" : "No lyrics found");
+            setIfChanged(lyricNext, l != null ? "Tap to read" : "");
+            return;
+        }
+        long pos = position();
+        int i = l.index(pos);
+        if (i != lyricLine) {
+            lyricLine = i;
+            setIfChanged(lyricPrev, i > 0 ? l.lines[i - 1] : "");
+            setIfChanged(lyricNow, i >= 0 ? l.lines[i] : "\u266A");
+            setIfChanged(lyricNext, i + 1 < l.lines.length ? l.lines[i + 1] : "");
+        }
+        if (visible && isPlaying() && i + 1 < l.times.length) {
+            long wait = (long) ((l.times[i + 1] - pos) / Math.max(0.5f, playback.getPlaybackSpeed()));
+            main.postDelayed(lyricsTick, Math.max(100, Math.min(wait + 30, 2000)));
+        }
     }
 
     /** Play/pause button and progress; the 1-second tick runs only while playing and visible. */
@@ -1439,17 +1658,26 @@ public class MainActivity extends Activity implements NavState.Listener {
         playPause.setImageResource(isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
         updateProgress();
         if (visible && isPlaying()) main.postDelayed(progressTick, 1000);
+        showNext();
+        showLyricsLine();
+    }
+
+    /** Where the song is now (ms), counting on from the player's last report. */
+    private long position() {
+        PlaybackState s = playback;
+        if (s == null) return 0;
+        long pos = s.getPosition();
+        if (s.getState() == PlaybackState.STATE_PLAYING) {
+            pos += (long) ((SystemClock.elapsedRealtime() - s.getLastPositionUpdateTime()) * s.getPlaybackSpeed());
+        }
+        return pos;
     }
 
     private void updateProgress() {
         MediaMetadata m = meta;
         if (controller == null || m == null) return;
         long dur = m.getLong(MediaMetadata.METADATA_KEY_DURATION);
-        PlaybackState s = playback;
-        long pos = s == null ? 0 : s.getPosition();
-        if (s != null && s.getState() == PlaybackState.STATE_PLAYING) {
-            pos += (long) ((SystemClock.elapsedRealtime() - s.getLastPositionUpdateTime()) * s.getPlaybackSpeed());
-        }
+        long pos = position();
         if (dur > 0) {
             pos = Math.max(0, Math.min(pos, dur));
             progressFill.setScaleX(pos / (float) dur);
@@ -1474,7 +1702,11 @@ public class MainActivity extends Activity implements NavState.Listener {
     }
 
     private void togglePlay() {
-        if (controller == null) { openMusic(); return; }
+        if (controller == null) {
+            LastPlayed last = lastPlayed();
+            if (last != null) resumeLast(last); else openMusic();
+            return;
+        }
         if (isPlaying()) controller.getTransportControls().pause();
         else controller.getTransportControls().play();
     }

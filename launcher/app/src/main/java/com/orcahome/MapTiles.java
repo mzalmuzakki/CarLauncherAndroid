@@ -33,7 +33,7 @@ final class MapTiles {
 
     private static final long DISK_MAX_BYTES = 50L * 1024 * 1024;
     private static final long FRESH_MS = 14L * 24 * 3600 * 1000; // map data changes slowly
-    private static final String USER_AGENT = "OrcaHome/2.6 (personal car head unit launcher)";
+    private static final String USER_AGENT = "OrcaHome/2.7 (personal car head unit launcher)";
 
     // ~40 tiles x 128 KB (RGB_565) = ~5 MB of RAM at most.
     private static final LruCache<String, Bitmap> MEM = new LruCache<String, Bitmap>(6 * 1024 * 1024) {
