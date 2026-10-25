@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
 import android.location.Location;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
@@ -40,12 +39,9 @@ final class MapPanel extends View implements MapTiles.Listener {
     private final Paint compassBg = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint compassRing = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint compassN = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint needleNorth = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint needleSouth = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint headingText = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Path arrow = new Path(), needleN = new Path(), needleS = new Path();
+    private final Paint northFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path arrow = new Path(), north = new Path();
     private final float compassR, compassX, compassY;
-    private final RectF pill = new RectF();
     private boolean headingUp;
     private Runnable onCompassTap;
     private boolean compassDown;
@@ -81,24 +77,16 @@ final class MapPanel extends View implements MapTiles.Listener {
         compassN.setTextSize(ui.dp(10));
         compassN.setFakeBoldText(true);
         compassN.setTextAlign(Paint.Align.CENTER);
-        needleNorth.setColor(GaugeView.ALERT);
-        needleSouth.setColor(ui.sub);
-        headingText.setColor(ui.text);
-        headingText.setTextSize(ui.dp(11));
-        headingText.setFakeBoldText(true);
-        headingText.setTextAlign(Paint.Align.CENTER);
-        // Compass, top left: a needle (red = north) with N at its tip.
+        northFill.setColor(GaugeView.ALERT);
+        // Compass, top left: a red arrow pointing north, N under it.
         compassR = ui.dp(21);
         compassX = compassY = ui.dp(10) + compassR;
-        float tip = ui.dp(8), tail = ui.dp(13), half = ui.dp(3.5f);
-        needleN.moveTo(0, -tip);
-        needleN.lineTo(half, 0);
-        needleN.lineTo(-half, 0);
-        needleN.close();
-        needleS.moveTo(0, tail);
-        needleS.lineTo(half, 0);
-        needleS.lineTo(-half, 0);
-        needleS.close();
+        float a = ui.dp(7);
+        north.moveTo(0, -ui.dp(15));
+        north.lineTo(a, ui.dp(3));
+        north.lineTo(0, -ui.dp(1));
+        north.lineTo(-a, ui.dp(3));
+        north.close();
         float s = ui.dp(13);
         arrow.moveTo(0, -s);
         arrow.lineTo(s * 0.8f, s);
@@ -138,14 +126,6 @@ final class MapPanel extends View implements MapTiles.Listener {
                 if (compassDown) return true;
         }
         return super.onTouchEvent(e);
-    }
-
-    private static final String[] POINTS = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
-
-    /** "NE 45°" for a bearing. */
-    static String heading(float bearing) {
-        int deg = Math.round(((bearing % 360) + 360) % 360) % 360;
-        return POINTS[Math.round(deg / 45f) % 8] + " " + deg + "\u00B0";
     }
 
     /** Tiles are only fetched while active (the home screen is visible). */
@@ -239,31 +219,15 @@ final class MapPanel extends View implements MapTiles.Listener {
         c.drawText(MapTiles.attribution(), ui.dp(8), h - ui.dp(6), credit);
     }
 
-    /** Which way north is (the needle turns with the map), and the direction of travel below. */
+    /** Which way north is: the arrow turns with the map. */
     private void drawCompass(Canvas c, boolean turned) {
-        float x = compassX, y = compassY, r = compassR;
-        c.drawCircle(x, y, r, compassBg);
-        c.drawCircle(x, y, r - ui.dp(1), compassRing);
+        c.drawCircle(compassX, compassY, compassR, compassBg);
+        c.drawCircle(compassX, compassY, compassR - ui.dp(1), compassRing);
         c.save();
-        c.translate(x, y);
+        c.translate(compassX, compassY);
         if (turned) c.rotate(-bearing);
-        float tick = r - ui.dp(5);
-        for (int i = 1; i < 4; i++) { // E, S, W marks
-            c.rotate(90);
-            c.drawCircle(0, -tick, ui.dp(1.5f), compassRing);
-        }
-        c.rotate(90);
-        c.drawText("N", 0, -r + ui.dp(12), compassN);
-        c.drawPath(needleS, needleSouth);
-        c.drawPath(needleN, needleNorth);
+        c.drawPath(north, northFill);
+        c.drawText("N", 0, ui.dp(14), compassN);
         c.restore();
-        if (hasBearing) {
-            String t = heading(bearing);
-            float tw = headingText.measureText(t) / 2 + ui.dp(7);
-            float ty = y + r + ui.dp(6);
-            pill.set(x - tw, ty, x + tw, ty + ui.dp(18));
-            c.drawRoundRect(pill, ui.dp(9), ui.dp(9), compassBg);
-            c.drawText(t, x, ty + ui.dp(13), headingText);
-        }
     }
 }
