@@ -1,6 +1,6 @@
   Last Known Locations:
-    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+7m29s291ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
-    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+7m29s291ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+7m12s670ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+7m12s670ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
   Last Known Locations Coarse Intervals:
-    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+3m37s122ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
-    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+3m37s122ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+3m28s957ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+3m28s957ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
