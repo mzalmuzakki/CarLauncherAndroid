@@ -1,9 +1,8 @@
 --------- beginning of main
 --------- beginning of system
-10-25 08:39:37.779 10321 10321 D OrcaHome: night brightness (test build): dim=true dimmed=false
-10-25 08:39:37.785 10321 10321 I OrcaHome: night brightness: dimmed to 30%
-10-25 08:39:37.815 10321 10413 I OrcaHome: lyrics for "Sunset Drive": none
-10-25 08:39:44.917 10321 10321 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-25 08:39:48.105 10321 10321 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-25 08:39:54.273 10321 10321 D OrcaHome: night brightness (test build): dim=false dimmed=true
-10-25 08:39:54.276 10321 10321 I OrcaHome: night brightness: back to 200
+10-25 14:15:03.810 10272 10272 D OrcaHome: night brightness (test build): dim=true dimmed=false
+10-25 14:15:03.814 10272 10272 I OrcaHome: night brightness: dimmed to 30%
+10-25 14:15:11.116 10272 10272 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-25 14:15:14.302 10272 10272 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-25 14:15:20.465 10272 10272 D OrcaHome: night brightness (test build): dim=false dimmed=true
+10-25 14:15:20.466 10272 10272 I OrcaHome: night brightness: back to 200
