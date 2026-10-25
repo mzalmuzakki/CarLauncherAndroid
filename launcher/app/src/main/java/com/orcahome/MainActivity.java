@@ -119,6 +119,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private Lyrics lyrics;
     private String lyricsKey;
     private boolean lyricsLoading;
+    private long lyricsFailedAt; // when loading failed (no internet) for lyricsKey; 0 = it didn't
     private int lyricLine = -2;
     private int lyricsOffset; // this song's timing fix, ms
 
@@ -1493,6 +1494,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private void stopMusic() {
         main.removeCallbacks(progressTick);
         main.removeCallbacks(lyricsTick);
+        main.removeCallbacks(lyricsRetry);
         main.removeCallbacks(hideLyricsAdjust);
         if (sessionsListening) sessions.removeOnActiveSessionsChangedListener(sessionsChanged);
         sessionsListening = false;
@@ -1685,18 +1687,22 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (TextUtils.isEmpty(artist)) artist = m.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(artist)) { lyricsKey = null; lyrics = null; lyricsLoading = false; return; }
         String key = Lyrics.key(artist, title);
-        if (key.equals(lyricsKey)) return;
+        // Same song: nothing to do, unless loading failed a while ago (no internet then).
+        if (key.equals(lyricsKey) && (lyricsFailedAt == 0 || SystemClock.elapsedRealtime() - lyricsFailedAt < 30_000)) return;
         lyricsKey = key;
         lyrics = null;
         lyricsLoading = true;
+        lyricsFailedAt = 0;
         lyricLine = -2;
         lyricsOffset = Lyrics.offset(this, key);
         showLyricsAdjust(false);
         Lyrics.get(this, artist, title, m.getString(MediaMetadata.METADATA_KEY_ALBUM),
-                m.getLong(MediaMetadata.METADATA_KEY_DURATION), l -> {
+                m.getLong(MediaMetadata.METADATA_KEY_DURATION), (l, failed) -> {
                     if (!key.equals(lyricsKey)) return; // the song changed meanwhile
                     lyrics = l;
                     lyricsLoading = false;
+                    lyricsFailedAt = failed ? SystemClock.elapsedRealtime() : 0;
+                    if (failed) main.postDelayed(lyricsRetry, 31_000);
                     lyricLine = -2;
                     showLyricsLine();
                 });
@@ -1704,6 +1710,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     }
 
     private final Runnable lyricsTick = this::showLyricsLine;
+    /** Loading failed: once more half a minute later, while lyrics show. */
+    private final Runnable lyricsRetry = () -> { if (visible && lyricsLayout && meta != null) findLyrics(meta); };
 
     /** Earlier / Later in half-second steps, for lyrics out of time with this version of the song. */
     private View lyricsAdjustRow() {
@@ -1773,7 +1781,8 @@ public class MainActivity extends Activity implements NavState.Listener {
             lyricLine = -2;
             setIfChanged(lyricPrev, "");
             setIfChanged(lyricNow, lyricsLoading ? "Looking for lyrics\u2026"
-                    : l != null ? "Lyrics without timing" : lyricsKey == null ? "No song title" : "No lyrics found");
+                    : l != null ? "Lyrics without timing" : lyricsKey == null ? "No song title"
+                    : lyricsFailedAt != 0 ? "Lyrics couldn't load (no internet?)" : "No lyrics found");
             for (int k = 0; k < lyricAhead.length; k++) setIfChanged(lyricAhead[k], k == 0 && l != null ? "Tap to read" : "");
             return;
         }

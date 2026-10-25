@@ -39,7 +39,8 @@ import java.util.regex.Pattern;
  * on the unit (max 300 songs), so songs played again need no data.
  */
 final class Lyrics {
-    interface Done { void got(Lyrics l); }
+    /** l: the lyrics, or null; failed: they couldn't be loaded (no internet), so try again later. */
+    interface Done { void got(Lyrics l, boolean failed); }
 
     /** Line start times (ms) and texts, in order; empty when only plain lyrics exist. */
     final long[] times;
@@ -90,7 +91,7 @@ final class Lyrics {
     static void get(Context c, String artist, String title, String album, long durationMs, Done done) {
         final String key = key(artist, title);
         Lyrics m = MEMORY.get(key);
-        if (m != null) { done.got(m == NONE ? null : m); return; }
+        if (m != null) { done.got(m == NONE ? null : m, false); return; }
         final File dir = new File(c.getCacheDir(), "lyrics");
         final boolean log = (c.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         NET.execute(() -> {
@@ -109,7 +110,8 @@ final class Lyrics {
                     + (l == null ? "not loaded" : l == NONE ? "none" : l.synced() ? l.lines.length + " synced lines" : "plain only"));
             if (l != null) MEMORY.put(key, l);
             final Lyrics fin = l == NONE ? null : l;
-            MAIN.post(() -> done.got(fin));
+            final boolean failed = l == null;
+            MAIN.post(() -> done.got(fin, failed));
         });
     }
 
