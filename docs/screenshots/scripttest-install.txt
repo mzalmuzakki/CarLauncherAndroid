@@ -9,9 +9,9 @@
   [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 30 MB, free RAM 1882 MB
-  Now   : Orca Home 26 MB, free RAM 1826 MB
-  [32m✓[0m Orca Home uses 4 MB less than the original launcher
+  Before: original launcher 42 MB, free RAM 1873 MB
+  Now   : Orca Home 24 MB, free RAM 1872 MB
+  [32m✓[0m Orca Home uses 18 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
@@ -26,26 +26,26 @@ Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
   [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 42 MB, free RAM 1836 MB
-  Now   : Orca Home 26 MB, free RAM 1842 MB
+  Before: original launcher 39 MB, free RAM 1832 MB
+  Now   : Orca Home 29 MB, free RAM 1830 MB
+  [32m✓[0m Orca Home uses 10 MB less than the original launcher
+
+Check again any time: ./scripts/launcher.sh check
+Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
+(adb capture mode: execout)
+[1;34m==>[0m Installing Orca Home
+  [32m✓[0m installed
+[1;34m==>[0m Permissions
+  [32m✓[0m GPS for the speedometer
+  [32m✓[0m music card (reads what's playing)
+[1;34m==>[0m Home screen
+  [32m✓[0m Orca Home is now the home screen
+  [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
+  [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
+[1;34m==>[0m Memory (so Orca Home never makes the unit slower)
+  Before: original launcher 37 MB, free RAM 1832 MB
+  Now   : Orca Home 21 MB, free RAM 1832 MB
   [32m✓[0m Orca Home uses 16 MB less than the original launcher
-
-Check again any time: ./scripts/launcher.sh check
-Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
-(adb capture mode: execout)
-[1;34m==>[0m Installing Orca Home
-  [32m✓[0m installed
-[1;34m==>[0m Permissions
-  [32m✓[0m GPS for the speedometer
-  [32m✓[0m music card (reads what's playing)
-[1;34m==>[0m Home screen
-  [32m✓[0m Orca Home is now the home screen
-  [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
-  [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
-[1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 32 MB, free RAM 1829 MB
-  Now   : Orca Home 25 MB, free RAM 1811 MB
-  [32m✓[0m Orca Home uses 7 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)

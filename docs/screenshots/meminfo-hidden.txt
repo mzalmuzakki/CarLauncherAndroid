@@ -1,47 +1,47 @@
 Applications Memory Usage (in Kilobytes):
-Uptime: 558492 Realtime: 558492
+Uptime: 613762 Realtime: 613762
 
-** MEMINFO in pid 11135 [com.orcahome] **
-                   Pss  Private  Private  SwapPss     Heap     Heap     Heap
+** MEMINFO in pid 10968 [com.orcahome] **
+                   Pss  Private  Private     Swap     Heap     Heap     Heap
                  Total    Dirty    Clean    Dirty     Size    Alloc     Free
                 ------   ------   ------   ------   ------   ------   ------
-  Native Heap    19747    19724        0       22    22964    21419     1544
-  Dalvik Heap     1911     1832        0       14     3125     1563     1562
- Dalvik Other      348      348        0        0                           
-        Stack       36       36        0        0                           
+  Native Heap    13562    13512        0        0    21892    20467     1424
+  Dalvik Heap     1215     1172        0        0     3046     1510     1536
+ Dalvik Other      344      344        0        0                           
+        Stack       32       32        0        0                           
        Ashmem        2        0        0        0                           
     Other dev       68        0       68        0                           
-     .so mmap     1779      136        4        3                           
-    .jar mmap     1175        0       64        0                           
-    .apk mmap      794        0      140        0                           
-    .ttf mmap      217        0       64        0                           
+     .so mmap     1787      136        8        0                           
+    .jar mmap      970        0        4        0                           
+    .apk mmap      828        0      208        0                           
+    .ttf mmap      229        0       64        0                           
     .dex mmap       25        4       20        0                           
-    .oat mmap      752        0        8        0                           
-    .art mmap     2204     1944       20       11                           
-   Other mmap      206       36        0        0                           
-      Unknown      847      832        0        0                           
-        TOTAL    30161    24892      388       50    26089    22982     3106
+    .oat mmap      672        0        0        0                           
+    .art mmap     1902     1628       16        0                           
+   Other mmap      154       32        0        8                           
+      Unknown      817      792        0       24                           
+        TOTAL    22607    17652      388       32    24938    21977     2960
  
  App Summary
                        Pss(KB)
                         ------
-           Java Heap:     3796
-         Native Heap:    19724
-                Code:      440
-               Stack:       36
+           Java Heap:     2816
+         Native Heap:    13512
+                Code:      444
+               Stack:       32
             Graphics:        0
-       Private Other:     1284
-              System:     4881
+       Private Other:     1236
+              System:     4567
  
-               TOTAL:    30161       TOTAL SWAP PSS:       50
+               TOTAL:    22607      TOTAL SWAP (KB):       32
  
  Objects
-               Views:      106         ViewRootImpl:        1
+               Views:      102         ViewRootImpl:        1
          AppContexts:        6           Activities:        1
               Assets:       10        AssetManagers:        0
-       Local Binders:       18        Proxy Binders:       33
-       Parcel memory:        9         Parcel count:       46
-    Death Recipients:        0      OpenSSL Sockets:        4
+       Local Binders:       14        Proxy Binders:       32
+       Parcel memory:        8         Parcel count:       44
+    Death Recipients:        0      OpenSSL Sockets:        3
             WebViews:        0
  
  SQL
