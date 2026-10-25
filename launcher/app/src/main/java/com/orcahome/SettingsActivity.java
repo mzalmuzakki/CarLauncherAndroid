@@ -155,7 +155,7 @@ public class SettingsActivity extends Activity {
         check(col, "Song lyrics in the music card, in time with the music (from LRCLIB, internet; also the Lyrics button on the card)",
                 prefs.showLyrics(), prefs::setShowLyrics);
         TextView musicNote = ui.label(this, 13, ui.sub, false);
-        musicNote.setText("The music card keeps the last Spotify song: it shows when the car starts, and the play button carries on with it. \"Up next\" appears when the player shares its queue (the rest of the playlist or album); tap it to pick a song.");
+        musicNote.setText("The music card keeps the last Spotify song: it shows when the car starts, and the play button carries on with it. \"Up next\" appears when the player shares its queue (the rest of the playlist or album); tap it to pick a song. Lyrics out of time? Long-press them for Earlier / Later (kept for that song).");
         musicNote.setPadding(0, ui.dp(4), 0, 0);
         col.addView(musicNote);
 

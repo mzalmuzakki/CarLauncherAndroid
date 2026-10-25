@@ -69,6 +69,16 @@ final class Lyrics {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final LruCache<String, Lyrics> MEMORY = new LruCache<>(20);
 
+    /** The user's timing fix for one song (ms; positive = lyrics come earlier). */
+    static int offset(Context c, String key) {
+        return c.getSharedPreferences("lyricsoffset", Context.MODE_PRIVATE).getInt(key, 0);
+    }
+
+    static void setOffset(Context c, String key, int ms) {
+        android.content.SharedPreferences.Editor e = c.getSharedPreferences("lyricsoffset", Context.MODE_PRIVATE).edit();
+        (ms == 0 ? e.remove(key) : e.putInt(key, ms)).apply();
+    }
+
     static String key(String artist, String title) {
         return (artist + "\n" + title).toLowerCase(Locale.ROOT);
     }

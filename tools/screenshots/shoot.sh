@@ -229,6 +229,11 @@ tap_text "Viva la Vida" "512 256"; sleep 1
 home; shot 63-next-song-lyrics 12
 say "After picking from Up next: $(sh_ dumpsys media_session | grep -m1 -o 'description=[^,]*')"
 say "Lyrics: $(adb logcat -d -s OrcaHome:I | grep -o 'lyrics for .*' | tr '\n' ';')"
+# Lyrics timing: long-press the lyrics, "Later +" twice (paused, so the screen is still).
+sh_ input tap 823 441; sleep 2
+sh_ input swipe 823 240 823 240 1200; sleep 2
+tap_text "Later +" "834 268"; sleep 1; tap_text "Later +" "834 268"; shot 66-lyrics-timing 2
+say "Lyrics timing saved: $(sh_ "run-as $PKG cat shared_prefs/lyricsoffset.xml" | grep -o 'value="[^"]*"' | tr '\n' ' ') (expected -1000 for Viva la Vida)"
 sh_ am force-stop com.orcahome.demoplayer; sleep 2
 home; shot 64-last-played 5
 say "Remembered song: $(sh_ "run-as $PKG cat shared_prefs/lastplayed.xml" | grep -o 'name="title">[^<]*' | sed 's/.*>//'), cover saved: $(sh_ "run-as $PKG ls files/last-cover.jpg" 2>/dev/null | grep -c jpg)"

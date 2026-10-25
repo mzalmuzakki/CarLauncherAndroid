@@ -12,6 +12,8 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   pick a song (when the player shares its queue with Android).
 - Lyrics in the music card, line by line in time with the song (LRCLIB, free; one small
   request per new song, kept on the unit). Lyrics button on the card, or off in settings.
+  Lyrics out of time with your version of a song: long-press them, then Earlier / Later
+  (half a second a tap); remembered for that song.
 
 ## 2.6 — in testing
 - Night brightness (on by default): the screen dims at sunset (30 %, adjustable in settings)

@@ -96,8 +96,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private View musicCard;
     private ImageView musicArt, musicSourceIcon;
     private TextView musicSource, musicTitle, musicArtist, musicElapsed, musicDuration;
-    private TextView musicNext, lyricsChip, lyricPrev, lyricNow, lyricNext;
-    private View lyricsBox;
+    private TextView musicNext, lyricsChip, lyricPrev, lyricNow, lyricNext, lyricsShift;
+    private View lyricsBox, lyricsAdjust;
     private View progressFill;
     private ImageButton playPause;
 
@@ -120,6 +120,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private String lyricsKey;
     private boolean lyricsLoading;
     private int lyricLine = -2;
+    private int lyricsOffset; // this song's timing fix, ms
 
     @Override
     protected void onCreate(Bundle state) {
@@ -944,6 +945,13 @@ public class MainActivity extends Activity implements NavState.Listener {
             lp.topMargin = t == lyricPrev ? 0 : ui.dp(5);
             box.addView(t, lp);
         }
+        box.addView(lyricsAdjustRow(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30)));
+        box.setOnLongClickListener(v -> {
+            Lyrics l = lyrics;
+            if (l == null || !l.synced()) return false;
+            showLyricsAdjust(true);
+            return true;
+        });
         box.setOnClickListener(v -> {
             Lyrics l = lyrics;
             if (l != null && !l.synced()) { // only plain lyrics: show them all
@@ -1406,6 +1414,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private void stopMusic() {
         main.removeCallbacks(progressTick);
         main.removeCallbacks(lyricsTick);
+        main.removeCallbacks(hideLyricsAdjust);
         if (sessionsListening) sessions.removeOnActiveSessionsChangedListener(sessionsChanged);
         sessionsListening = false;
         if (controller != null) controller.unregisterCallback(trackCallback);
@@ -1615,6 +1624,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         lyrics = null;
         lyricsLoading = true;
         lyricLine = -2;
+        lyricsOffset = Lyrics.offset(this, key);
+        showLyricsAdjust(false);
         Lyrics.get(this, artist, title, m.getString(MediaMetadata.METADATA_KEY_ALBUM),
                 m.getLong(MediaMetadata.METADATA_KEY_DURATION), l -> {
                     if (!key.equals(lyricsKey)) return; // the song changed meanwhile
@@ -1627,6 +1638,65 @@ public class MainActivity extends Activity implements NavState.Listener {
     }
 
     private final Runnable lyricsTick = this::showLyricsLine;
+
+    /** Earlier / Later in half-second steps, for lyrics out of time with this version of the song. */
+    private View lyricsAdjustRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER);
+        lyricsShift = ui.label(this, 13, ui.text, true);
+        lyricsShift.setGravity(Gravity.CENTER);
+        row.addView(adjustButton("\u2212 Earlier", () -> shiftLyrics(500)));
+        row.addView(lyricsShift, new LinearLayout.LayoutParams(ui.dp(64), ViewGroup.LayoutParams.MATCH_PARENT));
+        row.addView(adjustButton("Later +", () -> shiftLyrics(-500)));
+        row.addView(adjustButton("Reset", () -> shiftLyrics(-lyricsOffset)));
+        row.addView(adjustButton("Done", () -> showLyricsAdjust(false)));
+        row.setVisibility(View.GONE);
+        lyricsAdjust = row;
+        return row;
+    }
+
+    private TextView adjustButton(String text, Runnable r) {
+        TextView b = ui.label(this, 12, ui.text, true);
+        b.setText(text);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(ui.dp(9), 0, ui.dp(9), 0);
+        b.setBackground(ui.box(ui.panel, ui.dp(14)));
+        b.setOnClickListener(v -> r.run());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.leftMargin = lp.rightMargin = ui.dp(3);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
+    private final Runnable hideLyricsAdjust = () -> showLyricsAdjust(false);
+
+    /** While adjusting, the line now and the buttons; closes itself after 8 s without a tap. */
+    private void showLyricsAdjust(boolean on) {
+        main.removeCallbacks(hideLyricsAdjust);
+        if (lyricsAdjust == null) return;
+        lyricsAdjust.setVisibility(on ? View.VISIBLE : View.GONE);
+        lyricPrev.setVisibility(on ? View.GONE : View.VISIBLE);
+        lyricNext.setVisibility(on ? View.GONE : View.VISIBLE);
+        if (on) {
+            lyricsShift.setText(shiftText());
+            main.postDelayed(hideLyricsAdjust, 8000);
+        }
+    }
+
+    private void shiftLyrics(int ms) {
+        if (lyricsKey == null) return;
+        lyricsOffset += ms;
+        Lyrics.setOffset(this, lyricsKey, lyricsOffset);
+        lyricsShift.setText(shiftText());
+        lyricLine = -2;
+        showLyricsLine();
+        main.removeCallbacks(hideLyricsAdjust);
+        main.postDelayed(hideLyricsAdjust, 8000);
+    }
+
+    private String shiftText() {
+        return lyricsOffset == 0 ? "0 s" : String.format(Locale.US, "%+.1f s", lyricsOffset / 1000f);
+    }
 
     /** The line for the current position; then waits exactly until the next line starts. */
     private void showLyricsLine() {
@@ -1641,7 +1711,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             setIfChanged(lyricNext, l != null ? "Tap to read" : "");
             return;
         }
-        long pos = position();
+        long pos = position() + lyricsOffset;
         int i = l.index(pos);
         if (i != lyricLine) {
             lyricLine = i;
