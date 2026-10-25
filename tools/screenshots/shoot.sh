@@ -39,6 +39,9 @@ setup_launcher() {   # $1 = apk; same steps as scripts/launcher.sh
     sh_ cmd package set-home-activity "$PKG/.MainActivity"
 }
 
+front() { sh_ dumpsys activity activities | grep -m1 mResumedActivity | grep -o '[a-z][a-zA-Z0-9_.]*/[a-zA-Z0-9_.$]*'; }
+player_state() { sh_ dumpsys media_session | grep -A15 'package=com.orcahome.demoplayer' | grep -m1 -o 'state=PlaybackState {state=[0-9]*' | grep -o '[0-9]*$'; }
+
 requests() { sh_ dumpsys location | grep -c "UpdateRecord\[.*$PKG"; }
 
 home() { sh_ am start -W -a android.intent.action.MAIN -c android.intent.category.HOME > /dev/null; }
@@ -241,9 +244,19 @@ tap_text "Lyrics" "960 182"; shot 67-lyrics-off 3   # back to the big cover
 sh_ am force-stop com.orcahome.demoplayer; sleep 2
 home; shot 64-last-played 5
 say "Remembered song: $(sh_ "run-as $PKG cat shared_prefs/lastplayed.xml" | grep -o 'name="title">[^<]*' | sed 's/.*>//'), cover saved: $(sh_ "run-as $PKG ls files/last-cover.jpg" 2>/dev/null | grep -c jpg)"
-sh_ input tap 823 441; sleep 7   # play: the demo app has no media button receiver, so Orca Home opens it
-home; shot 65-play-last-played 5
-say "After play on the last song: $(sh_ dumpsys media_session | grep -m1 -o 'package=com.orcahome.demoplayer') $(sh_ dumpsys media_session | grep -m1 -o 'state=PlaybackState {state=[0-9]*')"
+# Play on the last song: the player starts in the background, home stays in front.
+sh_ appops set "$PKG" SYSTEM_ALERT_WINDOW allow   # as launcher.sh does (to come back home)
+adb logcat -c
+sh_ input tap 823 441; shot 65-play-last-played 6
+say "Play on the last song: in front $(front), player $(player_state), $(adb logcat -d -s OrcaHome:I | grep -o 'resume: .*' | tr '\n' ';')"
+# Again with a player that ignores the button (as when the firmware blocks it): Orca Home
+# opens it, presses play once it's ready, and comes back.
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es buttons off > /dev/null; sleep 2
+sh_ am force-stop com.orcahome.demoplayer; sleep 2
+home; sleep 4; adb logcat -c
+sh_ input tap 823 441; shot 69-play-last-played-opened 10
+say "  player blocked in the background: in front $(front), player $(player_state), $(adb logcat -d -s OrcaHome:I | grep -o 'resume: .*' | tr '\n' ';')"
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es buttons on > /dev/null
 
 # Music shortcuts: nothing playing (the demo player stopped).
 sh_ am force-stop com.orcahome.demoplayer

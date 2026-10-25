@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -1631,23 +1630,10 @@ public class MainActivity extends Activity implements NavState.Listener {
         }
     }
 
-    /** Sends "play" to the app's media button receiver: Spotify carries on with the last song. */
+    /** Spotify carries on with the last song, from the home screen (see Resume). */
     private void resumeLast(LastPlayed last) {
-        List<ResolveInfo> r = getPackageManager().queryBroadcastReceivers(
-                new Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(last.pkg), 0);
-        if (r.isEmpty()) { launchPackage(last.pkg); return; }
-        ComponentName cn = new ComponentName(last.pkg, r.get(0).activityInfo.name);
-        long t = SystemClock.uptimeMillis();
-        for (int action : new int[]{KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
-            sendBroadcast(new Intent(Intent.ACTION_MEDIA_BUTTON).setComponent(cn)
-                    .putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(t, t, action, KeyEvent.KEYCODE_MEDIA_PLAY, 0)));
-        }
         musicSource.setText(("Starting " + appLabel(last.pkg) + "\u2026").toUpperCase(Locale.getDefault()));
-        // Not playing a few seconds later (the firmware may keep it from starting): open the app.
-        main.postDelayed(() -> {
-            boolean playing = controller != null && last.pkg.equals(controller.getPackageName()) && isPlaying();
-            if (visible && !playing) launchPackage(last.pkg);
-        }, 4000);
+        Resume.start(this, last.pkg);
     }
 
     // ---- up next (the player's queue: the rest of the playlist or album) ----------------

@@ -54,10 +54,23 @@ public class DemoActivity extends Activity {
         }
         // "--es song playlist": real songs with a queue, like Spotify playing a playlist
         // (lyrics and "Up next" on the music card).
-        boolean playlist = "playlist".equals(getIntent().getStringExtra("song"));
+        // "--es buttons on|off": whether "play" from a media button starts the player in the
+        // background (like Spotify), or is ignored (like a firmware that blocks it).
+        String buttons = getIntent().getStringExtra("buttons");
+        if (buttons != null) {
+            getSharedPreferences("demo", MODE_PRIVATE).edit().putBoolean("ignore", "off".equals(buttons)).commit();
+            finish();
+            return;
+        }
+        startSession(getApplicationContext(), "playlist".equals(getIntent().getStringExtra("song")));
+        finish();
+    }
+
+    /** The playing session: the default song, or (playlist) real songs with a queue. */
+    static void startSession(Context app, boolean playlist) {
         if (session == null || playlist) {
             if (session == null) {
-                session = new MediaSession(getApplicationContext(), "demo");
+                session = new MediaSession(app, "demo");
                 session.setCallback(new MediaSession.Callback() {
                     @Override public void onPlay() { state(PlaybackState.STATE_PLAYING); }
                     @Override public void onPause() { state(PlaybackState.STATE_PAUSED); }
@@ -84,7 +97,6 @@ public class DemoActivity extends Activity {
             }
             session.setActive(true);
         }
-        finish();
     }
 
     /** artist, title, album, seconds */

@@ -8,8 +8,10 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - Map compass: a red arrow pointing north (N under it) that turns with the map, in both
   map directions; tap it to switch between north up and driving direction up.
 - The music card keeps the last Spotify song (title, artist, cover): it shows as soon as the
-  car starts, and the play button carries on with it in Spotify (or opens Spotify if the
-  unit doesn't let it start by itself). Spotify is first among the music buttons.
+  car starts, and the play button carries on with it without leaving the home screen. If
+  the unit doesn't let Spotify start in the background, Orca Home opens it, presses play as
+  soon as it's ready and comes back to the home screen. Spotify is first among the music
+  buttons.
 - "Up next" on the music card: the next song in the playlist or album; tap for the list and
   pick a song (when the player shares its queue with Android).
 - Lyrics in the music card, in time with the song (LRCLIB, free; one small request per new
