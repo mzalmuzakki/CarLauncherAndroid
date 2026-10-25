@@ -137,6 +137,8 @@ sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive start > /dev/nu
 sleep 4
 say "Test GPS for 2.4 shots: $(sh_ dumpsys location | grep -m1 -E 'gps: Location\[')"
 prefs 6 true theme heading wide; home; shot 20-heading-up 10
+sh_ input tap 55 169; shot 28-compass-tap-north-up 3   # the compass, top left of the map
+say "Compass tap: map direction now $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o 'name="mapdir">[^<]*' | sed 's/.*>//') (expected north)"
 prefs 6 true theme north tall; home; shot 21-square-map 8
 prefs 6 true theme heading tall; home; shot 22-square-map-heading-up 8
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es nav on > /dev/null

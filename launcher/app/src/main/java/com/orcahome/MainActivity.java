@@ -386,6 +386,13 @@ public class MainActivity extends Activity implements NavState.Listener {
             if (!locationAllowed() || !location.isProviderEnabled(LocationManager.GPS_PROVIDER)) askLocation();
             else openNavigation();
         });
+        map.setOnCompassTap(() -> { // north up <-> driving direction up, as in settings
+            boolean headingUp = !"heading".equals(prefs.mapDirection());
+            prefs.setMapDirection(headingUp ? "heading" : "north");
+            builtStamp = prefs.stamp();
+            map.setHeadingUp(headingUp);
+            Toast.makeText(this, headingUp ? "Driving direction up" : "North up", Toast.LENGTH_SHORT).show();
+        });
         frame.addView(map, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         mapHint = ui.label(this, 14, ui.sub, false);

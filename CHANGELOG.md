@@ -5,6 +5,9 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
 ## 2.7 — in testing
+- Map compass: a needle (red = north) that turns with the map, the direction of travel
+  under it (e.g. "NE 45°"), shown in both map directions; tap it to switch between north
+  up and driving direction up.
 - The music card keeps the last Spotify song (title, artist, cover): it shows as soon as the
   car starts, and the play button carries on with it in Spotify (or opens Spotify if the
   unit doesn't let it start by itself). Spotify is first among the music buttons.
