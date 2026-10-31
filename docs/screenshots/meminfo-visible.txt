@@ -1,47 +1,47 @@
 Applications Memory Usage (in Kilobytes):
-Uptime: 633474 Realtime: 633474
+Uptime: 759154 Realtime: 759154
 
-** MEMINFO in pid 14614 [com.orcahome] **
-                   Pss  Private  Private  SwapPss     Heap     Heap     Heap
+** MEMINFO in pid 14904 [com.orcahome] **
+                   Pss  Private  Private     Swap     Heap     Heap     Heap
                  Total    Dirty    Clean    Dirty     Size    Alloc     Free
                 ------   ------   ------   ------   ------   ------   ------
-  Native Heap    15899    15872        0       19    24772    22624     2147
-  Dalvik Heap     1653     1584        0       25     3421     1711     1710
- Dalvik Other     2088     2088        0        0                           
+  Native Heap    17729    17668        0        0    21000    19267     1732
+  Dalvik Heap    14590     8840        0        0     3045     1525     1520
+ Dalvik Other      512      512        0        0                           
         Stack       32       32        0        0                           
-       Ashmem      405      400        0        0                           
-    Other dev       64        0       64        0                           
-     .so mmap     1731      140        0        3                           
-    .jar mmap     1129        0        0        0                           
-    .apk mmap      620        0      188        0                           
-    .ttf mmap      368        0      180        0                           
-    .dex mmap       29        4       24        0                           
-    .oat mmap      697        0        4        0                           
-    .art mmap     1945     1712        4       17                           
-   Other mmap      215       40        0        0                           
-      Unknown      902      892        0        0                           
-        TOTAL    27841    22764      464       64    28193    24335     3857
+       Ashmem        5        0        0        0                           
+    Other dev       68        0       68        0                           
+     .so mmap     2478      136        4        0                           
+    .jar mmap     1482        0        0        0                           
+    .apk mmap    44817        0    18596        0                           
+    .ttf mmap      181        0       76        0                           
+    .dex mmap       28        4       24        0                           
+    .oat mmap     1061        0        0        0                           
+    .art mmap     1750     1424        4        0                           
+   Other mmap      259       12      140        0                           
+      Unknown      742      716        0        0                           
+        TOTAL    85734    29344    18912        0    24045    20792     3252
  
  App Summary
                        Pss(KB)
                         ------
-           Java Heap:     3300
-         Native Heap:    15872
-                Code:      540
+           Java Heap:    10268
+         Native Heap:    17668
+                Code:    18840
                Stack:       32
             Graphics:        0
-       Private Other:     3484
-              System:     4613
+       Private Other:     1448
+              System:    37478
  
-               TOTAL:    27841       TOTAL SWAP PSS:       64
+               TOTAL:    85734      TOTAL SWAP (KB):        0
  
  Objects
                Views:      126         ViewRootImpl:        1
          AppContexts:        6           Activities:        1
               Assets:       10        AssetManagers:        0
-       Local Binders:       20        Proxy Binders:       34
-       Parcel memory:       16         Parcel count:       98
-    Death Recipients:        0      OpenSSL Sockets:        6
+       Local Binders:       19        Proxy Binders:       33
+       Parcel memory:        5         Parcel count:       23
+    Death Recipients:        0      OpenSSL Sockets:        1
             WebViews:        0
  
  SQL

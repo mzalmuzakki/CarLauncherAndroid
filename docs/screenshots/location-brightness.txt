@@ -1,8 +1,6 @@
   Last Known Locations:
-    fused: Location[fused -6.186400,106.823800 hAcc=5 et=+6m50s65ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock {Bundle[{noGPSLocation=Location[fused -6.186400,106.823800 hAcc=5 et=+6m50s65ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]}]}]
-    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+6m50s65ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
-    passive: Location[fused -6.186400,106.823800 hAcc=5 et=+6m50s65ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock {Bundle[{noGPSLocation=Location[fused -6.186400,106.823800 hAcc=5 et=+6m50s65ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]}]}]
+    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+7m39s130ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+7m39s130ms alt=10.0 vel=0.0 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
   Last Known Locations Coarse Intervals:
-    fused: Location[fused -6.186400,106.832560 hAcc=5 et=+4m29s610ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock {Bundle[{noGPSLocation=Location[fused -6.186400,106.832560 hAcc=5 et=+4m29s610ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]}]}]
-    gps: Location[gps -6.186400,106.832560 hAcc=5 et=+4m29s610ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
-    passive: Location[gps -6.186400,106.832560 hAcc=5 et=+4m29s610ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    gps: Location[gps -6.186400,106.823800 hAcc=5 et=+3m44s211ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+    passive: Location[gps -6.186400,106.823800 hAcc=5 et=+3m44s211ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
