@@ -4,6 +4,17 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.9 — in testing
+- The unit's own FM/AM radio on the music card (through the NWD radio service): the station
+  (name or frequency, radio text), its presets as buttons (tap to tune), ◀ ▶ search the
+  previous / next station, the radio's screen from the middle button. Shown while the radio is
+  in use and no other player plays.
+- Favourite station: long-press a preset or the station name. The radio buttons (empty music
+  card, quick switch) and a dock button set to "Radio: favourite station" start the radio on
+  it and come back to the home screen.
+- Car data recorder (settings, two hours): logs what the car's CAN box and the firmware send
+  (doors, car info, air conditioning, handbrake, volume...), to work out this car's data.
+
 ## 2.8 — in testing
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and
   the Hijri date; public holidays (Google's Indonesian holiday calendar, cuti bersama included)

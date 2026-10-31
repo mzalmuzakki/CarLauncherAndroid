@@ -67,7 +67,7 @@ final class Lyrics {
     }
 
     private static final String API = "https://lrclib.net/api/";
-    private static final String UA = "OrcaHome/2.8 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
+    private static final String UA = "OrcaHome/2.9 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
     private static final Lyrics NONE = new Lyrics(new long[0], new String[0], "");
     private static final long RETRY_NONE_MS = 7L * 24 * 3600 * 1000;
     private static final long KEEP_MS = 30L * 24 * 3600 * 1000;

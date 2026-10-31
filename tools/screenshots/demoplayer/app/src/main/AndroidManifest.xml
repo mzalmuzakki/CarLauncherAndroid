@@ -9,6 +9,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- A stand-in for the NWD radio (service and screen), for Orca Home's radio card. -->
+        <activity android:name=".FakeRadioActivity" android:exported="true" android:label="Radio"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name=".FakeRadioService" android:exported="true">
+            <intent-filter>
+                <action android:name="com.nwd.radio.service.ACTION_RADIO_SERVICE" />
+            </intent-filter>
+        </service>
         <receiver android:name=".ButtonReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />

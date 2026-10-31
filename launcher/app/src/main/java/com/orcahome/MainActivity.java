@@ -89,7 +89,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private GaugeView gauge;
     private MapPanel map;
     private TextView speedBubble, mapHint;
-    private LinearLayout chipRow, musicApps, quickSwitch;
+    private LinearLayout chipRow, musicApps, quickSwitch, radioPresets;
+    private String shownPresets = "";
     private final List<String> quickPkgs = new ArrayList<>(); // the player of each quickSwitch icon
     // 2.8: next prayer / Hijri date under the clock, speed limit sign and trip under the speed,
     // reminder pills at the bottom of the map.
@@ -171,6 +172,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         showWeather();
         if (prefs.showWeather()) Weather.refreshIfStale(this, prefs, this::showWeather);
         if (prefs.showHolidays()) Holidays.refreshIfStale(this, this::updateCalendar);
+        RadioClient radio = RadioClient.get(this);
+        radio.setListener(this::showTrack);
+        radio.connect();
         Drive drive = Drive.get(this);
         drive.setListener(this::showTrip);
         drive.start();
@@ -194,6 +198,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         unregisterReceiver(dateChanged);
         main.removeCallbacks(calendarTick);
         Drive.get(this).setListener(null);
+        RadioClient.get(this).setListener(null);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
         stopSpeed();
@@ -1051,7 +1056,7 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** Lyrics showing for a song: the card trades its big cover for more lines of lyrics. */
     private boolean wantsLyricsLayout() {
-        return prefs.showLyrics() && controller != null && meta != null;
+        return prefs.showLyrics() && controller != null && meta != null && !radioShown();
     }
 
     /**
@@ -1114,7 +1119,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
             llp.topMargin = ui.dp(8);
             p.addView(lyricsView(5), llp);
-            musicApps = quickSwitch = null;
+            musicApps = quickSwitch = radioPresets = null;
             p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         } else {
             LinearLayout head = new LinearLayout(this);
@@ -1134,7 +1139,7 @@ public class MainActivity extends Activity implements NavState.Listener {
                 icon.setPadding(ui.dp(3), ui.dp(3), ui.dp(3), ui.dp(3));
                 icon.setBackground(ui.box(ui.tile, ui.dp(16)));
                 Apps.icon(icon, e);
-                icon.setOnClickListener(v -> Apps.launch(this, e.cn));
+                icon.setOnClickListener(v -> openMusicApp(e));
                 LinearLayout.LayoutParams ql = new LinearLayout.LayoutParams(ui.dp(32), ui.dp(32));
                 ql.leftMargin = ui.dp(6);
                 quickSwitch.addView(icon, ql);
@@ -1162,6 +1167,17 @@ public class MainActivity extends Activity implements NavState.Listener {
             alp.topMargin = ui.dp(3);
             p.addView(musicArtist, alp);
             p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            // The radio's presets, while the card shows the radio.
+            HorizontalScrollView ps = new HorizontalScrollView(this);
+            ps.setHorizontalScrollBarEnabled(false);
+            radioPresets = new LinearLayout(this);
+            ps.addView(radioPresets);
+            ps.setVisibility(View.GONE);
+            LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            pl.topMargin = ui.dp(6);
+            pl.gravity = Gravity.CENTER_HORIZONTAL;
+            p.addView(ps, pl);
+            shownPresets = "";
             p.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
         }
 
@@ -1199,10 +1215,16 @@ public class MainActivity extends Activity implements NavState.Listener {
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setGravity(Gravity.CENTER);
-        buttons.addView(mediaButton(R.drawable.ic_prev, false, v -> { if (controller != null) controller.getTransportControls().skipToPrevious(); }));
+        buttons.addView(mediaButton(R.drawable.ic_prev, false, v -> {
+            if (radioShown()) RadioClient.get(this).seek(false);
+            else if (controller != null) controller.getTransportControls().skipToPrevious();
+        }));
         playPause = mediaButton(R.drawable.ic_play, true, v -> togglePlay());
         buttons.addView(playPause);
-        buttons.addView(mediaButton(R.drawable.ic_next, false, v -> { if (controller != null) controller.getTransportControls().skipToNext(); }));
+        buttons.addView(mediaButton(R.drawable.ic_next, false, v -> {
+            if (radioShown()) RadioClient.get(this).seek(true);
+            else if (controller != null) controller.getTransportControls().skipToNext();
+        }));
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         bl.topMargin = ui.dp(6);
         p.addView(buttons, bl);
@@ -1311,7 +1333,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             label.setEllipsize(TextUtils.TruncateAt.END);
             label.setGravity(Gravity.CENTER);
             b.addView(label, wrapTop(5));
-            b.setOnClickListener(v -> Apps.launch(this, e.cn));
+            b.setOnClickListener(v -> openMusicApp(e));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ui.dp(74), ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.leftMargin = lp.rightMargin = ui.dp(4);
             row.addView(b, lp);
@@ -1371,8 +1393,10 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** A dock button that can be changed to any app with a long press (e.g. ZLink instead of the browser). */
     private void dockSlot(LinearLayout d, Map<String, Apps.Entry> apps, String slot, String name, int icon, View.OnClickListener own) {
-        Apps.Entry app = apps.get(prefs.dockApp(slot));
-        ImageView b = dockButton(d, icon, false, app == null ? own : v -> Apps.launch(this, app.cn), v -> {
+        boolean radioFav = RADIO_FAV.equals(prefs.dockApp(slot)) && favouriteStation() != null;
+        Apps.Entry app = radioFav ? null : apps.get(prefs.dockApp(slot));
+        View.OnClickListener click = radioFav ? v -> startRadio() : app == null ? own : v -> Apps.launch(this, app.cn);
+        ImageView b = dockButton(d, radioFav ? R.drawable.ic_radio : icon, false, click, v -> {
             chooseDockApp(slot, name);
             return true;
         });
@@ -1403,13 +1427,16 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private void chooseDockApp(String slot, String name) {
         List<Apps.Entry> all = Apps.all(this);
-        String[] items = new String[all.size() + 1];
+        RadioClient.Station fav = favouriteStation();
+        int extra = fav != null ? 2 : 1; // own button, [favourite radio station], then the apps
+        String[] items = new String[all.size() + extra];
         items[0] = name + " (Orca Home's own button)";
-        for (int i = 0; i < all.size(); i++) items[i + 1] = all.get(i).label;
+        if (fav != null) items[1] = "Radio: favourite station " + fav.number() + " " + fav.unit();
+        for (int i = 0; i < all.size(); i++) items[i + extra] = all.get(i).label;
         new android.app.AlertDialog.Builder(this)
                 .setTitle("Dock button: " + name)
                 .setItems(items, (dlg, which) -> {
-                    prefs.setDockApp(slot, which == 0 ? "" : all.get(which - 1).key());
+                    prefs.setDockApp(slot, which == 0 ? "" : which < extra ? RADIO_FAV : all.get(which - extra).key());
                     build();
                     onNavChanged();
                 })
@@ -1776,7 +1803,11 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private final MediaController.Callback trackCallback = new MediaController.Callback() {
         @Override public void onMetadataChanged(MediaMetadata m) { meta = m; showTrack(); }
-        @Override public void onPlaybackStateChanged(PlaybackState s) { playback = s; showState(); }
+        @Override public void onPlaybackStateChanged(PlaybackState s) {
+            playback = s;
+            if (isPlaying()) RadioClient.get(MainActivity.this).setActive(false);
+            showState();
+        }
         @Override public void onQueueChanged(List<MediaSession.QueueItem> q) { queue = q; showNext(); }
         @Override public void onSessionDestroyed() { pickController(null); }
     };
@@ -1852,6 +1883,10 @@ public class MainActivity extends Activity implements NavState.Listener {
     private void showTrack() {
         if (musicTitle == null) return;
         if (wantsLyricsLayout() != lyricsLayout && musicCard.getParent() != null) { relayoutMusic(); return; }
+        if (radioPresets != null) ((View) radioPresets.getParent()).setVisibility(View.GONE);
+        if (radioShown()) { showRadio(); return; }
+        musicTitle.setOnLongClickListener(null); // the favourite-station long-press is the radio's
+        musicTitle.setLongClickable(false);
         MediaController c = controller;
         MediaMetadata m = meta;
         LastPlayed last = c == null ? lastPlayed() : null;
@@ -2155,6 +2190,7 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** Play/pause button and progress; the 1-second tick runs only while playing and visible. */
     private void showState() {
+        if (radioShown()) return; // the radio has no play state or progress here
         if (musicTitle == null) return;
         main.removeCallbacks(progressTick);
         if (controller == null || meta == null) return;
@@ -2204,7 +2240,123 @@ public class MainActivity extends Activity implements NavState.Listener {
                 : String.format(Locale.US, "%d:%02d", s / 60, s % 60);
     }
 
+    // ---- the unit's radio (NWD firmware) ------------------------------------------------
+
+    private static final String RADIO_FAV = "radio:fav";
+
+    /** The card shows the radio while it's in use and no other player is playing. */
+    private boolean radioShown() {
+        RadioClient rc = RadioClient.get(this);
+        return rc.active() && rc.current() != null && !isPlaying();
+    }
+
+    private RadioClient.Station favouriteStation() { return RadioClient.Station.fromKey(prefs.radioFavourite()); }
+
+    private void showRadio() {
+        RadioClient rc = RadioClient.get(this);
+        RadioClient.Station s = rc.current();
+        shownMeta = null;
+        main.removeCallbacks(progressTick);
+        main.removeCallbacks(lyricsTick);
+        if (musicApps != null) musicApps.setVisibility(View.GONE);
+        if (quickSwitch != null) quickSwitch.setVisibility(View.GONE);
+        lyricsChip.setVisibility(View.GONE);
+        musicNext.setVisibility(View.GONE);
+        try { musicSourceIcon.setImageDrawable(getPackageManager().getApplicationIcon(rc.appIntent().getComponent() != null
+                ? rc.appIntent().getComponent().getPackageName() : RadioClient.NWD_APP)); }
+        catch (Exception e) { musicSourceIcon.setImageDrawable(null); }
+        musicSource.setText("RADIO \u00b7 " + (s.fm() ? "FM" : "AM") + (s.key().equals(prefs.radioFavourite()) ? "  \u2605" : ""));
+        String freq = s.number() + " " + s.unit();
+        musicTitle.setText(s.name.isEmpty() ? freq : s.name);
+        String rt = rc.radioText();
+        musicArtist.setText((s.name.isEmpty() ? "" : freq) + (rt.isEmpty() ? "" : (s.name.isEmpty() ? "" : " \u00b7 ") + rt));
+        musicTitle.setOnLongClickListener(v -> { askFavourite(rc.current()); return true; });
+        musicArt.setVisibility(View.VISIBLE);
+        musicArt.setImageResource(R.drawable.ic_radio);
+        musicArt.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        musicArt.setColorFilter(ui.accent);
+        playPause.setImageResource(R.drawable.ic_radio);
+        progressFill.setScaleX(0);
+        setIfChanged(musicElapsed, "");
+        setIfChanged(musicDuration, "");
+        if (radioPresets == null) return;
+        // Presets: a chip each, the one playing highlighted; tap to tune, long-press for favourite.
+        List<RadioClient.Station> presets = rc.presets();
+        StringBuilder sig = new StringBuilder(s.key());
+        for (RadioClient.Station p : presets) sig.append('|').append(p.key());
+        ((View) radioPresets.getParent()).setVisibility(presets.isEmpty() ? View.GONE : View.VISIBLE);
+        if (sig.toString().equals(shownPresets)) return;
+        shownPresets = sig.toString();
+        radioPresets.removeAllViews();
+        for (int i = 0; i < presets.size() && i < 12; i++) {
+            RadioClient.Station p = presets.get(i);
+            final int index = i;
+            boolean on = p.freq == s.freq && p.band == s.band;
+            TextView chip = ui.label(this, 13, on ? ui.onAccent : ui.text, true);
+            chip.setText(p.number());
+            chip.setGravity(Gravity.CENTER);
+            chip.setPadding(ui.dp(10), 0, ui.dp(10), 0);
+            chip.setBackground(ui.box(on ? ui.accent : ui.tile, ui.dp(14)));
+            chip.setOnClickListener(v -> RadioClient.get(this).tune(p, index));
+            chip.setOnLongClickListener(v -> { askFavourite(p); return true; });
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(28));
+            cl.rightMargin = ui.dp(6);
+            radioPresets.addView(chip, cl);
+        }
+    }
+
+    private void askFavourite(RadioClient.Station s) {
+        if (s == null) return;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Favourite station")
+                .setMessage("Make " + s.number() + " " + s.unit() + (s.name.isEmpty() ? "" : " (" + s.name + ")")
+                        + " your favourite? The radio button (and a dock button set to \"Radio: favourite station\") start it.")
+                .setPositiveButton("Make favourite", (d, w) -> {
+                    prefs.setRadioFavourite(s.key());
+                    builtStamp = prefs.stamp();
+                    showTrack();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /** Radio player buttons start the radio (on the favourite station); other players open. */
+    private void openMusicApp(Apps.Entry e) {
+        String l = e.label.toLowerCase(Locale.ROOT);
+        boolean radio = RadioClient.NWD_APP.equals(e.cn.getPackageName()) || l.contains("radio") || l.equals("fm");
+        if (radio && RadioClient.get(this).servicePackage() != null) startRadio();
+        else Apps.launch(this, e.cn);
+    }
+
+    /** Opens the radio (that makes it the sound source), tunes the favourite, comes back home. */
+    private void startRadio() {
+        RadioClient rc = RadioClient.get(this);
+        rc.connect();
+        rc.setActive(true);
+        Intent i = rc.appIntent();
+        if (i == null || !open(i)) return;
+        RadioClient.Station fav = favouriteStation();
+        if (fav != null) main.postDelayed(() -> rc.tune(fav, presetIndex(rc, fav)), 1500);
+        main.postDelayed(() -> {
+            if (shown) return;
+            Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                    .setComponent(new ComponentName(this, MainActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try { startActivity(home); } catch (RuntimeException ignored) { }
+        }, 3000);
+    }
+
+    private static int presetIndex(RadioClient rc, RadioClient.Station s) {
+        List<RadioClient.Station> ps = rc.presets();
+        for (int i = 0; i < ps.size(); i++) if (ps.get(i).freq == s.freq && ps.get(i).band == s.band) return i;
+        return -1;
+    }
+
     private void togglePlay() {
+        if (radioShown()) { // the radio can't pause from here: its own screen
+            Intent i = RadioClient.get(this).appIntent();
+            if (i != null) open(i);
+            return;
+        }
         if (controller == null) {
             LastPlayed last = lastPlayed();
             if (last != null) resumeLast(last); else openMusic();

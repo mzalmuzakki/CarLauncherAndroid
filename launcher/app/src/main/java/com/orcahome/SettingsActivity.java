@@ -213,6 +213,36 @@ public class SettingsActivity extends Activity {
         volNote.setText("Set a few seconds after the car starts (after the unit sets its own). Never the last, possibly loud level.");
         col.addView(volNote);
 
+        header(col, "Radio");
+        RadioClient.Station fav = RadioClient.Station.fromKey(prefs.radioFavourite());
+        TextView radioNote = ui.label(this, 13, ui.sub, false);
+        radioNote.setText((fav == null ? "No favourite station yet. " : "Favourite station: " + fav.number() + " " + fav.unit()
+                + (fav.name.isEmpty() ? "" : " (" + fav.name + ")") + ". ")
+                + "While the radio plays, the music card shows the station and its presets (\u25C0 \u25B6 search the next station); "
+                + "long-press a preset or the station name to make it the favourite. The radio button, and a dock button set to "
+                + "\"Radio: favourite station\" (long-press the music button), start the radio on it.");
+        col.addView(radioNote);
+        if (fav != null) button(col, "Forget the favourite station", () -> { prefs.setRadioFavourite(""); build(); });
+
+        header(col, "Car data (to learn this car's CAN data)");
+        CanRecorder rec = CanRecorder.get(this);
+        long until = prefs.carDataUntil();
+        boolean recording = until > System.currentTimeMillis();
+        TextView canNote = ui.label(this, 13, ui.sub, false);
+        canNote.setText(!CanRecorder.available(this) ? "This unit has no NWD CAN service."
+                : "Records what the car's CAN box sends (doors, outside temperature, air conditioning...) for two hours, "
+                + "to work out how this car's data is encoded. While it records: open and close a door, switch the air "
+                + "conditioning on and off, drive a little. Then: adb pull " + rec.file().getPath());
+        col.addView(canNote);
+        if (CanRecorder.available(this)) {
+            button(col, recording ? "Recording car data until " + android.text.format.DateFormat.getTimeFormat(this).format(new java.util.Date(until))
+                    + " (tap to stop)" : "Record car data for 2 hours", () -> {
+                if (recording) { prefs.setCarDataUntil(0); rec.stop(); }
+                else { long t = System.currentTimeMillis() + 2 * 3600_000L; prefs.setCarDataUntil(t); rec.startUntil(t); }
+                build();
+            });
+        }
+
         header(col, "Prayer times and dates");
         check(col, "Next prayer time on the clock card (Kemenag method, worked out on the unit)", prefs.showPrayer(), prefs::setShowPrayer);
         check(col, "Hijri date on the clock card", prefs.showHijri(), prefs::setShowHijri);
@@ -277,7 +307,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.8 · CAKRA Labs\nNo ads. Internet is used only for weather, map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data.");
+        about.setText("Orca Home 2.9 · CAKRA Labs\nNo ads. Internet is used only for weather, map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);

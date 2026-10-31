@@ -86,6 +86,12 @@ final class Prefs {
     }
     /** Volume (% of the maximum) set when the car starts; -1 = leave it to the unit. */
     int startVolume() { return sp.getInt("startvol", -1); }
+    /** The favourite radio station ("band:frequency:name"), or "". */
+    String radioFavourite() { return sp.getString("radiofav", ""); }
+    void setRadioFavourite(String key) { sp.edit().putString("radiofav", key).putLong("stamp", System.nanoTime()).apply(); }
+    /** Car-data recording runs until this time (ms); 0 = off. */
+    long carDataUntil() { return sp.getLong("candata_until", 0); }
+    void setCarDataUntil(long t) { sp.edit().putLong("candata_until", t).apply(); }
     /** Package the dock's navigation button opens; empty = automatic. */
     String navApp() { return sp.getString("navapp", ""); }
     long stamp() { return sp.getLong("stamp", 0); }

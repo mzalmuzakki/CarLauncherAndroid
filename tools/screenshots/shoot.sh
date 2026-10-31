@@ -93,10 +93,22 @@ tap_text() {
     sh_ uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
     at=$(sh_ cat /sdcard/ui.xml | python3 -c '
 import re, sys
-m = re.search(r"text=\"" + re.escape(sys.argv[1]) + r"[^\"]*\"[^>]*?bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read())
+m = re.search(r"text=\"" + re.escape(sys.argv[1]) + r"[^\"]*\"[^>]*?bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read(), re.I)
 print("%d %d" % ((int(m[1]) + int(m[3])) // 2, (int(m[2]) + int(m[4])) // 2) if m else "")' "$1")
     [ -n "$at" ] || { say "  (\"$1\" not found on screen, tapping at $2)"; at=$2; }
     sh_ input tap $at
+}
+
+# Long-press on the first view whose text starts with $1.
+long_text() {
+    local at
+    sh_ uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
+    at=$(sh_ cat /sdcard/ui.xml | python3 -c '
+import re, sys
+m = re.search(r"text=\"" + re.escape(sys.argv[1]) + r"[^\"]*\"[^>]*?bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", sys.stdin.read(), re.I)
+print("%d %d" % ((int(m[1]) + int(m[3])) // 2, (int(m[2]) + int(m[4])) // 2) if m else "")' "$1")
+    if [ -z "$at" ]; then say "  (\"$1\" not found on screen for a long press)"; return; fi
+    sh_ input swipe $at $at 1200
 }
 
 # --- Screenshots (debug build) -----------------------------------------------------------
@@ -295,6 +307,24 @@ adb logcat -c
 sh_ input keyevent KEYCODE_SLEEP; sleep 8; sh_ input keyevent KEYCODE_WAKEUP; sleep 1; sh_ wm dismiss-keyguard; sleep 8
 say "  start-up volume: $(sh_ media volume --stream 3 --get | grep -o 'volume is [0-9]* in range \[[0-9.]*\]') (expected about 30 %), $(adb logcat -d -s OrcaHome:I | grep -o -E '(start-up volume|car started): .*' | tr '\n' ';')"
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
+
+# 2.9: the unit's radio on the music card (the demo app's stand-in for the NWD radio service):
+# station, presets, seek, favourite.
+sh_ am force-stop com.orcahome.demoplayer   # no other player
+prefs 6 true theme north wide; home; sleep 5
+adb logcat -c
+tap_text "Radio" "880 270"; sleep 6     # the radio button on the empty music card
+home; shot 75-radio-card 4
+say ""
+say "2.9 radio (stand-in): $(adb logcat -d -s OrcaHome:I | grep -o 'radio: .*' | tr '\n' ';')"
+adb logcat -c
+tap_text "101.4" "823 380"; sleep 3; shot 76-radio-preset 2
+sh_ input tap 910 441; sleep 3; shot 77-radio-seek 2   # the next button: search up
+say "  preset and seek: $(adb logcat -d -s OrcaHome:I | grep -o 'radio: .*' | tr '\n' ';')"
+long_text "102.6"; sleep 2; shot 78-radio-favourite-ask 2
+tap_text "MAKE FAVOURITE" "760 400"; sleep 2
+say "  favourite saved: $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o 'name="radiofav">[^<]*' | sed 's/.*>//') (expected 0:10260:TRAX FM)"
+shot 79-radio-favourite 2
 
 # Music shortcuts: nothing playing (the demo player stopped).
 sh_ am force-stop com.orcahome.demoplayer
