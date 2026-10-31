@@ -986,6 +986,11 @@ public class MainActivity extends Activity implements NavState.Listener {
         }
         cal.addView(calMonth);
         cal.addView(calDay, wrapTop(3));
+        // Grid layout: the next prayer and the Hijri date (short) on a line of their own.
+        prayerLine = ui.label(this, 12, ui.sub, false);
+        prayerLine.setSingleLine(true);
+        prayerLine.setEllipsize(TextUtils.TruncateAt.END);
+        cal.addView(prayerLine, wrapTop(2));
         LinearLayout strip = new LinearLayout(this);
         strip.setGravity(Gravity.BOTTOM);
         calPrev = ui.label(this, 22, ui.sub, false);
@@ -1002,7 +1007,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (prefs.showMap()) {
             // The map replaces the clock panel, so this card shows the date and a large clock.
             LinearLayout dc = panel(LinearLayout.VERTICAL);
-            dc.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(8));
+            dc.setPadding(ui.dp(12), ui.dp(8), ui.dp(12), ui.dp(6)); // a little room to spare for the four lines
             calMonth = ui.label(this, 11, ui.sub, false);
             calMonth.setSingleLine(true);
             calMonth.setEllipsize(TextUtils.TruncateAt.END);
@@ -1029,7 +1034,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             row.addView(dc, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         } else {
             row.addView(cal, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-            prayerLine = hijriLine = null;
+            hijriLine = null;
         }
 
         if (prefs.showWeather()) {
@@ -1531,8 +1536,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         open(new Intent(Intent.ACTION_DIAL));
     }
 
+    /** The dock's music button: the music player (also while the card shows the radio). */
     private void openMusic() {
-        if (controller != null) { openPlayer(); return; }
+        if (controller != null) { openSessionApp(); return; }
         if (launchPackage("com.spotify.music")) return;
         open(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC));
     }
@@ -1591,10 +1597,13 @@ public class MainActivity extends Activity implements NavState.Listener {
             refreshPills();
             return;
         }
-        String extra = holiday != null ? holiday : hijri;
         calMonth.setText((new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(now)
-                + (extra.isEmpty() ? "" : " \u00b7 " + extra)).toUpperCase(Locale.getDefault()));
-        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now) + (prayer.isEmpty() ? "" : " \u00b7 " + prayer));
+                + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
+        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now));
+        String shortHijri = prefs.showHijri() ? PrayerTimes.hijriShort(now.getTime(), TimeZone.getDefault()) : "";
+        String line = prayer + (!prayer.isEmpty() && !shortHijri.isEmpty() ? " \u00b7 " : "") + shortHijri;
+        prayerLine.setText(line);
+        prayerLine.setVisibility(line.isEmpty() ? View.GONE : View.VISIBLE);
         calToday.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
         c.add(Calendar.DAY_OF_MONTH, -1);
         calPrev.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
@@ -2309,7 +2318,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         main.removeCallbacks(progressTick);
         main.removeCallbacks(lyricsTick);
         if (musicApps != null) musicApps.setVisibility(View.GONE);
-        if (quickSwitch != null) quickSwitch.setVisibility(View.GONE);
+        Intent radioApp = rc.appIntent();
+        showQuickSwitch(radioApp != null && radioApp.getComponent() != null ? radioApp.getComponent().getPackageName()
+                : radioApp != null ? radioApp.getPackage() : RadioClient.NWD_APP);
         lyricsChip.setVisibility(View.GONE);
         musicNext.setVisibility(View.GONE);
         try { musicSourceIcon.setImageDrawable(getPackageManager().getApplicationIcon(rc.appIntent().getComponent() != null
@@ -2430,12 +2441,17 @@ public class MainActivity extends Activity implements NavState.Listener {
         else controller.getTransportControls().play();
     }
 
+    /** A tap on the music card: the radio's screen while it shows the radio, else the player. */
     private void openPlayer() {
-        if (radioShown()) { // the radio's own screen
+        if (radioShown()) {
             Intent i = RadioClient.get(this).appIntent();
             if (i != null) open(i);
             return;
         }
+        openSessionApp();
+    }
+
+    private void openSessionApp() {
         if (!sessionsListening) {
             open(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
             return;

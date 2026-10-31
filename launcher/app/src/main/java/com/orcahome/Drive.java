@@ -20,9 +20,9 @@ import java.util.Locale;
  * is on, nothing while it sleeps). A trip starts when the car does (the screen comes on after
  * at least 10 minutes off, or the unit starts), which is also when the start-up volume is set.
  * With "background location" (launcher.sh allows it) it counts while other apps are in front
- * too; without, only while the home screen shows. After 10 minutes without moving it stops
- * asking for GPS and only listens to fixes other apps get (Maps, the home screen's speed);
- * GPS comes back when one of those shows the car moving, or when the car starts.
+ * too; without, only while the home screen shows. After 10 minutes without moving at all
+ * (crawling counts as moving) it stops asking for GPS and listens to fixes other apps get,
+ * with a 30-second GPS check every 2 minutes; GPS comes back as soon as the car moves.
  */
 final class Drive implements LocationListener {
     interface Listener { void changed(); }
@@ -36,7 +36,7 @@ final class Drive implements LocationListener {
     private boolean running;
     private boolean idle; // listening only (passive), after standing still
     private long movedAt;
-    private static final long IDLE_MS = 10 * 60_000L;
+    private static final long IDLE_MS = 10 * 60_000L, PROBE_EVERY_MS = 2 * 60_000L, PROBE_MS = 30_000L;
     private double lastLat = Double.NaN, lastLon;
     private long lastT, savedAt, lastFixAt; // lastT: time of the last counted point
     private Listener listener;
@@ -67,6 +67,8 @@ final class Drive implements LocationListener {
         movedAt = System.currentTimeMillis();
         request(LocationManager.GPS_PROVIDER);
         idle = false;
+        main.removeCallbacks(probe);
+        main.removeCallbacks(probeEnd);
         main.removeCallbacks(idleCheck);
         main.postDelayed(idleCheck, IDLE_MS);
     }
@@ -93,14 +95,31 @@ final class Drive implements LocationListener {
             request(LocationManager.PASSIVE_PROVIDER);
             idle = true;
             save();
+            main.postDelayed(probe, PROBE_EVERY_MS);
             Log.i("OrcaHome", "trip: standing still, GPS off until the car moves");
         }
+    };
+
+    /** While idle: GPS for 30 s every 2 minutes, in case no other app has a fix to share. */
+    private final Runnable probe = () -> {
+        if (!idle) return;
+        request(LocationManager.GPS_PROVIDER);
+        main.postDelayed(this.probeEnd, PROBE_MS);
+    };
+
+    /** Still not moving after the check: back to listening only. */
+    private final Runnable probeEnd = () -> {
+        if (!idle) return; // moved: start() already took over
+        request(LocationManager.PASSIVE_PROVIDER);
+        main.postDelayed(this.probe, PROBE_EVERY_MS);
     };
 
     /** The car went off (screen off): no GPS while it sleeps. */
     void screenOff() {
         sp.edit().putLong("screen_off", System.currentTimeMillis()).apply();
         main.removeCallbacks(idleCheck);
+        main.removeCallbacks(probe);
+        main.removeCallbacks(probeEnd);
         if (running) app.getSystemService(LocationManager.class).removeUpdates(this);
         running = false;
         idle = false;
@@ -141,20 +160,25 @@ final class Drive implements LocationListener {
     @Override
     public void onLocationChanged(Location l) {
         long now = System.currentTimeMillis();
-        if (tripStart == 0 || (lastFixAt > 0 && now - lastFixAt > 30 * 60_000L)) newTrip(); // a start nobody saw
+        long sinceFix = lastFixAt > 0 ? now - lastFixAt : 0;
+        if (tripStart == 0 || sinceFix > 30 * 60_000L) newTrip(); // a start nobody saw
         lastFixAt = now;
         if (!l.hasAccuracy() || l.getAccuracy() > 40) return;
         if (Double.isNaN(lastLat)) { mark(l, now); return; }
         float[] d = new float[1];
         Location.distanceBetween(lastLat, lastLon, l.getLatitude(), l.getLongitude(), d);
         long dt = now - lastT;
-        if (dt > 120_000 || d[0] / Math.max(1, dt / 1000.0) > 70) { mark(l, now); return; } // a gap or a jump: don't count it
+        // No fixes for two minutes (a tunnel, GPS off): start again from here. A jump faster
+        // than 250 km/h is a bad fix. Standing or crawling keeps the last point (below), so
+        // after a long jam the way crawled still counts.
+        if (sinceFix > 120_000 || d[0] / Math.max(1, dt / 1000.0) > 70) { mark(l, now); return; }
+        // Crawling (from about 3 km/h; slower is GPS wander) is movement for the idle timer.
+        if (l.hasSpeed() ? l.getSpeed() > 0.8f : d[0] >= 8) {
+            movedAt = now;
+            if (idle) start(); // moving again: GPS back
+        }
         boolean moving = l.hasSpeed() ? l.getSpeed() > 1.5f : d[0] >= 10;
-        // Standing or crawling: nothing counted yet, and the last point stays, so the way
-        // crawled counts once the car moves on (and isn't taken for a jump).
-        if (!moving) return;
-        movedAt = now;
-        if (idle) start(); // moving again: GPS back
+        if (!moving) return; // counted once the car moves on
         tripM += d[0];
         odoM += d[0];
         tripMovingMs += Math.min(dt, 10_000);

@@ -174,7 +174,9 @@ public class SettingsActivity extends Activity {
                 String.valueOf(prefs.speedLimit()), v -> prefs.setSpeedLimit(Integer.parseInt(v)), 800);
 
         header(col, "Driving");
-        check(col, "Road speed limit sign under the speed (OpenStreetMap: sends the car's position about every 30 s while driving)",
+        check(col, "Road speed limit sign under the speed (OpenStreetMap's server overpass-api.de, or overpass.kumi.systems "
+                + "when it's busy: they get the car's position about every 30 s while driving; also when the speed alert "
+                + "uses the road's limit)",
                 prefs.showRoadLimit(), prefs::setShowRoadLimit);
         check(col, "Trip: distance and time since the car started, average speed", prefs.showTrip(), prefs::setShowTrip);
         check(col, "Destination pin on the map (navigation started from Orca Home)", prefs.showDestination(), prefs::setShowDestination);
@@ -241,7 +243,7 @@ public class SettingsActivity extends Activity {
             button(col, recording ? "Recording car data until " + android.text.format.DateFormat.getTimeFormat(this).format(new java.util.Date(until))
                     + " (tap to stop)" : "Record car data for 2 hours", () -> {
                 if (recording) { prefs.setCarDataUntil(0); rec.stop(); }
-                else { long t = System.currentTimeMillis() + 2 * 3600_000L; prefs.setCarDataUntil(t); rec.startUntil(t); }
+                else { long t = System.currentTimeMillis() + 2 * 3600_000L; prefs.setCarDataUntil(t); rec.startUntil(t, false); }
                 build();
             });
         }
@@ -250,7 +252,8 @@ public class SettingsActivity extends Activity {
         check(col, "Next prayer time on the clock card (Kemenag method, worked out on the unit)", prefs.showPrayer(), prefs::setShowPrayer);
         check(col, "Hijri date on the clock card", prefs.showHijri(), prefs::setShowHijri);
         check(col, "Public holidays on the date (Google's Indonesian holiday calendar, internet)", prefs.showHolidays(), prefs::setShowHolidays);
-        check(col, "Nearest mosque around prayer time (OpenStreetMap: sends the car's position)", prefs.showMosque(), prefs::setShowMosque);
+        check(col, "Nearest mosque around prayer time (the same OpenStreetMap servers get the car's position)",
+                prefs.showMosque(), prefs::setShowMosque);
 
         header(col, "Maps app (navigation button, map tap, destination search)");
         RadioGroup nav = new RadioGroup(this);

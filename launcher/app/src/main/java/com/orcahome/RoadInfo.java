@@ -30,11 +30,15 @@ final class RoadInfo {
     interface Limit { void got(int kmh); } // -1: not known for this road
     interface Place { void got(String name, double lat, double lon); } // name null: none near
 
+    /** OpenStreetMap's main Overpass server, then a long-running community one (Germany). */
     private static final String[] SERVERS = {
         "https://overpass-api.de/api/interpreter?data=",
         "https://overpass.kumi.systems/api/interpreter?data=",
-        "https://maps.mail.ru/osm/tools/overpass/api/interpreter?data=",
     };
+    /** One lookup of each kind at a time; an answer older than this is for a place long gone. */
+    private static final java.util.concurrent.atomic.AtomicBoolean limitBusy = new java.util.concurrent.atomic.AtomicBoolean(),
+            mosqueBusy = new java.util.concurrent.atomic.AtomicBoolean();
+    private static final long MAX_AGE_MS = 45_000;
     private static int server; // the last one that answered
     private static final String UA = "OrcaHome/2.9 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
     private static final ExecutorService NET = Executors.newSingleThreadExecutor();
@@ -54,13 +58,17 @@ final class RoadInfo {
     /**
      * The limit of the road the car is on: of the roads within 30 m, the nearest one that runs
      * the way the car drives (bearing; NaN = unknown). Its maxspeed, or -1 if it has none: a
-     * road beside or above (an elevated toll road) doesn't lend its limit.
+     * road beside or above (an elevated toll road) doesn't lend its limit. When two roads the
+     * same way are too close to tell apart (a toll road right above a street) and their limits
+     * differ, the answer is -1 rather than a guess. Skipped while a lookup is still running.
      */
     static void speedLimit(double lat, double lon, float bearing, Limit done) {
+        if (!limitBusy.compareAndSet(false, true)) return;
+        long asked = android.os.SystemClock.elapsedRealtime();
         String q = String.format(Locale.US, "[out:json][timeout:10];way(around:30,%.6f,%.6f)[highway];out tags geom;", lat, lon);
         NET.execute(() -> {
-            int best = -1;
-            double bestScore = Double.MAX_VALUE;
+            int best = -1, second = -1;
+            double bestScore = Double.MAX_VALUE, secondScore = Double.MAX_VALUE;
             try {
                 JSONArray els = new JSONObject(get(q)).getJSONArray("elements");
                 for (int i = 0; i < els.length(); i++) {
@@ -69,12 +77,18 @@ final class RoadInfo {
                     JSONArray geom = e.optJSONArray("geometry");
                     if (tags == null || geom == null || !ROADS.contains(tags.optString("highway"))) continue;
                     double score = score(geom, lat, lon, bearing);
-                    if (score < bestScore) { bestScore = score; best = parse(tags.optString("maxspeed")); }
+                    int kmh = parse(tags.optString("maxspeed"));
+                    if (score < bestScore) { second = best; secondScore = bestScore; best = kmh; bestScore = score; }
+                    else if (score < secondScore) { second = kmh; secondScore = score; }
                 }
             } catch (Exception e) {
                 Log.i("OrcaHome", "speed limit: " + e);
                 return; // offline: keep what's shown
+            } finally {
+                limitBusy.set(false);
             }
+            if (secondScore - bestScore < 10 && second != best) best = -1; // can't tell which road
+            if (android.os.SystemClock.elapsedRealtime() - asked > MAX_AGE_MS) return;
             final int fin = best;
             Log.i("OrcaHome", "speed limit: " + (fin > 0 ? fin + " km/h" : "not known here"));
             main().post(() -> done.got(fin));
@@ -113,37 +127,42 @@ final class RoadInfo {
     }
 
     static void nearestMosque(double lat, double lon, Place done) {
+        if (!mosqueBusy.compareAndSet(false, true)) return;
         String q = String.format(Locale.US,
                 "[out:json][timeout:10];nwr(around:2500,%.6f,%.6f)[amenity=place_of_worship][religion=muslim];out center tags;", lat, lon);
         NET.execute(() -> {
-            String name = null;
-            double bLat = 0, bLon = 0;
-            float bestM = Float.MAX_VALUE;
-            try {
-                JSONArray els = new JSONObject(get(q)).getJSONArray("elements");
-                float[] d = new float[1];
-                for (int i = 0; i < els.length(); i++) {
-                    JSONObject e = els.getJSONObject(i);
-                    JSONObject at = e.has("center") ? e.getJSONObject("center") : e;
-                    if (!at.has("lat")) continue;
-                    Location.distanceBetween(lat, lon, at.getDouble("lat"), at.getDouble("lon"), d);
-                    if (d[0] >= bestM) continue;
-                    bestM = d[0];
-                    bLat = at.getDouble("lat");
-                    bLon = at.getDouble("lon");
-                    JSONObject tags = e.optJSONObject("tags");
-                    String n = tags == null ? "" : tags.optString("name");
-                    name = n.isEmpty() ? "Masjid" : n;
-                }
-            } catch (Exception e) {
-                Log.i("OrcaHome", "mosque: " + e);
-                return;
-            }
-            Log.i("OrcaHome", "mosque: " + (name == null ? "none within 2.5 km" : name + ", " + Math.round(bestM) + " m"));
-            final String fn = name;
-            final double fLat = bLat, fLon = bLon;
-            main().post(() -> done.got(fn, fLat, fLon));
+            try { findMosque(q, lat, lon, done); } finally { mosqueBusy.set(false); }
         });
+    }
+
+    private static void findMosque(String q, double lat, double lon, Place done) {
+        String name = null;
+        double bLat = 0, bLon = 0;
+        float bestM = Float.MAX_VALUE;
+        try {
+            JSONArray els = new JSONObject(get(q)).getJSONArray("elements");
+            float[] d = new float[1];
+            for (int i = 0; i < els.length(); i++) {
+                JSONObject e = els.getJSONObject(i);
+                JSONObject at = e.has("center") ? e.getJSONObject("center") : e;
+                if (!at.has("lat")) continue;
+                Location.distanceBetween(lat, lon, at.getDouble("lat"), at.getDouble("lon"), d);
+                if (d[0] >= bestM) continue;
+                bestM = d[0];
+                bLat = at.getDouble("lat");
+                bLon = at.getDouble("lon");
+                JSONObject tags = e.optJSONObject("tags");
+                String n = tags == null ? "" : tags.optString("name");
+                name = n.isEmpty() ? "Masjid" : n;
+            }
+        } catch (Exception e) {
+            Log.i("OrcaHome", "mosque: " + e);
+            return;
+        }
+        Log.i("OrcaHome", "mosque: " + (name == null ? "none within 2.5 km" : name + ", " + Math.round(bestM) + " m"));
+        final String fn = name;
+        final double fLat = bLat, fLon = bLon;
+        main().post(() -> done.got(fn, fLat, fLon));
     }
 
     /** The answer from the last server that worked, else the next ones in turn. */
@@ -152,7 +171,7 @@ final class RoadInfo {
         for (int k = 0; k < SERVERS.length; k++) {
             int i = (server + k) % SERVERS.length;
             try {
-                String body = get(SERVERS[i], query);
+                String body = get(SERVERS[i], query, k == 0 ? 8000 : 5000);
                 server = i;
                 return body;
             } catch (Exception e) {
@@ -162,10 +181,10 @@ final class RoadInfo {
         throw last;
     }
 
-    private static String get(String api, String query) throws Exception {
+    private static String get(String api, String query, int timeoutMs) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(api + Uri.encode(query)).openConnection();
-        c.setConnectTimeout(10000);
-        c.setReadTimeout(15000);
+        c.setConnectTimeout(timeoutMs);
+        c.setReadTimeout(timeoutMs + 4000);
         c.setRequestProperty("User-Agent", UA);
         try (InputStream in = c.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             byte[] buf = new byte[8192];

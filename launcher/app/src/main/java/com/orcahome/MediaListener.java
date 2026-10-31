@@ -38,7 +38,7 @@ public class MediaListener extends NotificationListenerService {
         }
         if (getSystemService(PowerManager.class).isInteractive()) Drive.get(this).start();
         long until = new Prefs(this).carDataUntil(); // car-data recording carries on after a restart
-        if (until > System.currentTimeMillis()) CanRecorder.get(this).startUntil(until);
+        if (until > System.currentTimeMillis()) CanRecorder.get(this).startUntil(until, true);
         // Test builds (debuggable) also take test guidance from the screenshot demo app.
         NavState.testApp = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         try {

@@ -60,7 +60,7 @@ final class CanRecorder {
     /** Registered callbacks with the call number that removes each. */
     private final List<Object[]> callbacks = new ArrayList<>();
     private java.io.Writer out;
-    private long written;
+    private long written, flushedAt;
     private volatile boolean full;
 
     static synchronized CanRecorder get(Context c) {
@@ -89,25 +89,27 @@ final class CanRecorder {
         stop();
     }
 
-    /** Records until `until` (ms), then stops by itself. */
-    void startUntil(long until) {
-        start();
+    /** Records until `until` (ms), then stops by itself; resume: carry on in the same file (after a restart). */
+    void startUntil(long until, boolean resume) {
+        start(resume);
         main.removeCallbacks(autoStop);
         main.postDelayed(autoStop, Math.max(0, until - System.currentTimeMillis()));
     }
 
-    /** A new recording: the previous file is kept as car-data-log.old.txt. */
-    void start() {
+    /** A new recording (the previous file is kept as car-data-log.old.txt), or resume the current one. */
+    void start(boolean resume) {
         if (running) return;
         running = true;
         writer.execute(() -> {
-            File old = new File(file.getParentFile(), "car-data-log.old.txt");
-            if (file.exists()) { old.delete(); file.renameTo(old); }
-            try { out = new java.io.BufferedWriter(new FileWriter(file, false)); } catch (IOException e) { out = null; }
-            written = 0;
-            full = false;
+            if (!resume) {
+                File old = new File(file.getParentFile(), "car-data-log.old.txt");
+                if (file.exists()) { old.delete(); file.renameTo(old); }
+            }
+            try { out = new java.io.BufferedWriter(new FileWriter(file, resume)); } catch (IOException e) { out = null; }
+            written = resume ? file.length() : 0;
+            full = written > MAX_BYTES;
         });
-        line("---- recording started " + new Date());
+        line("---- recording " + (resume ? "carries on after a restart " : "started ") + new Date());
         IntentFilter f = new IntentFilter();
         for (String a : NOTICES) f.addAction(a);
         app.registerReceiver(notices, f);
@@ -235,7 +237,8 @@ final class CanRecorder {
             } else {
                 out.write(l);
             }
-            out.flush();
+            // To storage at most once a second (and at stop), not for every message.
+            if (at - flushedAt >= 1000) { out.flush(); flushedAt = at; }
         } catch (IOException ignored) {
         }
     }

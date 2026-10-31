@@ -18,11 +18,16 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   Writes in the background so the unit's own CAN handling never waits; a new file for each
   recording (the one before kept as car-data-log.old.txt).
 - From the 2.9 review: the speed-limit sign takes the nearest road running the car's way
-  (not a road beside or above), with two backup OpenStreetMap servers; the road-limit speed
-  alert works without the sign; the clock card has a line of its own for the Hijri date;
-  trip time goes on in traffic jams, crawling counts; GPS for the trip stops after 10
-  minutes standing still and comes back when the car moves; the odd-even reminder changes at
-  05:00 and 21:00.
+  (not a road beside or above; no sign when two such roads are too close to tell apart and
+  their limits differ), one lookup at a time, with overpass.kumi.systems as the backup when
+  OpenStreetMap's own server is busy (settings name both: they get the car's position); the
+  road-limit speed alert works without the sign; the clock card has a line of its own for
+  the Hijri date (the grid layout too); trip time goes on in traffic jams and the way crawled
+  counts, also after long stops; GPS for the trip pauses after 10 minutes standing still
+  (with a short check every 2 minutes) and comes back as soon as the car moves; the
+  odd-even reminder changes at 05:00 and 21:00; the dock's music button opens the music
+  player even while the card shows the radio, and the radio card has the quick-switch
+  buttons for the other players.
 
 ## 2.8 — in testing
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and
