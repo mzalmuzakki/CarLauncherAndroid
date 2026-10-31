@@ -1,19 +1,20 @@
 Screen: Physical size: 1024x600, Physical density: 160
 Android: 10 (SDK 29), x86
 Home tiles: com.google.android.youtube/.app.honeycomb.Shell$HomeActivity;com.google.android.apps.maps/com.google.android.maps.MapsActivity;com.android.chrome/com.google.android.apps.chrome.Main;com.google.android.apps.photos/.home.HomeActivity;com.android.vending/.AssetBrowserActivity;com.android.settings/.Settings
-GPS seen by Android:     gps: Location[gps -6.186398,106.824520 hAcc=20 et=+1m14s400ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
-Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m38s472ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+GPS seen by Android:     gps: Location[gps -6.186398,106.824398 hAcc=20 et=+1m17s254ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m41s696ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
 Compass tap: map direction now north (expected north)
 Keyboard shown after coming back: mInputShown=false
-Auto theme: at 12:11 UTC it is night in Jakarta, so 41-auto-theme.png should show the night theme (day: Light, night: Midnight Drive)
+Auto theme: at 04:29 UTC it is day in Jakarta, so 41-auto-theme.png should show the day theme (day: Light, night: Midnight Drive)
 Home button: act=android.intent.action.VIEW dat=google.navigation:q=Monas,
-Test GPS for 2.6 shots:     gps: Location[gps -6.186400,106.824280 hAcc=5 et=+5m43s888ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+Test GPS for 2.6 shots:     gps: Location[gps -6.186400,106.824400 hAcc=5 et=+5m47s920ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
 Dock browser button set to com.google.android.youtube/.app.honeycomb.Shell$HomeActivity for 53-dock-custom-app.png
 Recent places saved: Kota Tua&#10;Bundaran HI&#10;Blok M Plaza
-Night brightness, car at -6.1864,106.8238 (night): brightness 77 (mode 0), expected 77 (30 %)
+Night brightness, car at -6.19,-73.18 (night): brightness 77 (mode 0), expected 77 (30 %)
   turned up by hand to 120, after going home again: 120 (mode 0), expected 120
-  car at -6.19,-73.18 (day): 200 (mode 0), expected 200 (mode 0)
+  car at -6.1864,106.8238 (day): 200 (mode 0), expected 200 (mode 0)
 Lyrics: lyrics for "Yellow": 49 synced lines;
+Saved lyrics after 'trim caches': 2 song(s) (expected 1 or more)
 After picking from Up next: description=Viva la Vida
 Lyrics: lyrics for "Yellow": 49 synced lines;lyrics for "Viva la Vida": 55 synced lines;
 Lyrics timing saved: value="-1000"  (expected -1000 for Viva la Vida)
@@ -23,15 +24,15 @@ Play on the last song: in front com.orcahome/.MainActivity, player 3, resume: pl
 Debug-build crashes: 0 (other apps: 0)
 
 Release APK: versionName=2.7
-Home screen visible for 25 s, process 11097
-  memory (TOTAL PSS): 28928 KB
-  CPU over 10 s: 0.6%
+Home screen visible for 25 s, process 11067
+  memory (TOTAL PSS): 30490 KB
+  CPU over 10 s: 0.7%
   location requests from Orca Home: 2
 Another app in front for 20 s:
-  process still there: 11097
+  process still there: 11067
   CPU over 10 s: 0.0%
   location requests from Orca Home: 0
-  memory (TOTAL PSS): 26975 KB
+  memory (TOTAL PSS): 27823 KB
 Back home: location requests from Orca Home: 2
 Release-APK crashes: 0
 Done.
@@ -39,13 +40,13 @@ Done.
 Boot test (two home apps, no default):
   install: Success
   home apps: com.google.android.apps.nexuslauncher/.NexusLauncherActivity com.orcahome/.MainActivity com.android.settings/.FallbackHome
-  default home: android/com.android.internal.app.ResolverActivity
+  default home: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
   helper off: SYSTEM_ALERT_WINDOW: default
-  helper off, after reboot: mResumedActivity: ActivityRecord{7fd946d u0 android/com.android.internal.app.ResolverActivity t33}
+  helper off, after reboot: mResumedActivity: ActivityRecord{f03f91f u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t33}
   helper on: SYSTEM_ALERT_WINDOW: allow
-  helper on: Orca Home in front after about 25 s
-  helper on, after reboot:  mResumedActivity: ActivityRecord{771ec32 u0 com.orcahome/.MainActivity t34}
-  after reboot: SYSTEM_ALERT_WINDOW: allow
+  helper on: Orca Home in front after about 65 s
+  helper on, after reboot:  mResumedActivity: ActivityRecord{a384996 u0 com.orcahome/.MainActivity t34}
+  after reboot: SYSTEM_ALERT_WINDOW: allow; time=+45s188ms ago
   RESULT: Orca Home opened by itself over the chooser
   crashes: 0
 
