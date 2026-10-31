@@ -90,6 +90,9 @@ prefs() {   # theme map(true/false) mapstyle(theme/classic) [direction north/hea
     sh_ "run-as $PKG sh -c 'mkdir -p shared_prefs && echo $b64 | base64 -d > shared_prefs/orcahome.xml'"
     # No remembered "last played" song unless a test plays one.
     sh_ "run-as $PKG rm -f shared_prefs/lastplayed.xml files/last-cover.jpg"
+    # Stopped again: Android can restart Orca Home (its music-card reader) the moment it is
+    # stopped, and that process would keep the old settings in memory.
+    sh_ am force-stop "$PKG"
 }
 
 # Taps the middle of the first view whose text starts with $1, else at $2 (x y).

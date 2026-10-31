@@ -19,6 +19,10 @@ check() { # label expected-home-prefix [expected music reader on/off]
     if [ -n "${3:-}" ] && [ "$r" != "$3" ]; then
         say "  FAIL $1: music reader=$r (expected $3), home=$h"; return
     fi
+    # Switched off: nothing of Orca Home may still run.
+    if [ "${3:-}" = off ] && [ -n "$(adb shell pidof com.orcahome | tr -d '\r')" ]; then
+        say "  FAIL $1: Orca Home still running after being switched off, home=$h"; return
+    fi
     case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws), music reader=$r" ;;
                  *) say "  FAIL $1: home=$h (expected $2...), in front=$f" ;; esac
 }

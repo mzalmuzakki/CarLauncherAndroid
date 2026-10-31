@@ -49,13 +49,14 @@ if [ "${1:-}" = off ]; then
   if [ -n "$prev" ] && dev cmd package set-home-activity "$prev" | grep -qi success; then
     ok "home screen switched back to $prev"
     rm -f "$STATE_DIR/home-before.txt"
+    dev input keyevent KEYCODE_HOME
+    sleep 1
+    orca_stop  # what still runs of Orca Home stops, now that it isn't the home screen
   else
+    # No Home press here: it would cover the Settings screen just opened.
     warn "choose the original launcher on the unit: Settings opens now"
     dev am start -a android.settings.HOME_SETTINGS >/dev/null
   fi
-  dev input keyevent KEYCODE_HOME
-  sleep 1
-  orca_stop  # what still runs of Orca Home stops, now that it isn't the home screen
   exit 0
 fi
 

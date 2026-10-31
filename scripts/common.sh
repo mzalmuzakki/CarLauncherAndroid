@@ -252,20 +252,26 @@ nwd_home_back() {
   fi
 }
 
+# Stops what still runs of Orca Home, but only once it is no longer the home screen
+# (Android's default, or the NWD firmware's own launcher setting): Android would restart
+# the home app straight away, a cold start on a slow unit. Nothing when the unit doesn't answer.
+orca_stop() {
+  pkg_installed com.orcahome || return 0
+  local h
+  h=$(ask cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME | tail -1) || return 0
+  case "$h" in
+    com.orcahome/*) return 0 ;;
+    */*) ;;
+    *) return 0 ;;  # not a real answer
+  esac
+  if nwd_home_fw && [ "$(ask getprop "$NWD_HOME_PROP")" = com.orcahome ]; then return 0; fi
+  dev am force-stop com.orcahome >/dev/null 2>&1
+}
+
 # Orca Home's start-up helper (BootReceiver) opens Orca Home over the firmware's
 # "Select a Home app" box at boot, but only with "display over other apps"
 # (Android 10 needs it for that). That permission is the on/off switch: adb can't
 # switch single app components on or off.
-# Stops what still runs of Orca Home, but only once it is no longer the home screen:
-# Android would restart the home app straight away (a cold start on a slow unit).
-orca_stop() {
-  pkg_installed com.orcahome || return 0
-  case "$(dev cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null | tr -d '\r' | tail -1)" in
-    com.orcahome/*) return 0 ;;
-  esac
-  dev am force-stop com.orcahome >/dev/null 2>&1
-}
-
 orca_boot() { # on|off; for on, true once the unit has it
   # Android saves permission changes up to 30 min later; write-settings saves them
   # now, so they survive turning the car off straight away.

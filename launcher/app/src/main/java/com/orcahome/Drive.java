@@ -172,9 +172,10 @@ final class Drive implements LocationListener {
     }
 
     /** Orca Home is set up: its notification listener (the music-card reader) is allowed. */
-    private boolean setUp() {
-        String l = android.provider.Settings.Secure.getString(app.getContentResolver(), "enabled_notification_listeners");
-        return l != null && l.contains(app.getPackageName() + "/");
+    static boolean setUp(Context c) {
+        android.app.NotificationManager nm = c.getSystemService(android.app.NotificationManager.class);
+        return nm != null && nm.isNotificationListenerAccessGranted(
+                new android.content.ComponentName(c.getApplicationContext(), MediaListener.class));
     }
 
     private long carOffMs() { return new Prefs(app).testFast(app) ? 5000 : CAR_OFF_MS; }
@@ -194,7 +195,7 @@ final class Drive implements LocationListener {
         Log.i("OrcaHome", "car started: new trip");
         newTrip();
         int pct = new Prefs(app).startVolume();
-        if (pct < 0 || !setUp()) return;
+        if (pct < 0 || !setUp(app)) return;
         main.postDelayed(() -> {
             AudioManager am = app.getSystemService(AudioManager.class);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
