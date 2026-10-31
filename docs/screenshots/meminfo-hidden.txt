@@ -1,47 +1,47 @@
 Applications Memory Usage (in Kilobytes):
-Uptime: 799614 Realtime: 799614
+Uptime: 808886 Realtime: 808886
 
-** MEMINFO in pid 14631 [com.orcahome] **
-                   Pss  Private  Private     Swap     Heap     Heap     Heap
+** MEMINFO in pid 15879 [com.orcahome] **
+                   Pss  Private  Private  SwapPss     Heap     Heap     Heap
                  Total    Dirty    Clean    Dirty     Size    Alloc     Free
                 ------   ------   ------   ------   ------   ------   ------
-  Native Heap    14167    14128        0        0    21588    20557     1030
-  Dalvik Heap     3897     3856        0        0     3265     1633     1632
- Dalvik Other      352      352        0        0                           
+  Native Heap    16320    16292        0       17    24984    23421     1562
+  Dalvik Heap     2145     2100        0       14     3457     1729     1728
+ Dalvik Other      404      404        0        0                           
         Stack       36       36        0        0                           
-       Ashmem        2        0        0        0                           
-    Other dev       12        0       12        0                           
-     .so mmap     2236      140       72        0                           
-    .jar mmap     1049        0        0        0                           
-    .apk mmap      839        0      224        0                           
-    .ttf mmap      323        0      132        0                           
+       Ashmem      402      400        0        0                           
+    Other dev       68        0       68        0                           
+     .so mmap     1816      144        4        3                           
+    .jar mmap     1115        0        0        0                           
+    .apk mmap      871        0      228        0                           
+    .ttf mmap      242        0       64        0                           
     .dex mmap       29        4       24        0                           
-    .oat mmap      739        0        0        0                           
-    .art mmap     1848     1600       16        0                           
-   Other mmap      213       16      104        0                           
-      Unknown      813      792        0        0                           
-        TOTAL    26555    20924      584        0    24853    22190     2662
+    .oat mmap      678        0        0        0                           
+    .art mmap     2315     2064       16        9                           
+   Other mmap      224       48        0        0                           
+      Unknown      927      916        0        0                           
+        TOTAL    27635    22408      404       43    28441    25150     3290
  
  App Summary
                        Pss(KB)
                         ------
-           Java Heap:     5472
-         Native Heap:    14128
-                Code:      596
+           Java Heap:     4180
+         Native Heap:    16292
+                Code:      468
                Stack:       36
             Graphics:        0
-       Private Other:     1276
-              System:     5047
+       Private Other:     1836
+              System:     4823
  
-               TOTAL:    26555      TOTAL SWAP (KB):        0
+               TOTAL:    27635       TOTAL SWAP PSS:       43
  
  Objects
-               Views:      127         ViewRootImpl:        1
+               Views:      130         ViewRootImpl:        1
          AppContexts:        6           Activities:        1
               Assets:       10        AssetManagers:        0
-       Local Binders:       16        Proxy Binders:       36
-       Parcel memory:       19         Parcel count:      110
-    Death Recipients:        0      OpenSSL Sockets:        4
+       Local Binders:       16        Proxy Binders:       32
+       Parcel memory:       14         Parcel count:       87
+    Death Recipients:        0      OpenSSL Sockets:        8
             WebViews:        0
  
  SQL

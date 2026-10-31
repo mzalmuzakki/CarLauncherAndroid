@@ -1,5 +1,6 @@
 (adb capture mode: execout)
   [32m✓[0m Orca Home no longer opens by itself at start-up
+  [32m✓[0m Orca Home no longer runs in the background (music card reader off)
   [32m✓[0m Orca Home no longer changes the brightness (if the screen is dim, turn it up in the unit's settings)
   [32m✓[0m Google Maps' floating window is back as it was
   [32m✓[0m home screen switched back to com.google.android.apps.nexuslauncher/.NexusLauncherActivity

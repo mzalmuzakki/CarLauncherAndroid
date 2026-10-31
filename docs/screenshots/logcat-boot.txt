@@ -1,25 +1,25 @@
-10-31 10:40:30.832  3785  3785 D DMIntentReceiver: Ignoring Intent.ACTION_BOOT_COMPLETED
-10-31 10:40:31.022  2296  2296 I VvmSimStateTracker: android.intent.action.BOOT_COMPLETED
-10-31 10:40:32.129  2442  3593 I TrustedTime: Initializing single user components from LOCKED_BOOT_COMPLETED. [CONTEXT service_id=326 ]
-10-31 10:40:33.013  3218  3267 I Finsky  : [186] RECEIVER_BOOT_COMPLETED#logWorkEndAndFinishGoAsync: SUCCESS
-10-31 10:40:33.016  3383  3383 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.android.vending/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
-10-31 10:40:34.791  3965  3965 V AngleReceiver: Received intent: 'android.intent.action.BOOT_COMPLETED'
-10-31 10:40:35.015  1920  1934 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 (has extras) } to com.google.android.apps.docs/com.google.android.libraries.internal.growth.growthkit.inject.GrowthKitBootCompletedBroadcastReceiver requires android.permission.RECEIVE_BOOT_COMPLETED due to sender null (uid 1000)
-10-31 10:40:39.107  1920  1950 I ActivityManager: Start proc 4117:com.google.android.apps.tachyon/u0a101 for broadcast {com.google.android.apps.tachyon/com.google.android.apps.tachyon.common.applifecycle.BootReceiver}
-10-31 10:40:41.620  4340  4340 I AlarmClock: AlarmInitReceiver android.intent.action.BOOT_COMPLETED
-10-31 10:40:42.056  4374  4374 W Gmail   : EasBundling:ExchangeUpgradeReceiver: action=android.intent.action.BOOT_COMPLETED data=null
-10-31 10:40:43.682  2821  2821 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.google.android.googlequicksearchbox/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
-10-31 10:40:43.695  3854  3854 I CarrierServices: [2] RcsAutoStartReceiver.a: RcsAutoStartReceiver triggered. Fetching RCS State. Action: android.intent.action.BOOT_COMPLETED
-10-31 10:40:44.316  4554  4554 I GH.FzeroReceiver: Handling intent android.intent.action.BOOT_COMPLETED
-10-31 10:40:44.339  1920  1950 I ActivityManager: Start proc 4586:com.google.android.projection.gearhead:projection/u0a115 for broadcast {com.google.android.projection.gearhead/com.google.android.apps.auto.components.notifications.listener.impl.BootReceiver}
-10-31 10:40:44.891  2591  2591 I SetupWizard: [PostSetupLifecycleBootReceiver] [pre-deferred] in progress before reboot. Restarting lifecycle.
-10-31 10:40:45.340  4040  4468 I TrustedTime: Initializing single user components and calling onUserUnlockAfterBoot from BOOT_COMPLETED. [CONTEXT service_id=326 ]
-10-31 10:40:45.463  4040  4477 I NearbyMediums: ModuleInitializer handles incoming intent android.intent.action.BOOT_COMPLETED
-10-31 10:40:45.620  1920  1950 I ActivityManager: Start proc 4723:com.google.android.youtube/u0a145 for broadcast {com.google.android.youtube/com.google.android.libraries.youtube.mdx.background.MdxBackgroundScanBootReceiver}
-10-31 10:40:50.791  2724  2724 I OrcaHome: car started: new trip
-10-31 10:40:50.792  2724  2724 I OrcaHome: start-up: opening Orca Home
-10-31 10:40:50.793  1920  2212 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 10150
-10-31 10:40:50.793  1920  2212 W ActivityTaskManager: Background activity start for com.orcahome allowed because SYSTEM_ALERT_WINDOW permission is granted.
-10-31 10:40:52.126  1920  1948 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +1s332ms
-10-31 10:40:52.924  2724  4997 W com.orcahome: Verification of java.security.cert.CertPath com.android.org.conscrypt.OpenSSLX509CertPath.fromPkiPathEncoding(java.io.InputStream) took 109.173ms
-10-31 10:40:58.817  1920  2262 I ActivityManager: Finished processing BOOT_COMPLETED for u0
+10-31 12:08:00.777  4065  4065 I AlarmClock: AlarmInitReceiver android.intent.action.BOOT_COMPLETED
+10-31 12:08:01.505  4101  4101 W Gmail   : EasBundling:ExchangeUpgradeReceiver: action=android.intent.action.BOOT_COMPLETED data=null
+10-31 12:08:01.862  2411  4188 I NearbyMediums: ModuleInitializer handles incoming intent android.intent.action.BOOT_COMPLETED
+10-31 12:08:01.924  2411  4191 I TrustedTime: Initializing single user components and calling onUserUnlockAfterBoot from BOOT_COMPLETED. [CONTEXT service_id=326 ]
+10-31 12:08:02.357  2785  2785 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 cmp=com.google.android.googlequicksearchbox/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
+10-31 12:08:02.377  3319  3319 I CarrierServices: [2] RcsAutoStartReceiver.a: RcsAutoStartReceiver triggered. Fetching RCS State. Action: android.intent.action.BOOT_COMPLETED
+10-31 12:08:03.157  4294  4294 I GH.FzeroReceiver: Handling intent android.intent.action.BOOT_COMPLETED
+10-31 12:08:03.201  1917  1943 I ActivityManager: Start proc 4333:com.google.android.projection.gearhead:projection/u0a114 for broadcast {com.google.android.projection.gearhead/com.google.android.apps.auto.components.notifications.listener.impl.BootReceiver}
+10-31 12:08:03.411  1917  1943 I ActivityManager: Start proc 4380:com.google.android.setupwizard/u0a108 for broadcast {com.google.android.setupwizard/com.google.android.setupwizard.deferred.PostSetupLifecycleBootReceiver}
+10-31 12:08:03.653  4380  4380 I SetupWizard: [PostSetupLifecycleBootReceiver] [pre-deferred] in progress before reboot. Restarting lifecycle.
+10-31 12:08:04.289  1917  1943 I ActivityManager: Start proc 4506:com.google.android.youtube/u0a145 for broadcast {com.google.android.youtube/com.google.android.libraries.youtube.mdx.background.MdxBackgroundScanBootReceiver}
+10-31 12:08:05.563  2724  2724 I OrcaHome: car started: new trip
+10-31 12:08:05.578  2724  2724 I OrcaHome: start-up: opening Orca Home
+10-31 12:08:05.579  1917  2162 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 10150
+10-31 12:08:05.580  1917  2162 W ActivityTaskManager: Background activity start for com.orcahome allowed because SYSTEM_ALERT_WINDOW permission is granted.
+10-31 12:08:06.378  2724  2741 I com.orcahome: NativeAlloc concurrent copying GC freed 8417(638KB) AllocSpace objects, 8(224KB) LOS objects, 49% free, 1761KB/3523KB, paused 777us total 372.622ms
+10-31 12:08:07.279  1917  1941 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +1s699ms
+10-31 12:08:09.854  2411  4684 W Auth    : [AccountStateSyncAdapterInitIntentOperation] Initializing periodic tasks, IntentAction=android.intent.action.BOOT_COMPLETED, InitRuntimeState=2 [CONTEXT service_id=343 ]
+10-31 12:08:09.910  2411  4700 I Authzen : [AuthZenEventHandler] Handling event: android.intent.action.BOOT_COMPLETED
+10-31 12:08:10.208  2411  4686 I EsimModuleInit: onHandleIntent action: android.intent.action.BOOT_COMPLETED
+10-31 12:08:10.235  2411  4682 I constellation: [intent_handler] on init with intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x89000010 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.GmsIntentOperationService (has extras) }
+10-31 12:08:10.450  2411  2411 W .BOOT_COMPLETED: type=1400 audit(0.0:15): avc: denied { read } for name="u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=6830 scontext=u:r:priv_app:s0:c512,c768 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=0
+10-31 12:08:10.490  2411  2411 W .BOOT_COMPLETED: type=1400 audit(0.0:16): avc: denied { write } for name="property_service" dev="tmpfs" ino=6843 scontext=u:r:priv_app:s0:c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=0
+10-31 12:08:10.610  2411  2411 W .BOOT_COMPLETED: type=1400 audit(0.0:17): avc: denied { read } for name="u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=6830 scontext=u:r:priv_app:s0:c512,c768 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=0
+10-31 12:08:15.121  1917  4349 I ActivityManager: Finished processing BOOT_COMPLETED for u0
