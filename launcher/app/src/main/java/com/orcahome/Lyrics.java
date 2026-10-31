@@ -87,6 +87,26 @@ final class Lyrics {
         (ms == 0 ? e.remove(key) : e.putInt(key, ms)).apply();
     }
 
+    /** Drops one song's saved lyrics (memory and file), so the next get looks them up again. */
+    static void forget(Context c, String key) {
+        MEMORY.remove(key);
+        final File f = file(new File(c.getFilesDir(), "lyrics"), key);
+        NET.execute(f::delete); // on the same thread as the lookups, so it lands before the next one
+    }
+
+    /** How many songs have saved lyrics. */
+    static int saved(Context c) {
+        String[] names = new File(c.getFilesDir(), "lyrics").list();
+        return names == null ? 0 : names.length;
+    }
+
+    /** Drops all saved lyrics (a few hundred small files: quick enough for a button). */
+    static void forgetAll(Context c) {
+        MEMORY.evictAll();
+        File[] all = new File(c.getFilesDir(), "lyrics").listFiles();
+        if (all != null) for (File f : all) f.delete();
+    }
+
     static String key(String artist, String title) {
         return (artist + "\n" + title).toLowerCase(Locale.ROOT);
     }

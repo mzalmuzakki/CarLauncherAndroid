@@ -1022,13 +1022,13 @@ public class MainActivity extends Activity implements NavState.Listener {
             lp.topMargin = t == lyricPrev ? 0 : ui.dp(t == lyricNow || t == lyricAhead[0] ? 6 : 4);
             box.addView(t, lp);
         }
-        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30));
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         alp.topMargin = ui.dp(8);
         box.addView(lyricsAdjustRow(), alp);
         box.setOnLongClickListener(v -> {
             Lyrics l = lyrics;
-            if (l == null || !l.synced()) return false;
-            showLyricsAdjust(true);
+            if (l != null && l.synced()) showLyricsAdjust(true); // timing, reload
+            else if (!lyricsLoading) reloadLyrics(); // none found, couldn't load, or untimed: look again
             return true;
         });
         box.setOnClickListener(v -> {
@@ -1715,18 +1715,38 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** Earlier / Later in half-second steps, for lyrics out of time with this version of the song. */
     private View lyricsAdjustRow() {
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER);
+        LinearLayout rows = new LinearLayout(this);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout timing = new LinearLayout(this);
+        timing.setGravity(Gravity.CENTER);
         lyricsShift = ui.label(this, 13, ui.text, true);
         lyricsShift.setGravity(Gravity.CENTER);
-        row.addView(adjustButton("\u2212 Earlier", () -> shiftLyrics(500)));
-        row.addView(lyricsShift, new LinearLayout.LayoutParams(ui.dp(64), ViewGroup.LayoutParams.MATCH_PARENT));
-        row.addView(adjustButton("Later +", () -> shiftLyrics(-500)));
-        row.addView(adjustButton("Reset", () -> shiftLyrics(-lyricsOffset)));
-        row.addView(adjustButton("Done", () -> showLyricsAdjust(false)));
-        row.setVisibility(View.GONE);
-        lyricsAdjust = row;
-        return row;
+        timing.addView(adjustButton("\u2212 Earlier", () -> shiftLyrics(500)));
+        timing.addView(lyricsShift, new LinearLayout.LayoutParams(ui.dp(64), ViewGroup.LayoutParams.MATCH_PARENT));
+        timing.addView(adjustButton("Later +", () -> shiftLyrics(-500)));
+        rows.addView(timing, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30)));
+        LinearLayout more = new LinearLayout(this);
+        more.setGravity(Gravity.CENTER);
+        more.addView(adjustButton("Reset", () -> shiftLyrics(-lyricsOffset)));
+        more.addView(adjustButton("Reload lyrics", this::reloadLyrics));
+        more.addView(adjustButton("Done", () -> showLyricsAdjust(false)));
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ui.dp(30));
+        mlp.topMargin = ui.dp(6);
+        rows.addView(more, mlp);
+        rows.setVisibility(View.GONE);
+        lyricsAdjust = rows;
+        return rows;
+    }
+
+    /** Forgets this song's saved lyrics and looks them up again (e.g. corrected on LRCLIB). */
+    private void reloadLyrics() {
+        MediaMetadata m = meta;
+        if (lyricsKey == null || m == null) return;
+        Lyrics.forget(this, lyricsKey);
+        lyricsKey = null; // so findLyrics looks again
+        showLyricsAdjust(false);
+        findLyrics(m);
+        Toast.makeText(this, "Looking for the lyrics again\u2026", Toast.LENGTH_SHORT).show();
     }
 
     private TextView adjustButton(String text, Runnable r) {

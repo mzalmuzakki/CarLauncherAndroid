@@ -155,9 +155,17 @@ public class SettingsActivity extends Activity {
         check(col, "Song lyrics in the music card, in time with the music (from LRCLIB, internet; also the Lyrics button on the card)",
                 prefs.showLyrics(), prefs::setShowLyrics);
         TextView musicNote = ui.label(this, 13, ui.sub, false);
-        musicNote.setText("The music card keeps the last Spotify song: it shows when the car starts, and the play button carries on with it. \"Up next\" appears when the player shares its queue (the rest of the playlist or album); tap it to pick a song. Lyrics out of time? Long-press them for Earlier / Later (kept for that song).");
+        musicNote.setText("The music card keeps the last Spotify song: it shows when the car starts, and the play button carries on with it. \"Up next\" appears when the player shares its queue (the rest of the playlist or album); tap it to pick a song. Lyrics out of time or wrong? Long-press them for Earlier / Later (kept for that song) or Reload lyrics.");
         musicNote.setPadding(0, ui.dp(4), 0, 0);
         col.addView(musicNote);
+        int songs = Lyrics.saved(this);
+        if (songs > 0) {
+            button(col, "Delete saved lyrics (" + songs + (songs == 1 ? " song)" : " songs)"), () -> {
+                Lyrics.forgetAll(this);
+                Toast.makeText(this, "Saved lyrics deleted: they load again from LRCLIB", Toast.LENGTH_SHORT).show();
+                build();
+            });
+        }
 
         radios(col, "Speed alert (the speed turns red above it)", new String[][]{
                 {"0", "Off"}, {"60", "60 km/h"}, {"80", "80 km/h"}, {"100", "100 km/h"}, {"110", "110 km/h"}, {"120", "120 km/h"}},
