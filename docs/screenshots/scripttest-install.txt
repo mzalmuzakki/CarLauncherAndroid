@@ -10,9 +10,9 @@
   [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 43 MB, free RAM 1597 MB
-  Now   : Orca Home 28 MB, free RAM 1603 MB
-  [32m✓[0m Orca Home uses 15 MB less than the original launcher
+  Before: original launcher 29 MB, free RAM 1662 MB
+  Now   : Orca Home 26 MB, free RAM 1674 MB
+  [32m✓[0m Orca Home uses 3 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
@@ -28,9 +28,9 @@ Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
   [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 44 MB, free RAM 1572 MB
-  Now   : Orca Home 26 MB, free RAM 1629 MB
-  [32m✓[0m Orca Home uses 18 MB less than the original launcher
+  Before: original launcher 47 MB, free RAM 1656 MB
+  Now   : Orca Home 31 MB, free RAM 1663 MB
+  [32m✓[0m Orca Home uses 16 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
@@ -46,9 +46,9 @@ Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
   [32m✓[0m night brightness on: the screen dims at sunset (Orca Home settings to change)
   [32m✓[0m Google Maps' floating window off: Orca Home shows the guidance itself
 [1;34m==>[0m Memory (so Orca Home never makes the unit slower)
-  Before: original launcher 44 MB, free RAM 1610 MB
-  Now   : Orca Home 31 MB, free RAM 1612 MB
-  [32m✓[0m Orca Home uses 13 MB less than the original launcher
+  Before: original launcher 41 MB, free RAM 1650 MB
+  Now   : Orca Home 27 MB, free RAM 1704 MB
+  [32m✓[0m Orca Home uses 14 MB less than the original launcher
 
 Check again any time: ./scripts/launcher.sh check
 Switch back any time: ./scripts/launcher.sh off   (or ./scripts/restore.sh)
