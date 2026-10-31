@@ -44,7 +44,6 @@ pkg_installed com.orcahome && orca_boot off
 pkg_installed com.orcahome && orca_brightness off
 pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
 pkg_installed com.orcahome && dev cmd notification disallow_listener com.orcahome/com.orcahome.MediaListener >/dev/null 2>&1
-pkg_installed com.orcahome && dev am force-stop com.orcahome >/dev/null 2>&1
 maps_pip back || FAILED=1
 
 # NWD firmwares that pick the launcher themselves (see launcher.sh); also when
@@ -53,6 +52,7 @@ if ! nwd_home_back; then
   link_ok || lost
   FAILED=1
 fi
+orca_stop  # what still runs of Orca Home stops (not while it is still the home screen)
 
 # The manufacturer's auto-installer (NwdManagerService) reinstalls every .apk in
 # this folder at boot; apps we keep away from it were renamed to .apk.off.

@@ -24,11 +24,11 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(i.getAction())) return;
         Brightness.apply(c); // alarms don't survive a reboot
-        if (!Settings.canDrawOverlays(c)) { // switched off ('off', restore.sh) or not set up
+        Drive.get(c).carStarted(); // a new trip, and the start-up volume (only when set up)
+        if (!Settings.canDrawOverlays(c)) {
             Log.i("OrcaHome", "start-up: not opening (no \"display over other apps\")");
             return;
         }
-        Drive.get(c).carStarted(); // a new trip, and the start-up volume
         Log.i("OrcaHome", "start-up: opening Orca Home");
         final Context app = c.getApplicationContext();
         final PendingResult pending = goAsync();

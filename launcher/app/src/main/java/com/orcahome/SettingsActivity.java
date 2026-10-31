@@ -213,7 +213,8 @@ public class SettingsActivity extends Activity {
                 {"-1", "Leave it to the unit"}, {"20", "20 %"}, {"30", "30 %"}, {"40", "40 %"}, {"50", "50 %"}},
                 String.valueOf(prefs.startVolume()), v -> prefs.setStartVolume(Integer.parseInt(v)), 1100);
         TextView volNote = ui.label(this, 13, ui.sub, false);
-        volNote.setText("Set a few seconds after the car starts (after the unit sets its own). Never the last, possibly loud level.");
+        volNote.setText("Set a few seconds after the car starts (after the unit sets its own). Never the last, possibly loud level. "
+                + "Needs the music card's access to what's playing (scripts/launcher.sh gives it).");
         col.addView(volNote);
 
         header(col, "Radio");

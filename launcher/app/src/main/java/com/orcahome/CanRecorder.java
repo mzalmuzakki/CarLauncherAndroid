@@ -56,12 +56,13 @@ final class CanRecorder {
     /** Calls to the CAN service (adding and removing callbacks) happen here, never on the screen's thread. */
     private final java.util.concurrent.ExecutorService binderCalls = oneThread();
 
-    /** One thread, tasks in order; the thread ends after 30 s with nothing to do (none kept between recordings). */
+    /**
+     * One thread, tasks strictly in order (all go through the queue: no core thread), and the
+     * thread ends after 30 s with nothing to do (none kept between recordings).
+     */
     private static java.util.concurrent.ExecutorService oneThread() {
-        java.util.concurrent.ThreadPoolExecutor e = new java.util.concurrent.ThreadPoolExecutor(1, 1, 30,
+        return new java.util.concurrent.ThreadPoolExecutor(0, 1, 30,
                 java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.LinkedBlockingQueue<>());
-        e.allowCoreThreadTimeOut(true);
-        return e;
     }
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
     private volatile boolean running;

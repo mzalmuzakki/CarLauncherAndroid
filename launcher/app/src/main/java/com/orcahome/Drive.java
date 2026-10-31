@@ -47,6 +47,8 @@ final class Drive implements LocationListener {
     private long lastT, savedAt, lastFixAt; // lastT: time of the last counted point
     private Listener listener;
     private long carStartedAt; // elapsed ms
+    /** The unseen-wake check: once per start of the app (a wake can only go unseen while it wasn't running). */
+    private boolean wakeChecked;
 
     // Kept in memory, saved every 30 s and when the car goes off.
     private long tripStart, tripMovingMs;
@@ -89,7 +91,9 @@ final class Drive implements LocationListener {
         // volume (the drive may be well under way). A screen-off "in the future" (the clock
         // was set back) is ignored.
         long now = System.currentTimeMillis(), off = sp.getLong("screen_off", 0);
-        if (off > tripStart && off > sp.getLong("screen_on", 0) && off <= now) {
+        boolean check = !wakeChecked;
+        wakeChecked = true;
+        if (check && off > tripStart && off > sp.getLong("screen_on", 0) && off <= now) {
             sp.edit().putLong("screen_on", now).apply();
             if (now - off >= carOffMs()) {
                 Log.i("OrcaHome", "car started while Orca Home was closed: new trip");
@@ -167,21 +171,30 @@ final class Drive implements LocationListener {
         start();
     }
 
+    /** Orca Home is set up: its notification listener (the music-card reader) is allowed. */
+    private boolean setUp() {
+        String l = android.provider.Settings.Secure.getString(app.getContentResolver(), "enabled_notification_listeners");
+        return l != null && l.contains(app.getPackageName() + "/");
+    }
+
     private long carOffMs() { return new Prefs(app).testFast(app) ? 5000 : CAR_OFF_MS; }
 
     /**
      * New trip, and the start-up volume (a few seconds later, after the firmware sets its own).
      * Once per car start (boot and the screen coming on can both report it); the volume only
-     * while Orca Home is set up ("display over other apps", given by launcher.sh, taken back by 'off').
+     * while Orca Home is set up (its music-card reader allowed: launcher.sh gives it, 'off' and
+     * restore.sh take it back).
      */
     void carStarted() {
         long t = android.os.SystemClock.elapsedRealtime();
         if (carStartedAt > 0 && t - carStartedAt < 60_000) return;
         carStartedAt = t;
+        wakeChecked = true; // this start was seen
+        sp.edit().putLong("screen_on", System.currentTimeMillis()).apply();
         Log.i("OrcaHome", "car started: new trip");
         newTrip();
         int pct = new Prefs(app).startVolume();
-        if (pct < 0 || !android.provider.Settings.canDrawOverlays(app)) return;
+        if (pct < 0 || !setUp()) return;
         main.postDelayed(() -> {
             AudioManager am = app.getSystemService(AudioManager.class);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
