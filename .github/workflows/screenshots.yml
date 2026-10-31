@@ -61,6 +61,10 @@ jobs:
       - name: Boot emulator
         run: |
           $ANDROID_HOME/emulator/emulator -accel-check || true
+          # adb makes its key on first use; the emulator only trusts a key that exists when it
+          # starts, so make it first (otherwise adb can stay "unauthorized" and the boot times out).
+          $ANDROID_HOME/platform-tools/adb start-server
+          ls -l ~/.android/adbkey.pub
           $ANDROID_HOME/emulator/emulator -avd hu -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -camera-back none -camera-front none -accel on > emulator.log 2>&1 &
           EMU=$!
