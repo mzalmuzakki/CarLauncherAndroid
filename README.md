@@ -252,6 +252,15 @@ from apkmirror.com (variant **armeabi-v7a**, **nodpi**, **APK**, Android 10 or l
 it with `adb install -r <file>.apk`, then reboot. Don't just "Uninstall updates": the factory
 version is too old to sign in to Google.
 
+An automatic update of Play services can bring the loop back. `diagnose.sh` notes the version that
+ran without it (`backup/gms-good.txt`), warns when Play services has changed by itself, and when
+the loop is back after an update prints the command that puts the good version back
+(`adb install -r -d <that APK>`, then `adb reboot`), using the APK in your Downloads if it's there.
+Keep that APK. If the install says `INSTALL_FAILED_VERSION_DOWNGRADE`: on the unit, Settings > Apps >
+Google Play services > ⋮ > Uninstall updates, then straight away `adb install -r <that APK>`.
+To make it less likely: Play Store > Settings > Network preferences > Auto-update apps >
+Don't auto-update apps (Google can still update Play services now and then).
+
 ## Going back from Orca Home
 - `./scripts/launcher.sh off` (or `./scripts/restore.sh`): factory launcher back as the home
   screen, the unit's own launcher setting back (NWD firmware), Orca Home no longer opens at

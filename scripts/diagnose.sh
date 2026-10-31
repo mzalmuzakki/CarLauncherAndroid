@@ -12,6 +12,18 @@ up_s=$(dev cat /proc/uptime | cut -d. -f1)
 procs=$(dev ps -A | awk 'NR > 1' | wc -l)
 threads=$(dev ps -A -T | awk 'NR > 1' | wc -l)
 [ -n "$up_s" ] && echo "  Uptime       : $((up_s / 3600)) h $((up_s % 3600 / 60)) min since last real reboot; $procs processes, $threads threads"
+# Google Play services: the version last seen running without the start loop is noted in
+# backup/gms-good.txt, so when an automatic update brings the loop back, the warning names
+# the update and gives the command that puts the good version back.
+gms=$(dev dumpsys package com.google.android.gms | grep -m1 -o 'versionName=[^ ]*' | cut -d= -f2)
+gms_good=$(cat "$STATE_DIR/gms-good.txt" 2>/dev/null)
+gms_apk() { # a downloaded Play services APK of version $1 (Termux / computer Downloads), if any
+  local f
+  for f in "$HOME"/storage/downloads/com.google.android.gms_"$1"_*.apk \
+           "$HOME"/Downloads/com.google.android.gms_"$1"_*.apk ./com.google.android.gms_"$1"_*.apk; do
+    [ -f "$f" ] && { echo "$f"; return; }
+  done
+}
 # App processes that never finished starting keep the name <pre-initialized>.
 # On this unit Google Play services 26.36 got stuck in a start loop at boot:
 # a new copy every few seconds, 1,000+ after minutes, RAM gone.
@@ -24,11 +36,33 @@ if [ "${n_stuck:-0}" -gt 50 ]; then
   warn "$n_stuck processes stuck starting (app: ${app:-uid $uid}). This is what makes the unit slow."
   case "$app" in
     com.google.android.gms|com.google.android.gsf)
-      echo "    Reboot once: it doesn't happen at every boot. If it keeps coming back, install the current"
-      echo "    Play services (README: 'Play services start loop'); the factory version can't sign in to Google." ;;
+      if [ -n "$gms_good" ] && [ "$gms_good" != "$gms" ]; then
+        echo "    Play services updated itself: $gms_good ran fine, now $gms. Put $gms_good back, then reboot:"
+        apk=$(gms_apk "$gms_good")
+        echo "      adb install -r -d \"${apk:-<the Play services $gms_good APK (armeabi-v7a, nodpi)>}\""
+        echo "      adb reboot"
+        echo "    (README: 'Play services start loop'; then Play Store > Settings > Network preferences >"
+        echo "    Auto-update apps > Don't auto-update apps)"
+      else
+        echo "    Reboot once: it doesn't happen at every boot. If it keeps coming back, install the current"
+        echo "    Play services (README: 'Play services start loop'); the factory version can't sign in to Google."
+      fi ;;
   esac
 elif [ "${procs:-0}" -gt 900 ]; then
   warn "many processes: something leaks over time. A full reboot (not just ignition off) clears it"
+fi
+if [ -n "$gms" ]; then
+  echo "  Play services: $gms${gms_good:+ (last seen without the start loop: $gms_good)}"
+  if [ "${n_stuck:-0}" -le 50 ]; then
+    if [ -n "$gms_good" ] && [ "$gms_good" != "$gms" ]; then
+      warn "Play services changed by itself ($gms_good -> $gms). No start loop now; if the unit gets slow"
+      echo "    after a reboot, run diagnose.sh again: it then gives the command to put $gms_good back."
+    fi
+    # The loop shows within about two minutes of a start: after three, this version runs fine.
+    if [ "${up_s:-0}" -ge 180 ] && [ "$gms_good" != "$gms" ]; then
+      mkdir -p "$STATE_DIR" && echo "$gms" > "$STATE_DIR/gms-good.txt"
+    fi
+  fi
 fi
 echo "  CPU cores    : $(dev cat /proc/cpuinfo | grep -c '^processor') (as reported)"
 max_khz=$(dev cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
