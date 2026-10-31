@@ -28,6 +28,16 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   odd-even reminder changes at 05:00 and 21:00; the dock's music button opens the music
   player even while the card shows the radio, and the radio card has the quick-switch
   buttons for the other players.
+- From the final recheck: 'launcher.sh off' and restore.sh also switch off the music-card
+  reader, so a switched-off Orca Home no longer runs in the background (no trip GPS, no
+  start-up volume at boot); GPS for the trip always stops when the car sleeps; a new trip
+  also when Android closed Orca Home while the car slept; the music card leaves the radio
+  when Spotify starts from the steering wheel or by voice; the speed-limit sign goes after
+  1 km or 15 minutes without a fresh answer (offline, last night's road); a misbehaving
+  radio or CAN service can't crash or busy the home screen (connections guarded, calls off
+  the screen's thread, station lists checked); the car-data recording stops on time also
+  after the unit slept; less work per GPS fix; only the unit's own radio counts as the
+  radio; tapping the destination keeps its pin offline; downloads limited in size.
 
 ## 2.8 — in testing
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and

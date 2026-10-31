@@ -1,7 +1,10 @@
 package com.orcahome;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,6 +14,7 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.Locale;
@@ -23,6 +27,8 @@ import java.util.Locale;
  * too; without, only while the home screen shows. After 10 minutes without moving at all
  * (crawling counts as moving) it stops asking for GPS and listens to fixes other apps get,
  * with a 30-second GPS check every 2 minutes; GPS comes back as soon as the car moves.
+ * Drive watches the screen itself (for as long as the app runs), so GPS always stops when the
+ * car sleeps, whichever part of Orca Home started it.
  */
 final class Drive implements LocationListener {
     interface Listener { void changed(); }
@@ -57,12 +63,28 @@ final class Drive implements LocationListener {
         tripMovingMs = sp.getLong("trip_moving", 0);
         tripM = sp.getFloat("trip_m", 0);
         odoM = sp.getLong("odo_m", 0);
+        IntentFilter f = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        f.addAction(Intent.ACTION_SCREEN_OFF);
+        app.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context ctx, Intent i) {
+                if (Intent.ACTION_SCREEN_OFF.equals(i.getAction())) screenOff();
+                else screenOn();
+            }
+        }, f);
     }
 
     void setListener(Listener l) { listener = l; }
 
-    /** GPS fixes every 2 s from now on (if allowed). */
+    private boolean screenIsOn() { return app.getSystemService(PowerManager.class).isInteractive(); }
+
+    /** GPS fixes every 2 s from now on (if allowed); nothing while the car sleeps. */
     void start() {
+        if (!screenIsOn()) return;
+        // The car went off and came back while Orca Home wasn't running (Android closed it):
+        // the screen-on went unseen, so look at it now.
+        long off = sp.getLong("screen_off", 0);
+        if (off > tripStart && off > sp.getLong("screen_on", 0)) { screenOn(); return; }
         if (running && !idle) return;
         movedAt = System.currentTimeMillis();
         request(LocationManager.GPS_PROVIDER);
@@ -128,8 +150,10 @@ final class Drive implements LocationListener {
 
     /** The screen came on: after 10 minutes off that's the car starting. */
     void screenOn() {
+        long now = System.currentTimeMillis();
         long off = new Prefs(app).testFast(app) ? 5000 : CAR_OFF_MS;
-        if (System.currentTimeMillis() - sp.getLong("screen_off", 0) >= off) carStarted();
+        sp.edit().putLong("screen_on", now).apply();
+        if (now - sp.getLong("screen_off", 0) >= off) carStarted();
         start();
     }
 

@@ -37,6 +37,9 @@ fi
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
   pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
+  # Without this the music-card reader keeps Orca Home running (GPS for the trip, start-up volume).
+  pkg_installed com.orcahome && dev cmd notification disallow_listener com.orcahome/com.orcahome.MediaListener >/dev/null 2>&1 \
+    && ok "Orca Home no longer runs in the background (music card reader off)"
   pkg_installed com.orcahome && orca_brightness off \
     && ok "Orca Home no longer changes the brightness (if the screen is dim, turn it up in the unit's settings)"
   nwd_home_back

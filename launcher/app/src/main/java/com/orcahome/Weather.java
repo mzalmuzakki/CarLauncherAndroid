@@ -113,7 +113,10 @@ final class Weather {
         c.setReadTimeout(8000);
         try (InputStream in = c.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             byte[] buf = new byte[4096];
-            for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+            for (int n; (n = in.read(buf)) > 0; ) {
+                out.write(buf, 0, n);
+                if (out.size() > 1_000_000) throw new java.io.IOException("answer over 1 MB");
+            }
             return out.toString("UTF-8");
         } finally {
             c.disconnect();

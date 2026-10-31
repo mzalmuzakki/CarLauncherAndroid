@@ -133,7 +133,13 @@ final class RadioClient {
         if (service != null || binding) return;
         String pkg = servicePackage();
         if (pkg == null) return;
-        binding = app.bindService(new Intent(ACTION).setPackage(pkg), connection, Context.BIND_AUTO_CREATE);
+        try {
+            binding = app.bindService(new Intent(ACTION).setPackage(pkg), connection, Context.BIND_AUTO_CREATE);
+        } catch (RuntimeException e) { // the firmware refuses (a permission, not exported)
+            binding = false;
+            Log.w("OrcaHome", "radio: " + e);
+            return;
+        }
         Log.i("OrcaHome", "radio: " + (binding ? "connecting to " + pkg : "can't connect to " + pkg));
     }
 
@@ -225,10 +231,12 @@ final class RadioClient {
         return new Station(band, r.readInt(), name);
     }
 
+    /** A list of stations; a count that doesn't fit the data (a misbehaving service) gives none. */
     private static List<Station> readStations(Parcel r) {
         int n = r.readInt();
+        if (n <= 0 || n > 64 || n * 4L > r.dataAvail()) return Collections.emptyList();
         List<Station> out = new ArrayList<>();
-        for (int i = 0; i < n; i++) if (r.readInt() != 0) out.add(readStation(r));
+        for (int i = 0; i < n && r.dataAvail() > 0; i++) if (r.readInt() != 0) out.add(readStation(r));
         return out;
     }
 
@@ -260,7 +268,7 @@ final class RadioClient {
                     current = s;
                     // A station change means the radio is what's being listened to.
                     if (!s.same(before) && state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
-                    Log.i("OrcaHome", "radio: now " + describe(s));
+                    if (!s.same(before)) Log.i("OrcaHome", "radio: now " + describe(s)); // not each scrolling name
                     break;
                 }
                 case CB_PRESETS:
@@ -271,8 +279,9 @@ final class RadioClient {
                     rt = s == null ? "" : s.trim();
                     break;
                 }
-                default:
-                    break; // other notices (stereo, RDS, scan...) aren't used
+                default: // other notices (stereo, RDS, scan...) aren't used: no redraw
+                    if (reply != null) reply.writeNoException();
+                    return true;
             }
             if (reply != null) reply.writeNoException();
             notifyChanged();

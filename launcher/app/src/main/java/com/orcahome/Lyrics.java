@@ -300,7 +300,10 @@ final class Lyrics {
     private static String read(InputStream in) throws IOException {
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];
-        for (int n; (n = in.read(buf)) > 0; ) b.write(buf, 0, n);
+        for (int n; (n = in.read(buf)) > 0; ) {
+            b.write(buf, 0, n);
+            if (b.size() > 1_000_000) throw new IOException("over 1 MB"); // little memory on the unit
+        }
         return b.toString("UTF-8");
     }
 }

@@ -53,11 +53,15 @@ final class CanRecorder {
     private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
     /** Formatting and writing happen here, so a callback returns to the CAN service at once. */
     private final java.util.concurrent.ExecutorService writer = java.util.concurrent.Executors.newSingleThreadExecutor();
+    /** Calls to the CAN service (adding and removing callbacks) happen here, never on the screen's thread. */
+    private final java.util.concurrent.ExecutorService binderCalls = java.util.concurrent.Executors.newSingleThreadExecutor();
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
     private volatile boolean running;
+    /** When the recording ends (wall clock, ms; 0: no end). */
+    private volatile long until;
     private boolean bound;
-    private IBinder service;
-    /** Registered callbacks with the call number that removes each. */
+    private volatile IBinder service;
+    /** Registered callbacks with the call number that removes each (used on the binderCalls thread only). */
     private final List<Object[]> callbacks = new ArrayList<>();
     private java.io.Writer out;
     private long written, flushedAt;
@@ -92,8 +96,16 @@ final class CanRecorder {
         stop();
     }
 
+    /** The timer pauses while the unit sleeps, so the clock is also checked as messages come in. */
+    private void checkTime(long now) {
+        long u = until;
+        if (running && u > 0 && now >= u) main.post(this::timeUp);
+    }
+
     /** Records until `until` (ms), then stops by itself; resume: carry on in the same file (after a restart). */
     void startUntil(long until, boolean resume) {
+        if (until <= System.currentTimeMillis()) { timeUp(); return; }
+        this.until = until;
         start(resume);
         main.removeCallbacks(autoStop);
         main.postDelayed(autoStop, Math.max(0, until - System.currentTimeMillis()));
@@ -117,8 +129,13 @@ final class CanRecorder {
         for (String a : NOTICES) f.addAction(a);
         app.registerReceiver(notices, f);
         if (available(app)) {
-            bound = app.bindService(new Intent(ACTION).setPackage(NWD_CAN), connection, Context.BIND_AUTO_CREATE);
-            line("can service: " + (bound ? "connecting" : "can't connect"));
+            try {
+                bound = app.bindService(new Intent(ACTION).setPackage(NWD_CAN), connection, Context.BIND_AUTO_CREATE);
+                line("can service: " + (bound ? "connecting" : "can't connect"));
+            } catch (RuntimeException e) { // the firmware refuses (a permission, not exported)
+                bound = false;
+                line("can service: refused: " + e);
+            }
         } else {
             line("can service: not on this unit");
         }
@@ -128,8 +145,10 @@ final class CanRecorder {
         main.removeCallbacks(autoStop);
         if (!running) return;
         running = false;
+        until = 0;
         try { app.unregisterReceiver(notices); } catch (IllegalArgumentException ignored) { }
-        removeCallbacks();
+        IBinder b = service;
+        binderCalls.execute(() -> removeCallbacks(b));
         if (bound) {
             try { app.unbindService(connection); } catch (IllegalArgumentException ignored) { }
             bound = false;
@@ -142,8 +161,8 @@ final class CanRecorder {
         });
     }
 
-    private void removeCallbacks() {
-        IBinder b = service;
+    /** On the binderCalls thread. */
+    private void removeCallbacks(IBinder b) {
         if (b != null) for (Object[] c : callbacks) transact(b, (int) c[0], (IBinder) c[1]);
         callbacks.clear();
     }
@@ -153,22 +172,26 @@ final class CanRecorder {
         public void onServiceConnected(ComponentName n, IBinder b) {
             if (!running) return; // stopped meanwhile
             service = b;
-            callbacks.clear(); // a restarted service has none of ours
             line("can service: connected");
-            Binder outer = callback(OUTER_CB, "outer");
-            line("addCallBack4Outerface: " + transact(b, ADD_OUTER, outer));
-            callbacks.add(new Object[]{ADD_OUTER + 1, outer});
-            for (Object[] k : KINDS) {
-                Binder cb = callback(MODEL_CB, (String) k[0]);
-                line("add " + k[0] + ": " + transact(b, (int) k[1], cb));
-                callbacks.add(new Object[]{(int) k[1] + 1, cb});
-            }
+            binderCalls.execute(() -> {
+                callbacks.clear(); // a restarted service has none of ours
+                if (!running || service != b) return;
+                Binder outer = callback(OUTER_CB, "outer");
+                line("addCallBack4Outerface: " + transact(b, ADD_OUTER, outer));
+                callbacks.add(new Object[]{ADD_OUTER + 1, outer});
+                for (Object[] k : KINDS) {
+                    Binder cb = callback(MODEL_CB, (String) k[0]);
+                    line("add " + k[0] + ": " + transact(b, (int) k[1], cb));
+                    callbacks.add(new Object[]{(int) k[1] + 1, cb});
+                }
+                if (!running) removeCallbacks(b); // stopped while adding
+            });
         }
 
         @Override
         public void onServiceDisconnected(ComponentName n) {
             service = null;
-            callbacks.clear();
+            binderCalls.execute(callbacks::clear);
             line("can service: gone");
         }
     };
@@ -203,6 +226,7 @@ final class CanRecorder {
                 if (reply != null) reply.writeNoException();
                 if (running && !full) {
                     long at = System.currentTimeMillis();
+                    checkTime(at);
                     String what = kind + (OUTER_CB.equals(descriptor) ? (code == 1 ? "/raw" : "/can") : "");
                     writer.execute(() -> append(at, what + ": " + hex(bytes)));
                 }
@@ -215,8 +239,13 @@ final class CanRecorder {
         @Override
         public void onReceive(Context c, Intent i) {
             StringBuilder s = new StringBuilder("notice ").append(i.getAction());
-            Bundle b = i.getExtras();
-            if (b != null) for (String k : b.keySet()) s.append(' ').append(k).append('=').append(b.get(k));
+            try {
+                Bundle b = i.getExtras();
+                if (b != null) for (String k : b.keySet()) s.append(' ').append(k).append('=').append(b.get(k));
+            } catch (RuntimeException e) { // extras this app can't read (an unknown Parcelable)
+                s.append(" (extras unreadable: ").append(e.getClass().getSimpleName()).append(')');
+            }
+            checkTime(System.currentTimeMillis());
             line(s.toString());
         }
     };

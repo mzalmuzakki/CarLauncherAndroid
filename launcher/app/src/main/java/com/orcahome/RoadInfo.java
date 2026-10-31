@@ -23,8 +23,8 @@ import java.util.concurrent.Executors;
  * Road speed limits and the nearest mosque from OpenStreetMap (the Overpass API, free, no
  * account; the car's position is sent with each request). Each answer is one small request;
  * the home screen asks only while visible and moving (speed limit: at most every 30 s and
- * 200 m) or around prayer time (mosque). When the main public server doesn't answer, two
- * other public Overpass servers are tried.
+ * 200 m) or around prayer time (mosque). When the main public server doesn't answer, one
+ * other public Overpass server is tried. Answers over 1 MB are refused (little memory).
  */
 final class RoadInfo {
     interface Limit { void got(int kmh); } // -1: not known for this road; STALE: answer came too late
@@ -197,7 +197,10 @@ final class RoadInfo {
         c.setRequestProperty("User-Agent", UA);
         try (InputStream in = c.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             byte[] buf = new byte[8192];
-            for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+            for (int n; (n = in.read(buf)) > 0; ) {
+                out.write(buf, 0, n);
+                if (out.size() > 1_000_000) throw new java.io.IOException("answer over 1 MB");
+            }
             return out.toString("UTF-8");
         } finally {
             c.disconnect();

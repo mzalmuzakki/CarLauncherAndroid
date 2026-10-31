@@ -13,9 +13,10 @@ home() { adb shell cmd package resolve-activity --brief -a android.intent.action
 front() { adb shell dumpsys activity activities | tr -d '\r' | grep -m1 -E 'mResumedActivity' | grep -o '[a-z][a-zA-Z0-9_.]*/[a-zA-Z0-9_.$]*'; }
 saw() { adb shell appops get com.orcahome SYSTEM_ALERT_WINDOW | tr -d '\r' | grep -o -E 'allow|default|ignore|deny' | head -1; }
 ws() { adb shell appops get com.orcahome WRITE_SETTINGS | tr -d '\r' | grep -o -E 'allow|default|ignore|deny' | head -1; }
+nl() { adb shell settings get secure enabled_notification_listeners | grep -q com.orcahome && echo on || echo off; }
 check() { # label expected-home-prefix
     local h f; sleep 3; h=$(home); f=$(front)
-    case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws)" ;;
+    case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws), music reader=$(nl)" ;;
                  *) say "  FAIL $1: home=$h (expected $2...), in front=$f" ;; esac
 }
 

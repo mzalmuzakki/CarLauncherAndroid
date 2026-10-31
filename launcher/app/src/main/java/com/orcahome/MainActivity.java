@@ -96,6 +96,12 @@ public class MainActivity extends Activity implements NavState.Listener {
     // reminder pills at the bottom of the map.
     private TextView prayerLine, hijriLine, limitSign, tripLabel, pillDest, pillMosque, pillOddEven, pillService;
     private int roadLimit = -1;
+    /** Where and when (elapsed ms) the shown speed limit was asked for: it expires after 1 km or 15 min. */
+    private double roadLimitLat = Double.NaN, roadLimitLon;
+    private long roadLimitAt;
+    /** The latest GPS fix while home shows; pills refreshed at most every 5 s from fixes. */
+    private Location lastFix;
+    private long pillsAt;
     private double limitLat = Double.NaN, limitLon, mosqueQLat = Double.NaN, mosqueQLon;
     private long limitAt, mosqueAt;
     private String mosqueName;
@@ -176,6 +182,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         RadioClient radio = RadioClient.get(this);
         radio.setListener(this::showTrack);
         radio.connect();
+        expireRoadLimit(null); // last night's road
         Drive drive = Drive.get(this);
         drive.setListener(this::showTrip);
         drive.start();
@@ -201,6 +208,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         main.removeCallbacks(calendarTick);
         Drive.get(this).setListener(null);
         main.removeCallbacks(tripTick);
+        lastFix = null; // where the car is when home shows again comes from a new fix
         RadioClient.get(this).setListener(null);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
@@ -454,8 +462,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         ring.setColor(0xFFFFFFFF);
         ring.setStroke(ui.dp(5), GaugeView.ALERT);
         limitSign.setBackground(ring);
-        limitSign.setVisibility(View.GONE);
         under.addView(limitSign, new LinearLayout.LayoutParams(ui.dp(46), ui.dp(46)));
+        showLimitSign(); // a rebuild (settings, theme) keeps a limit that is still current
         tripLabel = ui.label(this, 11, ui.text, true);
         tripLabel.setGravity(Gravity.CENTER);
         tripLabel.setBackground(ui.box(ui.panel, ui.dp(10)));
@@ -554,13 +562,15 @@ public class MainActivity extends Activity implements NavState.Listener {
             if (now - limitAt < 30_000 || d[0] < 200) return;
         }
         float bearing = l.hasBearing() ? l.getBearing() : Float.NaN;
+        final double qLat = l.getLatitude(), qLon = l.getLongitude();
         // Noted only when a lookup really starts (not while one is still running).
-        boolean asked = RoadInfo.speedLimit(l.getLatitude(), l.getLongitude(), bearing, kmhLimit -> {
+        boolean asked = RoadInfo.speedLimit(qLat, qLon, bearing, kmhLimit -> {
             if (kmhLimit == RoadInfo.STALE) { limitAt = 0; return; } // too late for here: ask again at the next fix
             roadLimit = kmhLimit;
-            if (limitSign == null) return;
-            limitSign.setText(kmhLimit > 0 ? String.valueOf(kmhLimit) : "");
-            limitSign.setVisibility(kmhLimit > 0 && prefs.showRoadLimit() ? View.VISIBLE : View.GONE);
+            roadLimitLat = qLat;
+            roadLimitLon = qLon;
+            roadLimitAt = SystemClock.elapsedRealtime();
+            showLimitSign();
         });
         if (asked) {
             limitLat = l.getLatitude();
@@ -569,11 +579,36 @@ public class MainActivity extends Activity implements NavState.Listener {
         }
     }
 
+    private void showLimitSign() {
+        if (limitSign == null) return;
+        limitSign.setText(roadLimit > 0 ? String.valueOf(roadLimit) : "");
+        limitSign.setVisibility(roadLimit > 0 && prefs.showRoadLimit() ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * A speed limit from 1 km back or 15 minutes ago (lookups failing offline, last night's road)
+     * no longer counts: the sign goes and the speed alert stops using it. l: null checks the time only.
+     */
+    private void expireRoadLimit(Location l) {
+        if (roadLimit < 0 && Double.isNaN(roadLimitLat)) return;
+        boolean old = SystemClock.elapsedRealtime() - roadLimitAt > 15 * 60_000L;
+        if (!old && l != null && !Double.isNaN(roadLimitLat)) {
+            float[] d = new float[1];
+            Location.distanceBetween(roadLimitLat, roadLimitLon, l.getLatitude(), l.getLongitude(), d);
+            old = d[0] > 1000;
+        }
+        if (!old) return;
+        roadLimit = -1;
+        roadLimitLat = Double.NaN;
+        showLimitSign();
+    }
+
     /** Around prayer time: the nearest mosque, again after 1 km or 10 minutes. */
     private void checkMosque(Location l) {
         double lat = l.getLatitude(), lon = l.getLongitude();
-        boolean near = PrayerTimes.nearPrayer(lat, lon, System.currentTimeMillis(), TimeZone.getDefault()) || prefs.testFast(this);
-        if (!prefs.showMosque() || !near) {
+        boolean near = prefs.showMosque()
+                && (PrayerTimes.nearPrayer(lat, lon, System.currentTimeMillis(), TimeZone.getDefault()) || prefs.testFast(this));
+        if (!near) {
             if (mosqueName != null) { mosqueName = null; refreshPills(); }
             return;
         }
@@ -581,7 +616,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (!Double.isNaN(mosqueQLat)) {
             float[] d = new float[1];
             Location.distanceBetween(mosqueQLat, mosqueQLon, lat, lon, d);
-            if (d[0] < 1000 && now - mosqueAt < 10 * 60_000L) { refreshPills(); return; }
+            if (d[0] < 1000 && now - mosqueAt < 10 * 60_000L) return; // the pill follows from the GPS fixes
         }
         mosqueQLat = lat;
         mosqueQLon = lon;
@@ -597,10 +632,12 @@ public class MainActivity extends Activity implements NavState.Listener {
     /** Navigation started from Orca Home: its destination on the map (a name is looked up). */
     private void setDestination(String dest) {
         if (!prefs.showDestination()) return;
+        boolean same = dest.equals(destName) && !Double.isNaN(destLat);
         destName = dest;
-        destLat = Double.NaN;
         destSince = System.currentTimeMillis();
         destNavSeen = false;
+        if (same) return; // tapped again (the pill): keep the pin, also without internet
+        destLat = Double.NaN;
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("^\\s*(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)\\s*$").matcher(dest);
         if (m.matches()) {
             destLat = Double.parseDouble(m.group(1));
@@ -624,7 +661,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         long now = System.currentTimeMillis();
         // The destination goes when the navigation that went there has ended, or if it never started.
         if (destName != null && ((!destNavSeen && now - destSince > 3 * 60_000L) || now - destSince > 4 * 3600_000L)) destName = null;
-        Location here = DayNight.lastKnown(this);
+        Location here = lastFix != null ? lastFix : DayNight.lastKnown(this);
         boolean dest = destName != null && !Double.isNaN(destLat);
         if (map != null) map.setDestination(dest ? destLat : Double.NaN, destLon);
         if (dest) {
@@ -1340,10 +1377,16 @@ public class MainActivity extends Activity implements NavState.Listener {
         List<Apps.Entry> all = Apps.all(this);
         for (String pkg : MUSIC_APPS)
             for (Apps.Entry e : all) if (e.cn.getPackageName().equals(pkg)) { found.add(e); break; }
-        for (Apps.Entry e : all) {
-            String l = e.label.toLowerCase(Locale.ROOT);
-            if (l.contains("radio") || l.equals("fm")) { found.add(e); break; }
+        // The unit's own radio first; an app called "radio" only when the unit has none.
+        Apps.Entry radio = null;
+        for (Apps.Entry e : all) if (isUnitRadio(e)) { radio = e; break; }
+        if (radio == null && RadioClient.get(this).servicePackage() == null) {
+            for (Apps.Entry e : all) {
+                String l = e.label.toLowerCase(Locale.ROOT);
+                if (l.contains("radio") || l.equals("fm")) { radio = e; break; }
+            }
         }
+        if (radio != null && !found.contains(radio)) found.add(radio);
         return found;
     }
 
@@ -1719,6 +1762,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     private final LocationListener speedListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location l) {
+            lastFix = l;
+            expireRoadLimit(l);
             if (map != null) {
                 map.setLocation(l);
                 if (mapHint.length() > 0) mapHint.setText("");
@@ -1747,7 +1792,11 @@ public class MainActivity extends Activity implements NavState.Listener {
             if (gauge != null) gauge.setHint("GPS");
             if (prefs.showWeather()) Weather.refreshIfStale(MainActivity.this, prefs, MainActivity.this::showWeather);
             checkMosque(l);
-            if (destName != null && pillDest != null) refreshPills();
+            long t = SystemClock.elapsedRealtime();
+            if ((destName != null || mosqueName != null) && pillDest != null && t - pillsAt >= 5000) {
+                pillsAt = t;
+                refreshPills();
+            }
         }
         @Override public void onStatusChanged(String p, int s, Bundle b) { }
         @Override public void onProviderEnabled(String p) { showGpsState(true); }
@@ -1858,9 +1907,12 @@ public class MainActivity extends Activity implements NavState.Listener {
     private final MediaController.Callback trackCallback = new MediaController.Callback() {
         @Override public void onMetadataChanged(MediaMetadata m) { meta = m; showTrack(); }
         @Override public void onPlaybackStateChanged(PlaybackState s) {
+            boolean radioBefore = radioShown();
             playback = s;
             notePlaying();
-            showState();
+            // Spotify started from the steering wheel or by voice: the card leaves the radio.
+            if (radioShown() != radioBefore) showTrack();
+            else showState();
         }
         @Override public void onQueueChanged(List<MediaSession.QueueItem> q) { queue = q; showNext(); }
         @Override public void onSessionDestroyed() { pickController(null); }
@@ -2349,8 +2401,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (radioPresets == null) return;
         // Presets: a chip each, the one playing highlighted; tap to tune, long-press for favourite.
         List<RadioClient.Station> presets = rc.presets();
-        StringBuilder sig = new StringBuilder(s.key());
-        for (RadioClient.Station p : presets) sig.append('|').append(p.key());
+        // Band and frequency only: a scrolling station name doesn't rebuild the chips.
+        StringBuilder sig = new StringBuilder().append(s.band).append(':').append(s.freq);
+        for (RadioClient.Station p : presets) sig.append('|').append(p.band).append(':').append(p.freq);
         ((View) radioPresets.getParent()).setVisibility(presets.isEmpty() ? View.GONE : View.VISIBLE);
         if (sig.toString().equals(shownPresets)) return;
         shownPresets = sig.toString();
@@ -2387,10 +2440,17 @@ public class MainActivity extends Activity implements NavState.Listener {
                 .show();
     }
 
+    /** The unit's radio app (NWD), or the test stand-in: the one the radio service plays through. */
+    private boolean isUnitRadio(Apps.Entry e) {
+        if (RadioClient.NWD_APP.equals(e.cn.getPackageName())) return true;
+        if (!"com.orcahome.demoplayer".equals(e.cn.getPackageName())) return false;
+        Intent i = RadioClient.get(this).appIntent();
+        return i != null && e.cn.equals(i.getComponent());
+    }
+
     /** Radio player buttons start the radio (on the favourite station); other players open. */
     private void openMusicApp(Apps.Entry e) {
-        String l = e.label.toLowerCase(Locale.ROOT);
-        boolean radio = RadioClient.NWD_APP.equals(e.cn.getPackageName()) || l.contains("radio") || l.equals("fm");
+        boolean radio = isUnitRadio(e);
         if (radio && RadioClient.get(this).servicePackage() != null) startRadio();
         else Apps.launch(this, e.cn);
     }
