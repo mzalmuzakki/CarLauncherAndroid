@@ -214,10 +214,14 @@ sh_ input keyevent KEYCODE_BACK
 sh_ appops set "$PKG" WRITE_SETTINGS allow
 sh_ settings put system screen_brightness_mode 0
 sh_ settings put system screen_brightness 200
-if [ "$(python3 "$HERE/sun.py" -6.1864 106.8238)" = night ]; then NIGHT="-6.1864,106.8238" DAY="-6.19,-73.18"
-else NIGHT="-6.19,-73.18" DAY="-6.1864,106.8238"; fi
-place() { sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es place "$1" > /dev/null; sleep 4; }
+# Jakarta for whichever it is now; the other from places around the equator (near dusk the
+# far side of the earth can be just after dawn, so try several).
 sun() { python3 "$HERE/sun.py" "${1%,*}" "${1#*,}"; }
+NIGHT= DAY=
+for at in -6.1864,106.8238 -6.19,-73.18 -6.19,-103.18 -6.19,-43.18 -6.19,-133.18 -6.19,-13.18 -6.19,166.82; do
+    if [ "$(sun "$at")" = night ]; then NIGHT=${NIGHT:-$at}; else DAY=${DAY:-$at}; fi
+done
+place() { sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es place "$1" > /dev/null; sleep 4; }
 bright() { echo "$(sh_ settings get system screen_brightness) (mode $(sh_ settings get system screen_brightness_mode))"; }
 # Settings first: prefs() rewrites the whole settings file, the "dimmed" record too.
 EXTRA='<boolean name="nightdim" value="true" />' prefs 6 true theme north wide
@@ -322,7 +326,7 @@ adb logcat -c
 tap_text "101.4" "823 380"; sleep 3; shot 76-radio-preset 2
 sh_ input tap 910 441; sleep 3; shot 77-radio-seek 2   # the next button: search up
 say "  preset and search: $(adb logcat -d -s OrcaHome:I FakeRadio:I | grep -o -E '(radio: |FakeRadio: )?(tune|search|now) .*' | tr '\n' ';') (expected: preset 2 for 101.4, search up to 102.6)"
-long_text "102.6"; sleep 2; shot 78-radio-favourite-ask 2
+long_text "TRAX FM"; sleep 2; shot 78-radio-favourite-ask 2   # the station name (not the "102.6 MHz" line)
 tap_text "MAKE FAVOURITE" "760 400"; sleep 2
 say "  favourite saved: $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o 'name="radiofav">[^<]*' | sed 's/.*>//') (expected 0:10260:TRAX FM)"
 shot 79-radio-favourite 2
