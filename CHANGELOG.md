@@ -7,13 +7,22 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 ## 2.9 — in testing
 - The unit's own FM/AM radio on the music card (through the NWD radio service): the station
   (name or frequency, radio text), its presets as buttons (tap to tune), ◀ ▶ search the
-  previous / next station, the radio's screen from the middle button. Shown while the radio is
-  in use and no other player plays.
+  previous / next station (the radio's own search), the radio's screen from the middle button
+  or a tap on the card. Shown while the radio is on (the radio service's own state) and no
+  other player has played since.
 - Favourite station: long-press a preset or the station name. The radio buttons (empty music
   card, quick switch) and a dock button set to "Radio: favourite station" start the radio on
   it and come back to the home screen.
 - Car data recorder (settings, two hours): logs what the car's CAN box and the firmware send
   (doors, car info, air conditioning, handbrake, volume...), to work out this car's data.
+  Writes in the background so the unit's own CAN handling never waits; a new file for each
+  recording (the one before kept as car-data-log.old.txt).
+- From the 2.9 review: the speed-limit sign takes the nearest road running the car's way
+  (not a road beside or above), with two backup OpenStreetMap servers; the road-limit speed
+  alert works without the sign; the clock card has a line of its own for the Hijri date;
+  trip time goes on in traffic jams, crawling counts; GPS for the trip stops after 10
+  minutes standing still and comes back when the car moves; the odd-even reminder changes at
+  05:00 and 21:00.
 
 ## 2.8 — in testing
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and

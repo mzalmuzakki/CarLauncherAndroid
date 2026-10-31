@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Speed gauge and weather location; GPS only while the home screen is visible. -->
+    <!-- Speed, map, weather and trip km. The home screen's own GPS runs only while it's visible;
+         the trip counter's (Drive) while the car is on and moving. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Trip info and the service odometer while other apps are in front (granted by scripts/launcher.sh). -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />

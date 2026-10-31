@@ -174,7 +174,8 @@ public class SettingsActivity extends Activity {
                 String.valueOf(prefs.speedLimit()), v -> prefs.setSpeedLimit(Integer.parseInt(v)), 800);
 
         header(col, "Driving");
-        check(col, "Road speed limit sign under the speed (OpenStreetMap, internet)", prefs.showRoadLimit(), prefs::setShowRoadLimit);
+        check(col, "Road speed limit sign under the speed (OpenStreetMap: sends the car's position about every 30 s while driving)",
+                prefs.showRoadLimit(), prefs::setShowRoadLimit);
         check(col, "Trip: distance and time since the car started, average speed", prefs.showTrip(), prefs::setShowTrip);
         check(col, "Destination pin on the map (navigation started from Orca Home)", prefs.showDestination(), prefs::setShowDestination);
         check(col, "Brightness and volume buttons in the dock", prefs.quickControls(), prefs::setQuickControls);
@@ -218,7 +219,7 @@ public class SettingsActivity extends Activity {
         TextView radioNote = ui.label(this, 13, ui.sub, false);
         radioNote.setText((fav == null ? "No favourite station yet. " : "Favourite station: " + fav.number() + " " + fav.unit()
                 + (fav.name.isEmpty() ? "" : " (" + fav.name + ")") + ". ")
-                + "While the radio plays, the music card shows the station and its presets (\u25C0 \u25B6 search the next station); "
+                + "While the radio plays, the music card shows the station and its presets (\u25C0 \u25B6 find the next station); "
                 + "long-press a preset or the station name to make it the favourite. The radio button, and a dock button set to "
                 + "\"Radio: favourite station\" (long-press the music button), start the radio on it.");
         col.addView(radioNote);
@@ -232,7 +233,9 @@ public class SettingsActivity extends Activity {
         canNote.setText(!CanRecorder.available(this) ? "This unit has no NWD CAN service."
                 : "Records what the car's CAN box sends (doors, outside temperature, air conditioning...) for two hours, "
                 + "to work out how this car's data is encoded. While it records: open and close a door, switch the air "
-                + "conditioning on and off, drive a little. Then: adb pull " + rec.file().getPath());
+                + "conditioning on and off, use the handbrake, drive a little. Then: adb pull " + rec.file().getPath()
+                + " (each recording starts a new file; the one before is kept as car-data-log.old.txt). The log can "
+                + "contain your car's own data: don't post it publicly.");
         col.addView(canNote);
         if (CanRecorder.available(this)) {
             button(col, recording ? "Recording car data until " + android.text.format.DateFormat.getTimeFormat(this).format(new java.util.Date(until))
@@ -247,7 +250,7 @@ public class SettingsActivity extends Activity {
         check(col, "Next prayer time on the clock card (Kemenag method, worked out on the unit)", prefs.showPrayer(), prefs::setShowPrayer);
         check(col, "Hijri date on the clock card", prefs.showHijri(), prefs::setShowHijri);
         check(col, "Public holidays on the date (Google's Indonesian holiday calendar, internet)", prefs.showHolidays(), prefs::setShowHolidays);
-        check(col, "Nearest mosque around prayer time (OpenStreetMap, internet)", prefs.showMosque(), prefs::setShowMosque);
+        check(col, "Nearest mosque around prayer time (OpenStreetMap: sends the car's position)", prefs.showMosque(), prefs::setShowMosque);
 
         header(col, "Maps app (navigation button, map tap, destination search)");
         RadioGroup nav = new RadioGroup(this);

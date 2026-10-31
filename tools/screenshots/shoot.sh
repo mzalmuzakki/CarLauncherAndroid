@@ -35,6 +35,7 @@ setup_launcher() {   # $1 = apk; same steps as scripts/launcher.sh
     adb uninstall "$PKG" > /dev/null 2>&1
     adb install -r "$1" | tail -1
     sh_ pm grant "$PKG" android.permission.ACCESS_FINE_LOCATION
+    sh_ pm grant "$PKG" android.permission.ACCESS_BACKGROUND_LOCATION
     sh_ cmd notification allow_listener "$PKG/$PKG.MediaListener"
     sh_ cmd package set-home-activity "$PKG/.MainActivity"
 }
@@ -291,7 +292,7 @@ say ""
 say "2.8 on the emulator ($(sh_ date '+%a %d %b %H:%M'), plate digit parity $plate):"
 say "  $(adb logcat -d -s OrcaHome:I | grep -o -E '(speed limit|mosque|holidays|weather|car started): .*' | sort -u | tr '\n' ';')"
 wd=$(sh_ date +%u); hr=$(sh_ date +%H)
-say "  odd-even pill expected: $([ "$wd" -le 5 ] && [ "10#$hr" -ge 5 ] && [ "10#$hr" -lt 21 ] && echo yes || echo 'no (weekend or night)')"
+say "  odd-even pill expected: $([ "$wd" -le 5 ] && [ $((10#$hr)) -ge 5 ] && [ $((10#$hr)) -lt 21 ] && echo yes || echo 'no (weekend or night)')"
 sh_ input tap 70 113; sleep 6   # Home chip: navigation to "Monas, Jakarta" starts in Google Maps
 home; shot 71-destination 8
 sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; sleep 2
@@ -311,7 +312,7 @@ sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/nul
 # 2.9: the unit's radio on the music card (the demo app's stand-in for the NWD radio service):
 # station, presets, seek, favourite.
 sh_ am force-stop com.orcahome.demoplayer   # no other player
-prefs 6 true theme north wide; home; sleep 5
+EXTRA='<boolean name="test_radio" value="true" />' prefs 6 true theme north wide; home; sleep 5
 adb logcat -c
 tap_text "Radio" "880 270"; sleep 6     # the radio button on the empty music card
 home; shot 75-radio-card 4
@@ -320,7 +321,7 @@ say "2.9 radio (stand-in): $(adb logcat -d -s OrcaHome:I | grep -o 'radio: .*' |
 adb logcat -c
 tap_text "101.4" "823 380"; sleep 3; shot 76-radio-preset 2
 sh_ input tap 910 441; sleep 3; shot 77-radio-seek 2   # the next button: search up
-say "  preset and seek: $(adb logcat -d -s OrcaHome:I | grep -o 'radio: .*' | tr '\n' ';')"
+say "  preset and search: $(adb logcat -d -s OrcaHome:I FakeRadio:I | grep -o -E '(radio: |FakeRadio: )?(tune|search|now) .*' | tr '\n' ';') (expected: preset 2 for 101.4, search up to 102.6)"
 long_text "102.6"; sleep 2; shot 78-radio-favourite-ask 2
 tap_text "MAKE FAVOURITE" "760 400"; sleep 2
 say "  favourite saved: $(sh_ "run-as $PKG cat shared_prefs/orcahome.xml" | grep -o 'name="radiofav">[^<]*' | sed 's/.*>//') (expected 0:10260:TRAX FM)"

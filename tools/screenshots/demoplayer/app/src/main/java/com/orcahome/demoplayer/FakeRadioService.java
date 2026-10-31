@@ -10,7 +10,9 @@ import android.util.Log;
 
 /**
  * Screenshot helper only: a stand-in for the NWD firmware's radio service (same interface
- * name, call numbers and data layout), so Orca Home's radio card can be tried on the emulator.
+ * name, call numbers, data layout and meanings as found in the firmware: call 3 steps the
+ * frequency, call 4 searches the next station, presets count from 1, state 1 = playing), so
+ * Orca Home's radio card can be tried on the emulator.
  */
 public class FakeRadioService extends Service {
     private static final String FEATURE = "com.nwd.radio.service.RadioFeature";
@@ -31,16 +33,19 @@ public class FakeRadioService extends Service {
 
     private static void tuned() {
         Log.i("FakeRadio", "now " + freq);
+        send(2, p -> { p.writeByte(band); p.writeInt(freq); p.writeString(nameOf(freq)); p.writeInt(0); });
+    }
+
+    private interface Args { void write(Parcel p); }
+
+    private static void send(int code, Args args) {
         IBinder cb = callback;
         if (cb == null) return;
         Parcel p = Parcel.obtain(), r = Parcel.obtain();
         try {
             p.writeInterfaceToken(CALLBACK);
-            p.writeByte(band);
-            p.writeInt(freq);
-            p.writeString(nameOf(freq));
-            p.writeInt(0);
-            cb.transact(2, p, r, 0);
+            args.write(p);
+            cb.transact(code, p, r, 0);
             r.readException();
         } catch (RemoteException | RuntimeException e) {
             Log.w("FakeRadio", "callback: " + e);
@@ -48,6 +53,13 @@ public class FakeRadioService extends Service {
             p.recycle();
             r.recycle();
         }
+    }
+
+    /** The next preset above / below (the stand-in's "search"). */
+    private static int nextStation(boolean up) {
+        int best = up ? 10800 : 8750;
+        for (int f : PRESETS) if (up ? f > freq && f < best : f < freq && f > best) best = f;
+        return best;
     }
 
     private final Binder feature = new Binder() {
@@ -59,16 +71,25 @@ public class FakeRadioService extends Service {
             data.enforceInterface(FEATURE);
             boolean changed = false;
             switch (code) {
-                case 1: freq = data.readInt(); band = data.readByte(); data.readInt(); changed = true; reply.writeNoException(); break;
+                case 1: {
+                    freq = data.readInt();
+                    band = data.readByte();
+                    int preset = data.readInt(); // 1-based, 0 = not a preset
+                    Log.i("FakeRadio", "tune " + freq + " preset " + preset);
+                    changed = true;
+                    reply.writeNoException();
+                    break;
+                }
                 case 2: reply.writeNoException(); reply.writeInt(1); reply.writeByte(band); reply.writeString(nameOf(freq)); reply.writeInt(freq); break;
-                case 3: freq = Math.max(8750, Math.min(10800, freq + (data.readInt() != 0 ? 20 : -20))); changed = true; reply.writeNoException(); break;
+                case 3: freq = Math.max(8750, Math.min(10800, freq + (data.readInt() != 0 ? 10 : -10))); changed = true; reply.writeNoException(); break;
+                case 4: { boolean up = data.readInt() != 0; Log.i("FakeRadio", "search " + (up ? "up" : "down")); freq = nextStation(up); changed = true; reply.writeNoException(); break; }
                 case 21:
                     reply.writeNoException();
                     reply.writeInt(PRESETS.length);
                     for (int i = 0; i < PRESETS.length; i++) { reply.writeInt(1); reply.writeByte(band); reply.writeString(NAMES[i]); reply.writeInt(PRESETS[i]); }
                     break;
                 case 23: reply.writeNoException(); reply.writeByte((byte) 1); break;
-                case 24: callback = data.readStrongBinder(); reply.writeNoException(); break;
+                case 24: callback = data.readStrongBinder(); reply.writeNoException(); send(1, p -> p.writeByte((byte) 1)); break;
                 case 25: callback = null; reply.writeNoException(); break;
                 case 28: reply.writeNoException(); reply.writeString("Demo radio text"); break;
                 default: reply.writeNoException(); break;

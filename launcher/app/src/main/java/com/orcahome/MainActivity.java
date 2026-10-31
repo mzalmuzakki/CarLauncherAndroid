@@ -94,7 +94,7 @@ public class MainActivity extends Activity implements NavState.Listener {
     private final List<String> quickPkgs = new ArrayList<>(); // the player of each quickSwitch icon
     // 2.8: next prayer / Hijri date under the clock, speed limit sign and trip under the speed,
     // reminder pills at the bottom of the map.
-    private TextView prayerLine, limitSign, tripLabel, pillDest, pillMosque, pillOddEven, pillService;
+    private TextView prayerLine, hijriLine, limitSign, tripLabel, pillDest, pillMosque, pillOddEven, pillService;
     private int roadLimit = -1;
     private double limitLat = Double.NaN, limitLon, mosqueQLat = Double.NaN, mosqueQLon;
     private long limitAt, mosqueAt;
@@ -160,6 +160,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         super.onResume();
         visible = true;
         shown = true;
+        resumedSinceRadio = true;
         if (prefs.stamp() != builtStamp || prefs.activeTheme(this) != builtTheme) { build(); appsChanged = false; }
         else if (appsChanged) reloadApps.run();
         scheduleThemeSwitch();
@@ -178,7 +179,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         Drive drive = Drive.get(this);
         drive.setListener(this::showTrip);
         drive.start();
-        showTrip();
+        main.removeCallbacks(tripTick);
+        tripTick.run();
         refreshPills();
         NavState.setListener(this);
         rebindListener();
@@ -198,6 +200,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         unregisterReceiver(dateChanged);
         main.removeCallbacks(calendarTick);
         Drive.get(this).setListener(null);
+        main.removeCallbacks(tripTick);
         RadioClient.get(this).setListener(null);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
@@ -519,6 +522,15 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     // ---- 2.8: trip, speed limit, destination, mosque, reminders ------------------------
 
+    /** The trip time goes on in a traffic jam too: once a minute while shown. */
+    private final Runnable tripTick = new Runnable() {
+        @Override
+        public void run() {
+            showTrip();
+            if (visible) main.postDelayed(this, 60_000);
+        }
+    };
+
     private void showTrip() {
         Drive d = Drive.get(this);
         String trip = prefs.showTrip() ? d.tripText() : "";
@@ -533,7 +545,8 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** At most every 30 s and 200 m, while moving: the road's speed limit (OpenStreetMap). */
     private void checkRoadLimit(Location l, int kmh) {
-        if (!prefs.showRoadLimit() || kmh < 15) return;
+        // Needed for the sign, and for the speed alert set to the road's limit.
+        if ((!prefs.showRoadLimit() && prefs.speedLimit() >= 0) || kmh < 15) return;
         long now = SystemClock.elapsedRealtime();
         if (!Double.isNaN(limitLat)) {
             float[] d = new float[1];
@@ -543,11 +556,12 @@ public class MainActivity extends Activity implements NavState.Listener {
         limitLat = l.getLatitude();
         limitLon = l.getLongitude();
         limitAt = now;
-        RoadInfo.speedLimit(limitLat, limitLon, kmhLimit -> {
+        float bearing = l.hasBearing() ? l.getBearing() : Float.NaN;
+        RoadInfo.speedLimit(limitLat, limitLon, bearing, kmhLimit -> {
             roadLimit = kmhLimit;
             if (limitSign == null) return;
             limitSign.setText(kmhLimit > 0 ? String.valueOf(kmhLimit) : "");
-            limitSign.setVisibility(kmhLimit > 0 ? View.VISIBLE : View.GONE);
+            limitSign.setVisibility(kmhLimit > 0 && prefs.showRoadLimit() ? View.VISIBLE : View.GONE);
         });
     }
 
@@ -966,6 +980,10 @@ public class MainActivity extends Activity implements NavState.Listener {
         cal.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(10));
         calMonth = ui.label(this, 11, ui.sub, false);
         calDay = ui.label(this, 14, ui.text, true);
+        for (TextView t : new TextView[]{calMonth, calDay}) { // one line each, so the date row keeps its room
+            t.setSingleLine(true);
+            t.setEllipsize(TextUtils.TruncateAt.END);
+        }
         cal.addView(calMonth);
         cal.addView(calDay, wrapTop(3));
         LinearLayout strip = new LinearLayout(this);
@@ -986,25 +1004,32 @@ public class MainActivity extends Activity implements NavState.Listener {
             LinearLayout dc = panel(LinearLayout.VERTICAL);
             dc.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(8));
             calMonth = ui.label(this, 11, ui.sub, false);
+            calMonth.setSingleLine(true);
+            calMonth.setEllipsize(TextUtils.TruncateAt.END);
             dc.addView(calMonth);
             dc.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1f));
             TextClock clock = new TextClock(this);
             clock.setFormat24Hour("HH:mm");
             clock.setFormat12Hour("h:mm");
-            clock.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 40);
+            clock.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 36);
             clock.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             clock.setTextColor(ui.text);
             clock.setIncludeFontPadding(false);
             dc.addView(clock);
-            prayerLine = ui.label(this, 12, ui.sub, false);
-            prayerLine.setSingleLine(true);
-            prayerLine.setEllipsize(TextUtils.TruncateAt.END);
-            dc.addView(prayerLine, wrapTop(4));
+            // Below the clock, a line each: the next prayer, the Hijri date.
+            prayerLine = ui.label(this, 12, ui.text, false);
+            hijriLine = ui.label(this, 11, ui.sub, false);
+            for (TextView t : new TextView[]{prayerLine, hijriLine}) {
+                t.setSingleLine(true);
+                t.setEllipsize(TextUtils.TruncateAt.END);
+            }
+            dc.addView(prayerLine, wrapTop(3));
+            dc.addView(hijriLine, wrapTop(1));
             calDay = calPrev = calToday = calNext = null;
             row.addView(dc, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         } else {
             row.addView(cal, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-            prayerLine = null;
+            prayerLine = hijriLine = null;
         }
 
         if (prefs.showWeather()) {
@@ -1216,13 +1241,13 @@ public class MainActivity extends Activity implements NavState.Listener {
         LinearLayout buttons = new LinearLayout(this);
         buttons.setGravity(Gravity.CENTER);
         buttons.addView(mediaButton(R.drawable.ic_prev, false, v -> {
-            if (radioShown()) RadioClient.get(this).seek(false);
+            if (radioShown()) RadioClient.get(this).search(false);
             else if (controller != null) controller.getTransportControls().skipToPrevious();
         }));
         playPause = mediaButton(R.drawable.ic_play, true, v -> togglePlay());
         buttons.addView(playPause);
         buttons.addView(mediaButton(R.drawable.ic_next, false, v -> {
-            if (radioShown()) RadioClient.get(this).seek(true);
+            if (radioShown()) RadioClient.get(this).search(true);
             else if (controller != null) controller.getTransportControls().skipToNext();
         }));
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -1549,26 +1574,27 @@ public class MainActivity extends Activity implements NavState.Listener {
         // Tanggal merah: the holiday's name after the date, in red.
         String holiday = prefs.showHolidays() ? Holidays.on(this, now) : null;
         calMonth.setTextColor(holiday != null ? GaugeView.ALERT : ui.sub);
-        String extra = prayerText(now.getTime());
+        String prayer = prayerText(now.getTime());
+        String hijri = prefs.showHijri() ? PrayerTimes.hijri(now.getTime(), TimeZone.getDefault()) : "";
+        // Again at the next prayer time, and at 05:00 / 21:00 for the odd-even reminder (only while shown).
         main.removeCallbacks(calendarTick);
-        if (prefs.showPrayer()) {
-            double[] p = DayNight.position(this);
-            long next = PrayerTimes.next(p[0], p[1], now.getTime(), TimeZone.getDefault())[1];
-            main.postDelayed(calendarTick, Math.max(1000, next - now.getTime() + 1000));
-        }
+        if (visible) main.postDelayed(calendarTick, Math.max(1000, nextCalendarChange(now.getTime()) - now.getTime() + 1000));
         if (calDay == null) { // map layout: date line above the large clock, prayer and Hijri date below
             String date = new SimpleDateFormat(holiday != null ? "EEE, d MMM" : "EEEE, d MMM", Locale.getDefault()).format(now);
             calMonth.setText((date + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
             if (prayerLine != null) {
-                prayerLine.setText(extra);
-                prayerLine.setVisibility(extra.isEmpty() ? View.GONE : View.VISIBLE);
+                prayerLine.setText(prayer);
+                prayerLine.setVisibility(prayer.isEmpty() ? View.GONE : View.VISIBLE);
+                hijriLine.setText(hijri);
+                hijriLine.setVisibility(hijri.isEmpty() ? View.GONE : View.VISIBLE);
             }
             refreshPills();
             return;
         }
+        String extra = holiday != null ? holiday : hijri;
         calMonth.setText((new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(now)
-                + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
-        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now) + (extra.isEmpty() ? "" : " \u00b7 " + extra));
+                + (extra.isEmpty() ? "" : " \u00b7 " + extra)).toUpperCase(Locale.getDefault()));
+        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now) + (prayer.isEmpty() ? "" : " \u00b7 " + prayer));
         calToday.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
         c.add(Calendar.DAY_OF_MONTH, -1);
         calPrev.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
@@ -1576,20 +1602,33 @@ public class MainActivity extends Activity implements NavState.Listener {
         calNext.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
     }
 
-    /** "Ashar 14:54 · 20 Jumadil Awal 1448" (either part can be off). */
+    /** "Ashar 14:54", or "" when prayer times are off. */
     private String prayerText(long now) {
-        StringBuilder s = new StringBuilder();
+        if (!prefs.showPrayer()) return "";
+        double[] p = DayNight.position(this);
+        long[] next = PrayerTimes.next(p[0], p[1], now, TimeZone.getDefault());
+        return PrayerTimes.NAMES[(int) next[0]] + " "
+                + android.text.format.DateFormat.getTimeFormat(this).format(new Date(next[1]));
+    }
+
+    /** The next time the clock card or the odd-even pill changes: a prayer time, 05:00, 21:00 or midnight. */
+    private long nextCalendarChange(long now) {
+        long next = Long.MAX_VALUE;
         if (prefs.showPrayer()) {
             double[] p = DayNight.position(this);
-            long[] next = PrayerTimes.next(p[0], p[1], now, TimeZone.getDefault());
-            s.append(PrayerTimes.NAMES[(int) next[0]]).append(' ')
-                    .append(android.text.format.DateFormat.getTimeFormat(this).format(new Date(next[1])));
+            next = PrayerTimes.next(p[0], p[1], now, TimeZone.getDefault())[1];
         }
-        if (prefs.showHijri()) {
-            if (s.length() > 0) s.append(" \u00b7 ");
-            s.append(PrayerTimes.hijri(now, TimeZone.getDefault()));
+        Calendar c = Calendar.getInstance();
+        for (int hour : new int[]{5, 21, 24}) {
+            c.setTimeInMillis(now);
+            c.set(Calendar.HOUR_OF_DAY, 0);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+            c.add(Calendar.HOUR_OF_DAY, hour);
+            if (c.getTimeInMillis() > now) next = Math.min(next, c.getTimeInMillis());
         }
-        return s.toString();
+        return next;
     }
 
     private void showWeather() {
@@ -1805,7 +1844,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         @Override public void onMetadataChanged(MediaMetadata m) { meta = m; showTrack(); }
         @Override public void onPlaybackStateChanged(PlaybackState s) {
             playback = s;
-            if (isPlaying()) RadioClient.get(MainActivity.this).setActive(false);
+            notePlaying();
             showState();
         }
         @Override public void onQueueChanged(List<MediaSession.QueueItem> q) { queue = q; showNext(); }
@@ -1870,6 +1909,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         controller = c;
         meta = c != null ? c.getMetadata() : null;
         playback = c != null ? c.getPlaybackState() : null;
+        notePlaying();
         queue = c != null ? c.getQueue() : null;
         shownMeta = null;
         if (controller != null) controller.registerCallback(trackCallback);
@@ -2244,10 +2284,20 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     private static final String RADIO_FAV = "radio:fav";
 
-    /** The card shows the radio while it's in use and no other player is playing. */
+    /** When another player (Spotify...) last played (elapsed ms); the radio card needs a newer start. */
+    private static long otherPlayedAt;
+
+    private void notePlaying() {
+        if (isPlaying()) otherPlayedAt = SystemClock.elapsedRealtime();
+    }
+
+    /**
+     * The card shows the radio while the radio is on (its own state), it was started or changed
+     * station after the last time another player played, and no other player plays now.
+     */
     private boolean radioShown() {
         RadioClient rc = RadioClient.get(this);
-        return rc.active() && rc.current() != null && !isPlaying();
+        return rc.on() && rc.current() != null && !isPlaying() && rc.playedAt() > otherPlayedAt;
     }
 
     private RadioClient.Station favouriteStation() { return RadioClient.Station.fromKey(prefs.radioFavourite()); }
@@ -2265,7 +2315,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         try { musicSourceIcon.setImageDrawable(getPackageManager().getApplicationIcon(rc.appIntent().getComponent() != null
                 ? rc.appIntent().getComponent().getPackageName() : RadioClient.NWD_APP)); }
         catch (Exception e) { musicSourceIcon.setImageDrawable(null); }
-        musicSource.setText("RADIO \u00b7 " + (s.fm() ? "FM" : "AM") + (s.key().equals(prefs.radioFavourite()) ? "  \u2605" : ""));
+        musicSource.setText("RADIO \u00b7 " + (s.fm() ? "FM" : "AM") + (s.same(favouriteStation()) ? "  \u2605" : ""));
         String freq = s.number() + " " + s.unit();
         musicTitle.setText(s.name.isEmpty() ? freq : s.name);
         String rt = rc.radioText();
@@ -2328,17 +2378,31 @@ public class MainActivity extends Activity implements NavState.Listener {
         else Apps.launch(this, e.cn);
     }
 
-    /** Opens the radio (that makes it the sound source), tunes the favourite, comes back home. */
+    /** Set when the home screen came back while the radio was starting (then it isn't pulled back). */
+    private static boolean resumedSinceRadio;
+
+    /**
+     * Opens the radio (that makes it the sound source), tunes the favourite (again a little later
+     * if the radio app brought back its own last station meanwhile), comes back home.
+     */
     private void startRadio() {
         RadioClient rc = RadioClient.get(this);
-        rc.connect();
-        rc.setActive(true);
         Intent i = rc.appIntent();
-        if (i == null || !open(i)) return;
+        if (i == null) {
+            Toast.makeText(this, "This unit has no radio Orca Home can use", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        rc.connect();
+        if (!open(i)) return;
+        rc.starting();
+        resumedSinceRadio = false;
         RadioClient.Station fav = favouriteStation();
-        if (fav != null) main.postDelayed(() -> rc.tune(fav, presetIndex(rc, fav)), 1500);
+        if (fav != null) {
+            main.postDelayed(() -> rc.tune(fav, presetIndex(rc, fav)), 1500);
+            main.postDelayed(() -> { if (!fav.same(rc.current())) rc.tune(fav, presetIndex(rc, fav)); }, 4000);
+        }
         main.postDelayed(() -> {
-            if (shown) return;
+            if (shown || resumedSinceRadio) return; // home is back, or the driver went elsewhere from it
             Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                     .setComponent(new ComponentName(this, MainActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try { startActivity(home); } catch (RuntimeException ignored) { }
@@ -2367,6 +2431,11 @@ public class MainActivity extends Activity implements NavState.Listener {
     }
 
     private void openPlayer() {
+        if (radioShown()) { // the radio's own screen
+            Intent i = RadioClient.get(this).appIntent();
+            if (i != null) open(i);
+            return;
+        }
         if (!sessionsListening) {
             open(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
             return;

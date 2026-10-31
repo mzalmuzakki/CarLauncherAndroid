@@ -50,10 +50,18 @@ final class CanRecorder {
     private static CanRecorder instance;
     private final Context app;
     private final File file;
-    private IBinder service;
-    private boolean running;
-    private final List<Binder> callbacks = new ArrayList<>();
+    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    /** Formatting and writing happen here, so a callback returns to the CAN service at once. */
+    private final java.util.concurrent.ExecutorService writer = java.util.concurrent.Executors.newSingleThreadExecutor();
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+    private volatile boolean running;
+    private boolean bound;
+    private IBinder service;
+    /** Registered callbacks with the call number that removes each. */
+    private final List<Object[]> callbacks = new ArrayList<>();
+    private java.io.Writer out;
+    private long written;
+    private volatile boolean full;
 
     static synchronized CanRecorder get(Context c) {
         if (instance == null) instance = new CanRecorder(c.getApplicationContext());
@@ -74,22 +82,6 @@ final class CanRecorder {
         catch (Exception e) { return false; }
     }
 
-    void start() {
-        if (running) return;
-        running = true;
-        write("---- recording started " + new Date());
-        IntentFilter f = new IntentFilter();
-        for (String a : NOTICES) f.addAction(a);
-        app.registerReceiver(notices, f);
-        if (available(app)) {
-            boolean ok = app.bindService(new Intent(ACTION).setPackage(NWD_CAN), connection, Context.BIND_AUTO_CREATE);
-            write("can service: " + (ok ? "connecting" : "can't connect"));
-        } else {
-            write("can service: not on this unit");
-        }
-    }
-
-    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable autoStop = this::timeUp;
 
     private void timeUp() {
@@ -104,43 +96,75 @@ final class CanRecorder {
         main.postDelayed(autoStop, Math.max(0, until - System.currentTimeMillis()));
     }
 
+    /** A new recording: the previous file is kept as car-data-log.old.txt. */
+    void start() {
+        if (running) return;
+        running = true;
+        writer.execute(() -> {
+            File old = new File(file.getParentFile(), "car-data-log.old.txt");
+            if (file.exists()) { old.delete(); file.renameTo(old); }
+            try { out = new java.io.BufferedWriter(new FileWriter(file, false)); } catch (IOException e) { out = null; }
+            written = 0;
+            full = false;
+        });
+        line("---- recording started " + new Date());
+        IntentFilter f = new IntentFilter();
+        for (String a : NOTICES) f.addAction(a);
+        app.registerReceiver(notices, f);
+        if (available(app)) {
+            bound = app.bindService(new Intent(ACTION).setPackage(NWD_CAN), connection, Context.BIND_AUTO_CREATE);
+            line("can service: " + (bound ? "connecting" : "can't connect"));
+        } else {
+            line("can service: not on this unit");
+        }
+    }
+
     void stop() {
         main.removeCallbacks(autoStop);
         if (!running) return;
         running = false;
         try { app.unregisterReceiver(notices); } catch (IllegalArgumentException ignored) { }
-        IBinder b = service;
-        if (b != null) {
-            for (int i = 0; i < callbacks.size(); i++) {
-                int code = i == 0 ? ADD_OUTER + 1 : (int) KINDS[i - 1][1] + 1; // the remove calls
-                transact(b, code, callbacks.get(i));
-            }
+        removeCallbacks();
+        if (bound) {
             try { app.unbindService(connection); } catch (IllegalArgumentException ignored) { }
+            bound = false;
         }
-        callbacks.clear();
         service = null;
-        write("---- recording stopped " + new Date());
+        line("---- recording stopped " + new Date());
+        writer.execute(() -> {
+            try { if (out != null) out.close(); } catch (IOException ignored) { }
+            out = null;
+        });
+    }
+
+    private void removeCallbacks() {
+        IBinder b = service;
+        if (b != null) for (Object[] c : callbacks) transact(b, (int) c[0], (IBinder) c[1]);
+        callbacks.clear();
     }
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName n, IBinder b) {
+            if (!running) return; // stopped meanwhile
             service = b;
-            write("can service: connected");
+            callbacks.clear(); // a restarted service has none of ours
+            line("can service: connected");
             Binder outer = callback(OUTER_CB, "outer");
-            callbacks.add(outer);
-            write("addCallBack4Outerface: " + transact(b, ADD_OUTER, outer));
+            line("addCallBack4Outerface: " + transact(b, ADD_OUTER, outer));
+            callbacks.add(new Object[]{ADD_OUTER + 1, outer});
             for (Object[] k : KINDS) {
                 Binder cb = callback(MODEL_CB, (String) k[0]);
-                callbacks.add(cb);
-                write("add " + k[0] + ": " + transact(b, (int) k[1], cb));
+                line("add " + k[0] + ": " + transact(b, (int) k[1], cb));
+                callbacks.add(new Object[]{(int) k[1] + 1, cb});
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName n) {
             service = null;
-            write("can service: gone");
+            callbacks.clear();
+            line("can service: gone");
         }
     };
 
@@ -161,7 +185,7 @@ final class CanRecorder {
         }
     }
 
-    /** A callback that writes each byte message it gets, with its kind. */
+    /** A callback that hands each byte message to the writer and returns straight away. */
     private Binder callback(String descriptor, String kind) {
         return new Binder() {
             { attachInterface(null, descriptor); }
@@ -171,8 +195,12 @@ final class CanRecorder {
                 if (code < FIRST_CALL_TRANSACTION || code > LAST_CALL_TRANSACTION) return super.onTransact(code, data, reply, flags);
                 data.enforceInterface(descriptor);
                 byte[] bytes = data.createByteArray();
-                write(kind + (OUTER_CB.equals(descriptor) ? (code == 1 ? "/raw" : "/can") : "") + ": " + hex(bytes));
                 if (reply != null) reply.writeNoException();
+                if (running && !full) {
+                    long at = System.currentTimeMillis();
+                    String what = kind + (OUTER_CB.equals(descriptor) ? (code == 1 ? "/raw" : "/can") : "");
+                    writer.execute(() -> append(at, what + ": " + hex(bytes)));
+                }
                 return true;
             }
         };
@@ -184,23 +212,38 @@ final class CanRecorder {
             StringBuilder s = new StringBuilder("notice ").append(i.getAction());
             Bundle b = i.getExtras();
             if (b != null) for (String k : b.keySet()) s.append(' ').append(k).append('=').append(b.get(k));
-            write(s.toString());
+            line(s.toString());
         }
     };
+
+    /** A status line: also to the system log. */
+    private void line(String text) {
+        Log.i("OrcaCAN", text);
+        long at = System.currentTimeMillis();
+        writer.execute(() -> append(at, text));
+    }
+
+    /** On the writer thread. Messages beyond 2 MB are dropped (one note says so). */
+    private void append(long at, String text) {
+        if (out == null || full) return;
+        try {
+            String l = time.format(new Date(at)) + " " + text + "\n";
+            written += l.length();
+            if (written > MAX_BYTES) {
+                full = true;
+                out.write("---- log full (2 MB): later messages not written\n");
+            } else {
+                out.write(l);
+            }
+            out.flush();
+        } catch (IOException ignored) {
+        }
+    }
 
     static String hex(byte[] b) {
         if (b == null) return "null";
         StringBuilder s = new StringBuilder();
         for (byte x : b) s.append(String.format(Locale.US, "%02X ", x));
         return s.toString().trim();
-    }
-
-    private synchronized void write(String line) {
-        Log.i("OrcaCAN", line);
-        if (file.length() > MAX_BYTES) return;
-        try (FileWriter w = new FileWriter(file, true)) {
-            w.write(time.format(new Date()) + " " + line + "\n");
-        } catch (IOException ignored) {
-        }
     }
 }

@@ -4,7 +4,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Handler;
@@ -25,7 +24,8 @@ import java.util.concurrent.Executors;
  * The unit's own FM/AM radio (NWD firmware), through its radio service: the station playing,
  * the presets, tuning and seeking. The service hands its interface (an AIDL one, spoken here
  * by hand: same interface names, call numbers and data layout as the firmware's) to any app.
- * Frequencies: FM in 10 kHz steps (9870 = 98.7 MHz), AM in kHz.
+ * Frequencies: FM in 10 kHz steps (9870 = 98.7 MHz), AM in kHz. Presets are counted from 1
+ * (0 = not a preset). Radio state: 0 closed, 1 playing, 2 searching, 3 intro scan.
  * Test builds without the NWD radio use a stand-in in the screenshot demo app.
  */
 final class RadioClient {
@@ -51,6 +51,9 @@ final class RadioClient {
 
         String key() { return band + ":" + freq + ":" + name.replace(':', ' '); }
 
+        /** Same station: band and frequency (the RDS name scrolls and changes). */
+        boolean same(Station o) { return o != null && o.freq == freq && o.band == band; }
+
         static Station fromKey(String k) {
             String[] p = k.split(":", 3);
             if (p.length < 2) return null;
@@ -65,8 +68,9 @@ final class RadioClient {
     private static final String FEATURE = "com.nwd.radio.service.RadioFeature";
     private static final String CALLBACK = "com.nwd.radio.service.RadioCallback";
     // Call numbers of RadioFeature and RadioCallback in the firmware.
-    private static final int SET_FREQUENCY = 1, GET_FREQUENCY = 2, SEEK = 3, GET_PRESETS = 21,
-            GET_STATE = 23, REGISTER = 24, UNREGISTER = 25, GET_RT = 28;
+    // SEARCH finds the next station (the firmware's scan); call 3 would only step the frequency.
+    private static final int SET_FREQUENCY = 1, GET_FREQUENCY = 2, SEARCH = 4, GET_PRESETS = 21,
+            GET_STATE = 23, REGISTER = 24, GET_RT = 28;
     private static final int CB_STATE = 1, CB_FREQUENCY = 2, CB_PRESETS = 8, CB_RT = 13;
 
     private static RadioClient instance;
@@ -80,8 +84,8 @@ final class RadioClient {
     private volatile List<Station> presets = Collections.emptyList();
     private volatile String rt = "";
     private volatile int state = -1;
-    /** The radio is what's playing: Orca Home started it, or it changed station since. */
-    private boolean active;
+    /** When the radio last came on, changed station or was started from Orca Home (elapsed ms). */
+    private volatile long playedAt;
 
     static synchronized RadioClient get(Context c) {
         if (instance == null) instance = new RadioClient(c.getApplicationContext());
@@ -90,11 +94,10 @@ final class RadioClient {
 
     private RadioClient(Context c) { app = c; }
 
-    /** The package with the radio service: the NWD one, or the test stand-in (test builds only). */
+    /** The package with the radio service: the NWD one, or the test stand-in (test builds, when asked). */
     String servicePackage() {
         if (installed(NWD_SERVICE)) return NWD_SERVICE;
-        boolean test = (app.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        return test && installed(TEST_PKG) ? TEST_PKG : null;
+        return new Prefs(app).testRadio(app) && installed(TEST_PKG) ? TEST_PKG : null;
     }
 
     /** The radio's own screen (it makes the radio the unit's sound source). */
@@ -113,11 +116,15 @@ final class RadioClient {
     Station current() { return current; }
     List<Station> presets() { return presets; }
     String radioText() { return rt; }
-    boolean active() { return active; }
 
-    void setActive(boolean a) {
-        if (a == active) return;
-        active = a;
+    /** The radio is on (playing or searching), as the radio service says. */
+    boolean on() { return state > 0; }
+    long playedAt() { return playedAt; }
+
+    /** Orca Home is starting the radio: count it as on until the radio says otherwise. */
+    void starting() {
+        state = 1;
+        playedAt = android.os.SystemClock.elapsedRealtime();
         notifyChanged();
     }
 
@@ -149,6 +156,10 @@ final class RadioClient {
         @Override
         public void onServiceDisconnected(ComponentName n) {
             service = null;
+            current = null;
+            presets = Collections.emptyList();
+            state = -1;
+            notifyChanged();
             Log.i("OrcaHome", "radio: service gone");
         }
     };
@@ -159,17 +170,18 @@ final class RadioClient {
         call(GET_PRESETS, null, r -> presets = readStations(r));
         call(GET_RT, null, r -> { String s = r.readString(); rt = s == null ? "" : s.trim(); });
         call(GET_STATE, null, r -> state = r.readByte());
+        if (state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
         notifyChanged();
     }
 
+    /** presetIndex: 0-based place in presets(), or -1 when it isn't one (the firmware counts from 1). */
     void tune(Station s, int presetIndex) {
-        active = true;
-        run("tune " + describe(s), () -> call(SET_FREQUENCY, p -> { p.writeInt(s.freq); p.writeByte(s.band); p.writeInt(presetIndex); }, null));
+        run("tune " + describe(s), () -> call(SET_FREQUENCY, p -> { p.writeInt(s.freq); p.writeByte(s.band); p.writeInt(presetIndex + 1); }, null));
     }
 
-    void seek(boolean up) {
-        active = true;
-        run("seek " + (up ? "up" : "down"), () -> call(SEEK, p -> p.writeInt(up ? 1 : 0), null));
+    /** The next station up or down (the radio's own search). */
+    void search(boolean up) {
+        run("search " + (up ? "up" : "down"), () -> call(SEARCH, p -> p.writeInt(up ? 1 : 0), null));
     }
 
     private interface Call { void run() throws RemoteException; }
@@ -235,6 +247,7 @@ final class RadioClient {
             switch (code) {
                 case CB_STATE:
                     state = data.readByte();
+                    if (state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
                     Log.i("OrcaHome", "radio: state " + state);
                     break;
                 case CB_FREQUENCY: {
@@ -245,8 +258,8 @@ final class RadioClient {
                     Station s = new Station(band, freq, name);
                     Station before = current;
                     current = s;
-                    // A station change while we listen means the radio is in use.
-                    if (before != null && (before.freq != s.freq || before.band != s.band)) main.post(() -> active = true);
+                    // A station change means the radio is what's being listened to.
+                    if (!s.same(before) && state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
                     Log.i("OrcaHome", "radio: now " + describe(s));
                     break;
                 }

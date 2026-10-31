@@ -21,36 +21,55 @@ import java.util.concurrent.Executors;
 
 /**
  * Road speed limits and the nearest mosque from OpenStreetMap (the Overpass API, free, no
- * account). Each answer is one small request; the home screen asks only while visible and
- * moving (speed limit: at most every 30 s and 200 m) or around prayer time (mosque).
+ * account; the car's position is sent with each request). Each answer is one small request;
+ * the home screen asks only while visible and moving (speed limit: at most every 30 s and
+ * 200 m) or around prayer time (mosque). When the main public server doesn't answer, two
+ * other public Overpass servers are tried.
  */
 final class RoadInfo {
     interface Limit { void got(int kmh); } // -1: not known for this road
     interface Place { void got(String name, double lat, double lon); } // name null: none near
 
-    private static final String API = "https://overpass-api.de/api/interpreter?data=";
+    private static final String[] SERVERS = {
+        "https://overpass-api.de/api/interpreter?data=",
+        "https://overpass.kumi.systems/api/interpreter?data=",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter?data=",
+    };
+    private static int server; // the last one that answered
     private static final String UA = "OrcaHome/2.9 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
     private static final ExecutorService NET = Executors.newSingleThreadExecutor();
-    private static final Handler MAIN = new Handler(Looper.getMainLooper());
-    /** Higher on the list wins where roads meet. */
-    private static final List<String> RANK = Arrays.asList("motorway", "trunk", "primary", "secondary",
+    private static Handler main;
+
+    private static synchronized Handler main() {
+        if (main == null) main = new Handler(Looper.getMainLooper());
+        return main;
+    }
+    /** Roads a car drives on. */
+    private static final List<String> ROADS = Arrays.asList("motorway", "trunk", "primary", "secondary",
             "tertiary", "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link",
             "unclassified", "residential", "living_street", "service");
 
     private RoadInfo() {}
 
-    static void speedLimit(double lat, double lon, Limit done) {
-        String q = String.format(Locale.US, "[out:json][timeout:10];way(around:20,%.6f,%.6f)[highway][maxspeed];out tags;", lat, lon);
+    /**
+     * The limit of the road the car is on: of the roads within 30 m, the nearest one that runs
+     * the way the car drives (bearing; NaN = unknown). Its maxspeed, or -1 if it has none: a
+     * road beside or above (an elevated toll road) doesn't lend its limit.
+     */
+    static void speedLimit(double lat, double lon, float bearing, Limit done) {
+        String q = String.format(Locale.US, "[out:json][timeout:10];way(around:30,%.6f,%.6f)[highway];out tags geom;", lat, lon);
         NET.execute(() -> {
-            int best = -1, bestRank = Integer.MAX_VALUE;
+            int best = -1;
+            double bestScore = Double.MAX_VALUE;
             try {
                 JSONArray els = new JSONObject(get(q)).getJSONArray("elements");
                 for (int i = 0; i < els.length(); i++) {
-                    JSONObject tags = els.getJSONObject(i).optJSONObject("tags");
-                    if (tags == null) continue;
-                    int kmh = parse(tags.optString("maxspeed"));
-                    int rank = RANK.indexOf(tags.optString("highway"));
-                    if (kmh > 0 && rank >= 0 && rank < bestRank) { best = kmh; bestRank = rank; }
+                    JSONObject e = els.getJSONObject(i);
+                    JSONObject tags = e.optJSONObject("tags");
+                    JSONArray geom = e.optJSONArray("geometry");
+                    if (tags == null || geom == null || !ROADS.contains(tags.optString("highway"))) continue;
+                    double score = score(geom, lat, lon, bearing);
+                    if (score < bestScore) { bestScore = score; best = parse(tags.optString("maxspeed")); }
                 }
             } catch (Exception e) {
                 Log.i("OrcaHome", "speed limit: " + e);
@@ -58,8 +77,28 @@ final class RoadInfo {
             }
             final int fin = best;
             Log.i("OrcaHome", "speed limit: " + (fin > 0 ? fin + " km/h" : "not known here"));
-            MAIN.post(() -> done.got(fin));
+            main().post(() -> done.got(fin));
         });
+    }
+
+    /** Metres to the nearest piece of the road, plus 50 if that piece runs across the car's way. */
+    static double score(JSONArray geom, double lat, double lon, float bearing) throws org.json.JSONException {
+        double kx = 111320 * Math.cos(Math.toRadians(lat)), ky = 110540, best = Double.MAX_VALUE;
+        for (int i = 0; i + 1 < geom.length(); i++) {
+            JSONObject p = geom.getJSONObject(i), q = geom.getJSONObject(i + 1);
+            double ax = (p.getDouble("lon") - lon) * kx, ay = (p.getDouble("lat") - lat) * ky;
+            double bx = (q.getDouble("lon") - lon) * kx, by = (q.getDouble("lat") - lat) * ky;
+            double dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+            double t = len2 == 0 ? 0 : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2));
+            double d = Math.hypot(ax + t * dx, ay + t * dy);
+            if (!Float.isNaN(bearing) && len2 > 0) {
+                double seg = Math.toDegrees(Math.atan2(dx, dy)); // compass bearing of the piece
+                double diff = Math.abs(((seg - bearing) % 180 + 180) % 180); // either direction of travel
+                if (Math.min(diff, 180 - diff) > 45) d += 50;
+            }
+            best = Math.min(best, d);
+        }
+        return best;
     }
 
     /** "80", "80 km/h", "50 mph"; anything else (e.g. "ID:urban") counts as unknown. */
@@ -103,12 +142,28 @@ final class RoadInfo {
             Log.i("OrcaHome", "mosque: " + (name == null ? "none within 2.5 km" : name + ", " + Math.round(bestM) + " m"));
             final String fn = name;
             final double fLat = bLat, fLon = bLon;
-            MAIN.post(() -> done.got(fn, fLat, fLon));
+            main().post(() -> done.got(fn, fLat, fLon));
         });
     }
 
+    /** The answer from the last server that worked, else the next ones in turn. */
     private static String get(String query) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(API + Uri.encode(query)).openConnection();
+        Exception last = null;
+        for (int k = 0; k < SERVERS.length; k++) {
+            int i = (server + k) % SERVERS.length;
+            try {
+                String body = get(SERVERS[i], query);
+                server = i;
+                return body;
+            } catch (Exception e) {
+                last = e;
+            }
+        }
+        throw last;
+    }
+
+    private static String get(String api, String query) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(api + Uri.encode(query)).openConnection();
         c.setConnectTimeout(10000);
         c.setReadTimeout(15000);
         c.setRequestProperty("User-Agent", UA);

@@ -84,6 +84,11 @@ final class Prefs {
         return (c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
                 && sp.getBoolean("test_fast", false);
     }
+    /** Test builds only (emulator test): use the demo app's stand-in radio. */
+    boolean testRadio(Context c) {
+        return (c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && sp.getBoolean("test_radio", false);
+    }
     /** Volume (% of the maximum) set when the car starts; -1 = leave it to the unit. */
     int startVolume() { return sp.getInt("startvol", -1); }
     /** The favourite radio station ("band:frequency:name"), or "". */
