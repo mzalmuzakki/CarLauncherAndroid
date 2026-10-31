@@ -1,8 +1,10 @@
 --------- beginning of main
 --------- beginning of system
-10-31 11:48:31.905 11530 11530 D OrcaHome: night brightness (test build): dim=true dimmed=false
-10-31 11:48:31.921 11530 11530 I OrcaHome: night brightness: dimmed to 30%
-10-31 11:48:40.411 11530 11530 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-31 11:48:43.989 11530 11530 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-31 11:48:50.335 11530 11530 D OrcaHome: night brightness (test build): dim=false dimmed=true
-10-31 11:48:50.337 11530 11530 I OrcaHome: night brightness: back to 200
+10-31 16:15:26.108 13088 13088 D OrcaHome: night brightness (test build): dim=true dimmed=false
+10-31 16:15:26.117 13088 13088 I OrcaHome: night brightness: dimmed to 30%
+10-31 16:15:26.731 13088 13141 I OrcaHome: weather: code 45, rain expected: no
+10-31 16:15:27.548 13088 13156 I OrcaHome: mosque: java.io.FileNotFoundException: https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A10%5D%3Bnwr(around%3A2500%2C-6.190000%2C-73.180000)%5Bamenity%3Dplace_of_worship%5D%5Breligion%3Dmuslim%5D%3Bout%20center%20tags%3B
+10-31 16:15:33.020 13088 13088 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-31 16:15:36.156 13088 13088 D OrcaHome: night brightness (test build): dim=true dimmed=true
+10-31 16:15:42.270 13088 13088 D OrcaHome: night brightness (test build): dim=false dimmed=true
+10-31 16:15:42.272 13088 13088 I OrcaHome: night brightness: back to 200

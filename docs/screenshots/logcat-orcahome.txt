@@ -1,101 +1,116 @@
-10-31 11:53:42.470  1924  1949 I ActivityManager: Force stopping com.orcahome appid=10148 user=-1: deletePackageX
-10-31 11:53:42.471  1924  1949 I ActivityManager: Killing 13574:com.orcahome/u0a148 (adj 0): stop com.orcahome
-10-31 11:53:42.472  1924  1949 W ActivityManager: Scheduling restart of crashed service com.orcahome/.MediaListener in 1000ms
-10-31 11:53:42.472  1924  1949 W ActivityTaskManager: Force removing ActivityRecord{ee74c33 u0 com.orcahome/.MainActivity t49 f}: app died, no saved state
-10-31 11:53:42.512  1924  2009 W InputDispatcher: channel 'e5da662 com.orcahome/com.orcahome.MainActivity (server)' ~ Consumer closed input channel or an error occurred.  events=0x9
-10-31 11:53:42.512  1924  2009 E InputDispatcher: channel 'e5da662 com.orcahome/com.orcahome.MainActivity (server)' ~ Channel is unrecoverably broken and will be disposed!
-10-31 11:53:42.518  1924  1949 W InputDispatcher: Attempted to unregister already unregistered input channel 'e5da662 com.orcahome/com.orcahome.MainActivity (server)'
-10-31 11:53:42.525  1924  2927 D NotificationListeners: Removing active service ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:42.594  1924  1949 I ActivityManager:   Force stopping service ServiceRecord{6ec5f78 u0 com.orcahome/.MediaListener}
-10-31 11:53:42.680  1924  1924 V NotificationListeners: 0 notification listener connection lost: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:42.680  1924  1924 W NotificationListeners: 0 notification listener binding died: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:42.681  1924  1924 V NotificationListeners: onNullBinding() called with: name = [ComponentInfo{com.orcahome/com.orcahome.MediaListener}]
-10-31 11:53:42.758  1924  1938 W ShortcutService: Cached launcher ComponentInfo{com.orcahome/com.orcahome.MainActivity} no longer exists
-10-31 11:53:43.615  1924  1962 I ActivityManager: Force stopping com.orcahome appid=10148 user=0: pkg removed
-10-31 11:53:43.650 10387 14100 I Finsky  : [878] Asset module storage cleared for package com.orcahome.
-10-31 11:53:43.947 10485 10485 I Finsky:background: [2] Package no longer installed: com.orcahome
-10-31 11:53:43.962 10485 10485 I Finsky:background: [2] Package no longer installed: com.orcahome
-10-31 11:53:44.029 10485 10568 I Finsky:background: [769] IQ:PSL: skipping onPackageRemoved(replacing=false) for untracked package=com.orcahome
-10-31 11:53:44.078  8498 14057 W Role    : Cannot get ApplicationInfo for package: com.orcahome, user: 0
-10-31 11:53:44.078  8498 14057 I RoleControllerServiceImpl: Removing package that no longer qualifies for the role, package: com.orcahome, role: android.app.role.HOME
-10-31 11:53:44.079  8498 14057 W RoleControllerServiceImpl: Cannot get ApplicationInfo for package: com.orcahome
-10-31 11:53:44.638  1924  1962 I PackageManager: Un-granting permission android.permission.SYSTEM_ALERT_WINDOW from package com.orcahome (protectionLevel=1250 flags=0x20083e44)
-10-31 11:53:44.638  1924  1962 I PackageManager: Un-granting permission android.permission.WRITE_SETTINGS from package com.orcahome (protectionLevel=1218 flags=0x20083e44)
-10-31 11:53:44.704  1924  1939 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.musicfx/.Compatibility$Receiver
-10-31 11:53:44.711  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.impl.PackageMonitorReceiverImpl$RegisteredReceiver
-10-31 11:53:44.748  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.backgroundimpl.BackgroundPackageMonitorReceiverImpl$RegisteredReceiver
-10-31 11:53:44.857  1924  1962 I PackageManager.DexOptimizer: Running dexopt (dexoptNeeded=1) on: /data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==/base.apk pkg=com.orcahome isa=x86 dexoptFlags=boot_complete,profile_guided,public,enable_hidden_api_checks targetFilter=speed-profile oatDir=/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==/oat classLoaderContext=PCL[]
-10-31 11:53:44.890  1818  9600 V installd: DexInv: --- BEGIN '/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==/base.apk' ---
-10-31 11:53:45.012 14170 14170 W dex2oat : /apex/com.android.runtime/bin/dex2oat --zip-fd=8 --zip-location=base.apk --input-vdex-fd=-1 --output-vdex-fd=10 --oat-fd=9 --oat-location=/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==/oat/x86/base.odex --instruction-set=x86 --instruction-set-variant=x86 --instruction-set-features=default --runtime-arg -Xbootclasspath:/apex/com.android.runtime/javalib/core-oj.jar:/apex/com.android.runtime/javalib/core-libart.jar:/apex/com.android.runtime/javalib/okhttp.jar:/apex/com.android.runtime/javalib/bouncycastle.jar:/apex/com.android.runtime/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/system/framework/android.test.base.jar --runtime-arg -Xms64m --runtime-arg -Xmx512m --resolve-startup-const-strings=true --max-image-block-size=524288 --compiler-filter=speed-profile --swap-fd=11 --app-image-fd=12 --image-format=lz4 --classpath-dir=/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==
-10-31 11:53:45.012 14170 14170 I dex2oat : /apex/com.android.runtime/bin/dex2oat --input-vdex-fd=-1 --output-vdex-fd=10 --resolve-startup-const-strings=true --max-image-block-size=524288 --compiler-filter=speed-profile --classpath-dir=/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ== --class-loader-context=PCL[] --generate-mini-debug-info --compact-dex-level=none --compilation-reason=install
-10-31 11:53:45.205  1924  2019 D WifiConfigManager: Remove all networks for app ApplicationInfo{c70ea3 com.orcahome}
-10-31 11:53:45.437  1924  2019 E PasspointManager: No app ops listener found for com.orcahome
-10-31 11:53:46.163  1924  1924 I ConditionProviders: Disallowing condition provider com.orcahome
-10-31 11:53:46.189 14170 14170 W dex2oat : Compilation of void com.orcahome.Lyrics.lambda$get$1(java.io.File, java.io.File, java.lang.String, java.lang.String, java.lang.String, java.lang.String, long, boolean, com.orcahome.Lyrics$Done) took 320.315ms
-10-31 11:53:46.418 10387 10387 I Finsky  : [2] Received an install/uninstall event for package com.orcahome
-10-31 11:53:46.730 14261 14299 I MediaProvider: Begin Intent { act=android.intent.action.PACKAGE_FULLY_REMOVED dat=package:com.orcahome flg=0x5000010 cmp=com.android.providers.media/.MediaService (has extras) }
-10-31 11:53:46.865 14261 14299 I MediaProvider: End Intent { act=android.intent.action.PACKAGE_FULLY_REMOVED dat=package:com.orcahome flg=0x5000010 cmp=com.android.providers.media/.MediaService (has extras) }
-10-31 11:53:47.271  1818  9600 V installd: DexInv: --- END '/data/app/com.orcahome-5E_WohgQkOuiiprOx-IjuQ==/base.apk' (success) ---
-10-31 11:53:47.676  1924  1939 I ConditionProviders:  Allowing condition provider com.orcahome/com.orcahome.MediaListener
-10-31 11:53:47.677  1924  1939 I NotificationListeners:  Allowing notification listener com.orcahome/com.orcahome.MediaListener
-10-31 11:53:47.677  1924  1939 V NotificationListeners: enabling notification listener for 0: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:47.677  1924  1939 V NotificationListeners: binding: Intent { act=android.service.notification.NotificationListenerService cmp=com.orcahome/.MediaListener (has extras) }
-10-31 11:53:47.727 14350 14350 W com.orcahome: Unexpected CPU variant for X86 using defaults: x86
-10-31 11:53:47.739 14350 14350 E com.orcahome: Not starting debugger since process cannot load the jdwp agent.
-10-31 11:53:47.782  1924  1950 I ActivityManager: Start proc 14350:com.orcahome/u0a149 for service {com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:48.154  1924  1924 V NotificationListeners: 0 notification listener service connected: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:48.252  1924  1924 V NotificationListeners: enabling notification listener for 0: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
-10-31 11:53:48.252  1924  1924 V NotificationListeners: Not registering ComponentInfo{com.orcahome/com.orcahome.MediaListener} is already bound
-10-31 11:53:48.693  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.packageinstaller/com.android.packageinstaller.PackageInstalledReceiver
-10-31 11:53:48.693  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.musicfx/.Compatibility$Receiver
-10-31 11:53:48.694  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.impl.PackageMonitorReceiverImpl$RegisteredReceiver
-10-31 11:53:48.694  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.backgroundimpl.BackgroundPackageMonitorReceiverImpl$RegisteredReceiver
-10-31 11:53:48.694  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.gms/.gass.chimera.PackageChangeBroadcastReceiver
-10-31 11:53:48.695  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
-10-31 11:53:48.695  1924  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.ims/.receivers.RcsAutoStartReceiver
-10-31 11:53:49.676 10387 10387 I Finsky  : [2] Received an install/uninstall event for package com.orcahome
-10-31 11:53:49.890 14350 14360 I com.orcahome: Background young concurrent copying GC freed 47757(3420KB) AllocSpace objects, 0(0B) LOS objects, 86% free, 979KB/7123KB, paused 2.612ms total 162.247ms
-10-31 11:53:52.533 14113 14475 W NetworkScheduler: Unexpected forwarded intent: Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.PersistentIntentOperationService (has extras) }
-10-31 11:53:52.717  1924  1924 V NotificationListeners: Not registering ComponentInfo{com.orcahome/com.orcahome.MediaListener} is already bound
-10-31 11:53:52.933 14113 14479 W GCM     : Unexpected forwarded intent: Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.PersistentIntentOperationService (has extras) }
-10-31 11:54:01.858  1924  2745 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 2000
-10-31 11:54:02.878 14350 14360 I com.orcahome: NativeAlloc concurrent copying GC freed 10894(847KB) AllocSpace objects, 7(204KB) LOS objects, 51% free, 1449KB/2985KB, paused 1.319ms total 212.261ms
-10-31 11:54:03.390 14350 14360 I com.orcahome: Background young concurrent copying GC freed 26044(1248KB) AllocSpace objects, 2(40KB) LOS objects, 38% free, 1821KB/2985KB, paused 71.575ms total 241.574ms
-10-31 11:54:04.048  1924  1948 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +2s185ms
-10-31 11:54:29.260 14350 14710 I com.orcahome: Explicit concurrent copying GC freed 7547(471KB) AllocSpace objects, 6(184KB) LOS objects, 50% free, 1534KB/3070KB, paused 1.039ms total 16.012ms
-10-31 11:55:10.255 14350 14710 I com.orcahome: Explicit concurrent copying GC freed 7826(333KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1540KB/3080KB, paused 1.066ms total 9.339ms
-10-31 11:55:10.302  1924  2923 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 2000
-10-31 11:55:10.330  1924  2917 I ActivityManager: Killing 13767:com.orcahome.demoplayer/u0a147 (adj 985): empty #17
-10-31 11:55:20.827 15120 15120 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:20.831 15120 15120 I AndroidRuntime: Using default boot image
-10-31 11:55:20.831 15120 15120 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:20.908 15120 15120 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:20.917 15120 15120 D AndroidRuntime: Shutting down VM
-10-31 11:55:20.923  1924  1941 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.orcahome/.MainActivity (has extras)} from uid 0
-10-31 11:55:22.020 15132 15132 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:22.022 15132 15132 I AndroidRuntime: Using default boot image
-10-31 11:55:22.022 15132 15132 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:22.085 15132 15132 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:22.090 15132 15132 D AndroidRuntime: Shutting down VM
-10-31 11:55:23.207 15144 15144 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:23.209 15144 15144 I AndroidRuntime: Using default boot image
-10-31 11:55:23.209 15144 15144 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:23.270 15144 15144 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:23.276 15144 15144 D AndroidRuntime: Shutting down VM
-10-31 11:55:24.387 15156 15156 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:24.388 15156 15156 I AndroidRuntime: Using default boot image
-10-31 11:55:24.388 15156 15156 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:24.451 15156 15156 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:24.458 15156 15156 D AndroidRuntime: Shutting down VM
-10-31 11:55:25.591 15168 15168 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:25.593 15168 15168 I AndroidRuntime: Using default boot image
-10-31 11:55:25.593 15168 15168 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:25.656 15168 15168 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:25.663 15168 15168 D AndroidRuntime: Shutting down VM
-10-31 11:55:25.667  1924  1941 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.orcahome/.MainActivity (has extras)} from uid 0
-10-31 11:55:26.703  1924  2917 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.orcahome/.SettingsActivity} from uid 2000
-10-31 11:55:29.074 15187 15187 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
-10-31 11:55:29.076 15187 15187 I AndroidRuntime: Using default boot image
-10-31 11:55:29.077 15187 15187 I AndroidRuntime: Leaving lock profiling enabled
-10-31 11:55:29.142 15187 15187 D AndroidRuntime: Calling main entry com.android.commands.input.Input
-10-31 11:55:29.154 15187 15187 D AndroidRuntime: Shutting down VM
+10-31 16:18:57.616  1915  6715 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.orcahome.demoplayer/.DemoActivity} from uid 2000
+10-31 16:18:57.648  1915  1950 I ActivityManager: Start proc 14359:com.orcahome.demoplayer/u0a147 for activity {com.orcahome.demoplayer/com.orcahome.demoplayer.DemoActivity}
+10-31 16:18:57.669  1915  6515 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 2000
+10-31 16:18:58.002 14293 14390 D OrcaHome: lyrics: java.io.IOException: HTTP 502
+10-31 16:18:58.002 14293 14390 I OrcaHome: lyrics for "Sunset Drive": not loaded
+10-31 16:18:58.326  1915  1915 V NotificationListeners: binding: Intent { act=android.service.notification.NotificationListenerService cmp=com.orcahome/.MediaListener (has extras) }
+10-31 16:18:58.330  1915  1915 V NotificationListeners: 0 notification listener service connected: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:00.727  1915  1949 I ActivityManager: Force stopping com.orcahome appid=10148 user=-1: deletePackageX
+10-31 16:19:00.727  1915  1949 I ActivityManager: Killing 14293:com.orcahome/u0a148 (adj 0): stop com.orcahome
+10-31 16:19:00.729  1915  1949 W ActivityManager: Scheduling restart of crashed service com.orcahome/.MediaListener in 1000ms
+10-31 16:19:00.729  1915  1949 W ActivityTaskManager: Force removing ActivityRecord{a0f944f u0 com.orcahome/.MainActivity t56 f}: app died, no saved state
+10-31 16:19:00.748  1915  1949 I ActivityManager:   Force stopping service ServiceRecord{3b5efc9 u0 com.orcahome/.MediaListener}
+10-31 16:19:00.748  1915  1915 V NotificationListeners: 0 notification listener connection lost: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:00.748  1915  1915 W NotificationListeners: 0 notification listener binding died: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:00.814  1915  1915 V NotificationListeners: onNullBinding() called with: name = [ComponentInfo{com.orcahome/com.orcahome.MediaListener}]
+10-31 16:19:00.815  1915  7014 D NotificationListeners: Removing active service ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:00.825  2107 14408 W RoleControllerServiceImpl: Cannot get ApplicationInfo for package: com.orcahome
+10-31 16:19:00.837  1915  4383 W ShortcutService: Cached launcher ComponentInfo{com.orcahome/com.orcahome.MainActivity} no longer exists
+10-31 16:19:00.938  1915  1963 I ActivityManager: Force stopping com.orcahome appid=10148 user=0: pkg removed
+10-31 16:19:00.969  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.musicfx/.Compatibility$Receiver
+10-31 16:19:00.969  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.impl.PackageMonitorReceiverImpl$RegisteredReceiver
+10-31 16:19:00.969  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.backgroundimpl.BackgroundPackageMonitorReceiverImpl$RegisteredReceiver
+10-31 16:19:00.969  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_REMOVED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+10-31 16:19:00.995  7756  7756 I Finsky:background: [2] Package no longer installed: com.orcahome
+10-31 16:19:01.005  7756  7756 I Finsky:background: [2] Package no longer installed: com.orcahome
+10-31 16:19:01.011  1915  1940 E PackageManager: failed to find package com.orcahome
+10-31 16:19:01.011  1915  1940 E OverlayManager: Failed to change enabled overlays for com.orcahome user 0
+10-31 16:19:01.028  9600 14417 I Finsky  : [766] Asset module storage cleared for package com.orcahome.
+10-31 16:19:01.045  1915  2030 D WifiConfigManager: Remove all networks for app ApplicationInfo{2502685 com.orcahome}
+10-31 16:19:01.051  9600  9639 I Finsky  : [689] AIM: AppInfoManager-Perf > OnDeviceAppInfo > cacheHitCount=0, cacheMissCount=1. Missed  in cache (limit 10) : [com.orcahome]
+10-31 16:19:01.061  7756  7795 I Finsky:background: [585] IQ:PSL: skipping onPackageRemoved(replacing=false) for untracked package=com.orcahome
+10-31 16:19:01.068  1915  1915 I ConditionProviders: Disallowing condition provider com.orcahome
+10-31 16:19:01.128  9600  9640 I Finsky  : [690] AIM: AppInfoManager-Perf > ItemModel > CacheSize=0, cacheHitCount=0, cacheMissCount=1, total appsWithNoServerDataCount=0. Missed  in cache (limit 10) : [com.orcahome]
+10-31 16:19:01.149  9600  9640 I Finsky  : [690] ItemStore: Not cached: com.orcahome
+10-31 16:19:01.154  9600  9639 E Finsky  : [689] ItemStore: getItems RPC failed for item com.orcahome
+10-31 16:19:01.168 11841 13280 E WorkSourceUtil: Could not find package: com.orcahome
+10-31 16:19:01.188 11841 14436 W RWIPackageIntentOps: Registries cleared for package: com.orcahome
+10-31 16:19:01.195  1915  2030 E PasspointManager: No app ops listener found for com.orcahome
+10-31 16:19:01.198 11841 14409 I Icing   : doRemovePackageData com.orcahome
+10-31 16:19:01.207  1915  1963 I PackageManager: Un-granting permission android.permission.SYSTEM_ALERT_WINDOW from package com.orcahome (protectionLevel=1250 flags=0x20083e44)
+10-31 16:19:01.207  1915  1963 I PackageManager: Un-granting permission android.permission.WRITE_SETTINGS from package com.orcahome (protectionLevel=1218 flags=0x20083e44)
+10-31 16:19:01.250  1915  1963 I PackageManager.DexOptimizer: Running dexopt (dexoptNeeded=1) on: /data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==/base.apk pkg=com.orcahome isa=x86 dexoptFlags=boot_complete,profile_guided,public,enable_hidden_api_checks targetFilter=speed-profile oatDir=/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==/oat classLoaderContext=PCL[]
+10-31 16:19:01.250  1795  2768 V installd: DexInv: --- BEGIN '/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==/base.apk' ---
+10-31 16:19:01.329 14499 14499 W dex2oat : /apex/com.android.runtime/bin/dex2oat --zip-fd=8 --zip-location=base.apk --input-vdex-fd=-1 --output-vdex-fd=10 --oat-fd=9 --oat-location=/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==/oat/x86/base.odex --instruction-set=x86 --instruction-set-variant=x86 --instruction-set-features=default --runtime-arg -Xbootclasspath:/apex/com.android.runtime/javalib/core-oj.jar:/apex/com.android.runtime/javalib/core-libart.jar:/apex/com.android.runtime/javalib/okhttp.jar:/apex/com.android.runtime/javalib/bouncycastle.jar:/apex/com.android.runtime/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/system/framework/android.test.base.jar --runtime-arg -Xms64m --runtime-arg -Xmx512m --resolve-startup-const-strings=true --max-image-block-size=524288 --compiler-filter=speed-profile --swap-fd=11 --app-image-fd=12 --image-format=lz4 --classpath-dir=/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==
+10-31 16:19:01.330 14499 14499 I dex2oat : /apex/com.android.runtime/bin/dex2oat --input-vdex-fd=-1 --output-vdex-fd=10 --resolve-startup-const-strings=true --max-image-block-size=524288 --compiler-filter=speed-profile --classpath-dir=/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug== --class-loader-context=PCL[] --generate-mini-debug-info --compact-dex-level=none --compilation-reason=install
+10-31 16:19:01.378  9600  9600 I Finsky  : [2] Received an install/uninstall event for package com.orcahome
+10-31 16:19:01.401 14518 14556 I MediaProvider: Begin Intent { act=android.intent.action.PACKAGE_FULLY_REMOVED dat=package:com.orcahome flg=0x5000010 cmp=com.android.providers.media/.MediaService (has extras) }
+10-31 16:19:01.413 14518 14556 I MediaProvider: End Intent { act=android.intent.action.PACKAGE_FULLY_REMOVED dat=package:com.orcahome flg=0x5000010 cmp=com.android.providers.media/.MediaService (has extras) }
+10-31 16:19:01.524  1795  2768 V installd: DexInv: --- END '/data/app/com.orcahome-oJId2EkOn5f0WOq3cp67Ug==/base.apk' (success) ---
+10-31 16:19:01.525  1915  1963 I PackageManager: Un-granting permission android.permission.SYSTEM_ALERT_WINDOW from package com.orcahome (protectionLevel=1250 flags=0x20083e44)
+10-31 16:19:01.525  1915  1963 I PackageManager: Un-granting permission android.permission.WRITE_SETTINGS from package com.orcahome (protectionLevel=1218 flags=0x20083e44)
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.packageinstaller/com.android.packageinstaller.PackageInstalledReceiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.musicfx/.Compatibility$Receiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.impl.PackageMonitorReceiverImpl$RegisteredReceiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.android.vending/com.google.android.finsky.packagemonitor.backgroundimpl.BackgroundPackageMonitorReceiverImpl$RegisteredReceiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.gms/.gass.chimera.PackageChangeBroadcastReceiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$PersistentTrustedReceiver
+10-31 16:19:01.547  1915  1949 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 (has extras) } to com.google.android.ims/.receivers.RcsAutoStartReceiver
+10-31 16:19:01.577  9600  9641 I Finsky  : [691] AIM: AppInfoManager-Perf > OnDeviceAppInfo > cacheHitCount=0, cacheMissCount=1. Missed  in cache (limit 10) : [com.orcahome]
+10-31 16:19:01.604 11841 14445 W GCM     : Unexpected forwarded intent: Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.PersistentIntentOperationService (has extras) }
+10-31 16:19:01.604 11841 14445 W NetworkScheduler: Unexpected forwarded intent: Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.orcahome flg=0x4000010 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.PersistentIntentOperationService (has extras) }
+10-31 16:19:01.645  9600  9600 I Finsky  : [2] Received an install/uninstall event for package com.orcahome
+10-31 16:19:01.671  9600  9634 I Finsky  : [684] AIM: AppInfoManager-Perf > ItemModel > CacheSize=0, cacheHitCount=0, cacheMissCount=1, total appsWithNoServerDataCount=0. Missed  in cache (limit 10) : [com.orcahome]
+10-31 16:19:01.671  9600  9634 I Finsky  : [684] ItemStore: Not cached: com.orcahome
+10-31 16:19:01.742  9600  9641 E Finsky  : [691] ItemStore: getItems RPC failed for item com.orcahome
+10-31 16:19:01.750  1915  6715 I ConditionProviders:  Allowing condition provider com.orcahome/com.orcahome.MediaListener
+10-31 16:19:01.750  1915  6715 I NotificationListeners:  Allowing notification listener com.orcahome/com.orcahome.MediaListener
+10-31 16:19:01.750  1915  6715 V NotificationListeners: enabling notification listener for 0: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:01.750  1915  6715 V NotificationListeners: binding: Intent { act=android.service.notification.NotificationListenerService cmp=com.orcahome/.MediaListener (has extras) }
+10-31 16:19:01.775  1915  1950 I ActivityManager: Start proc 14614:com.orcahome/u0a149 for service {com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:01.804 14614 14614 W com.orcahome: Unexpected CPU variant for X86 using defaults: x86
+10-31 16:19:01.834 14614 14614 E com.orcahome: Not starting debugger since process cannot load the jdwp agent.
+10-31 16:19:01.889  1915  1915 V NotificationListeners: 0 notification listener service connected: ComponentInfo{com.orcahome/com.orcahome.MediaListener}
+10-31 16:19:01.908  1915  6158 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 2000
+10-31 16:19:02.533 14614 14672 I OrcaHome: holidays: 173 days off
+10-31 16:19:02.702 14614 14671 I OrcaHome: weather: code 80, rain expected: no
+10-31 16:19:03.041  1915  1948 I ActivityTaskManager: Displayed com.orcahome/.MainActivity: +1s132ms
+10-31 16:19:10.816  1915  1915 V NotificationListeners: Not registering ComponentInfo{com.orcahome/com.orcahome.MediaListener} is already bound
+10-31 16:19:17.547 14614 14681 I OrcaHome: speed limit: java.net.SocketTimeoutException: timeout
+10-31 16:19:28.130 14614 14697 I com.orcahome: Explicit concurrent copying GC freed 10947(458KB) AllocSpace objects, 0(0B) LOS objects, 49% free, 1710KB/3421KB, paused 13us total 4.458ms
+10-31 16:20:08.852 14614 14743 I com.orcahome: Explicit concurrent copying GC freed 7843(364KB) AllocSpace objects, 5(228KB) LOS objects, 49% free, 1702KB/3405KB, paused 9us total 4.131ms
+10-31 16:20:08.903  1915  4383 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000000 cmp=com.orcahome/.MainActivity} from uid 2000
+10-31 16:20:19.311 14827 14827 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:19.318 14827 14827 I AndroidRuntime: Using default boot image
+10-31 16:20:19.318 14827 14827 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:19.368 14827 14827 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:19.371 14827 14827 D AndroidRuntime: Shutting down VM
+10-31 16:20:19.372  1915  1941 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.orcahome/.MainActivity (has extras)} from uid 0
+10-31 16:20:20.451 14874 14874 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:20.452 14874 14874 I AndroidRuntime: Using default boot image
+10-31 16:20:20.452 14874 14874 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:20.491 14874 14874 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:20.492 14874 14874 D AndroidRuntime: Shutting down VM
+10-31 16:20:20.494  1915  1941 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.orcahome/.MainActivity (has extras)} from uid 0
+10-31 16:20:21.563 14886 14886 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:21.564 14886 14886 I AndroidRuntime: Using default boot image
+10-31 16:20:21.564 14886 14886 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:21.605 14886 14886 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:21.607 14886 14886 D AndroidRuntime: Shutting down VM
+10-31 16:20:22.693 14898 14898 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:22.694 14898 14898 I AndroidRuntime: Using default boot image
+10-31 16:20:22.694 14898 14898 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:22.735 14898 14898 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:22.737 14898 14898 D AndroidRuntime: Shutting down VM
+10-31 16:20:23.809 14909 14909 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:23.810 14909 14909 I AndroidRuntime: Using default boot image
+10-31 16:20:23.810 14909 14909 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:23.849 14909 14909 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:23.851 14909 14909 D AndroidRuntime: Shutting down VM
+10-31 16:20:23.852  1915  1941 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.orcahome/.MainActivity (has extras)} from uid 0
+10-31 16:20:24.907  1915  4062 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.orcahome/.SettingsActivity} from uid 2000
+10-31 16:20:27.138 14932 14932 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-31 16:20:27.139 14932 14932 I AndroidRuntime: Using default boot image
+10-31 16:20:27.139 14932 14932 I AndroidRuntime: Leaving lock profiling enabled
+10-31 16:20:27.178 14932 14932 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+10-31 16:20:27.188 14932 14932 D AndroidRuntime: Shutting down VM
