@@ -4,7 +4,8 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
-## 2.7 — in testing
+## 2.7 — working in the car (31 Oct 2026)
+`releases/orca-home-2.7.apk`, built from commit 3292caf. Includes 2.4, 2.5 and 2.6.
 - Map compass: a red arrow pointing north (N under it) that turns with the map, in both
   map directions; tap it to switch between north up and driving direction up.
 - The music card keeps the last Spotify song (title, artist, cover): it shows as soon as the
@@ -23,7 +24,7 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   Lyrics out of time with your version of a song: long-press them, then Earlier / Later
   (half a second a tap); remembered for that song.
 
-## 2.6 — in testing
+## 2.6 — working in the car, as part of 2.7
 - Night brightness (on by default): the screen dims at sunset (30 %, adjustable in settings)
   and goes back to the day brightness and auto/manual mode at sunrise. Turning it up by hand
   at night keeps your level until sunrise. launcher.sh allows it ("modify system settings");
@@ -36,7 +37,7 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - The last 5 places typed in the search bar appear as buttons after Gas stations
   (tap to navigate, long-press to remove).
 
-## 2.5 — in testing
+## 2.5 — working in the car, as part of 2.7
 - Automatic day/night theme (on by default: Light by day, Midnight Drive at night),
   switching at sunrise and sunset worked out on the unit from the GPS position.
 - Home and Work buttons above the map start Google Maps / Waze navigation in one tap
@@ -44,7 +45,7 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - Bigger music buttons, titles and app icons for use while driving.
 - Panel side: map (or app grid) on the left or on the right, nearer the driver.
 
-## 2.4 — in testing
+## 2.4 — working in the car, as part of 2.7
 - Keyboard closes when tapping outside the search bar, when opening another app and when
   coming back home.
 - While Google Maps / Waze navigates, the map layouts show a large guidance banner (turn
