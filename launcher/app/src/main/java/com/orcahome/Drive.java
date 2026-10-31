@@ -171,7 +171,8 @@ final class Drive implements LocationListener {
         // No fixes for two minutes (a tunnel, GPS off): start again from here. A jump faster
         // than 250 km/h is a bad fix. Standing or crawling keeps the last point (below), so
         // after a long jam the way crawled still counts.
-        if (sinceFix > 120_000 || d[0] / Math.max(1, dt / 1000.0) > 70) { mark(l, now); return; }
+        // While idle the car stood still, so a pause between checks isn't a gap: the last point holds.
+        if ((sinceFix > 120_000 && !idle) || d[0] / Math.max(1, dt / 1000.0) > 70) { mark(l, now); return; }
         // Crawling (from about 3 km/h; slower is GPS wander) is movement for the idle timer.
         if (l.hasSpeed() ? l.getSpeed() > 0.8f : d[0] >= 8) {
             movedAt = now;

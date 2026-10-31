@@ -548,21 +548,25 @@ public class MainActivity extends Activity implements NavState.Listener {
         // Needed for the sign, and for the speed alert set to the road's limit.
         if ((!prefs.showRoadLimit() && prefs.speedLimit() >= 0) || kmh < 15) return;
         long now = SystemClock.elapsedRealtime();
-        if (!Double.isNaN(limitLat)) {
+        if (!Double.isNaN(limitLat) && limitAt > 0) {
             float[] d = new float[1];
             Location.distanceBetween(limitLat, limitLon, l.getLatitude(), l.getLongitude(), d);
             if (now - limitAt < 30_000 || d[0] < 200) return;
         }
-        limitLat = l.getLatitude();
-        limitLon = l.getLongitude();
-        limitAt = now;
         float bearing = l.hasBearing() ? l.getBearing() : Float.NaN;
-        RoadInfo.speedLimit(limitLat, limitLon, bearing, kmhLimit -> {
+        // Noted only when a lookup really starts (not while one is still running).
+        boolean asked = RoadInfo.speedLimit(l.getLatitude(), l.getLongitude(), bearing, kmhLimit -> {
+            if (kmhLimit == RoadInfo.STALE) { limitAt = 0; return; } // too late for here: ask again at the next fix
             roadLimit = kmhLimit;
             if (limitSign == null) return;
             limitSign.setText(kmhLimit > 0 ? String.valueOf(kmhLimit) : "");
             limitSign.setVisibility(kmhLimit > 0 && prefs.showRoadLimit() ? View.VISIBLE : View.GONE);
         });
+        if (asked) {
+            limitLat = l.getLatitude();
+            limitLon = l.getLongitude();
+            limitAt = now;
+        }
     }
 
     /** Around prayer time: the nearest mosque, again after 1 km or 10 minutes. */
@@ -1600,7 +1604,9 @@ public class MainActivity extends Activity implements NavState.Listener {
         calMonth.setText((new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(now)
                 + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
         calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now));
-        String shortHijri = prefs.showHijri() ? PrayerTimes.hijriShort(now.getTime(), TimeZone.getDefault()) : "";
+        // With a 12-hour clock ("5:52 PM") the month gets its tiniest form so the line fits.
+        boolean twelve = !android.text.format.DateFormat.is24HourFormat(this);
+        String shortHijri = prefs.showHijri() ? PrayerTimes.hijriShort(now.getTime(), TimeZone.getDefault(), twelve) : "";
         String line = prayer + (!prayer.isEmpty() && !shortHijri.isEmpty() ? " \u00b7 " : "") + shortHijri;
         prayerLine.setText(line);
         prayerLine.setVisibility(line.isEmpty() ? View.GONE : View.VISIBLE);

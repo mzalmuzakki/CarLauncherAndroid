@@ -74,13 +74,17 @@ final class PrayerTimes {
         "Muharram", "Safar", "R. Awal", "R. Akhir", "J. Awal", "J. Akhir",
         "Rajab", "Syakban", "Ramadan", "Syawal", "Zulkaidah", "Zulhijah",
     };
+    private static final String[] HIJRI_TINY = {
+        "Muh.", "Safar", "R. Awal", "R. Akhir", "J. Awal", "J. Akhir",
+        "Rajab", "Sya.", "Ram.", "Syawal", "Zulk.", "Zulh.",
+    };
 
-    /** "9 J. Awal", for a narrow line. */
-    static String hijriShort(long now, TimeZone tz) {
+    /** "9 J. Awal", for a narrow line; tiny: at most 8 letters for the month ("20 Zulk."). */
+    static String hijriShort(long now, TimeZone tz, boolean tiny) {
         IslamicCalendar h = new IslamicCalendar(android.icu.util.TimeZone.getTimeZone(tz.getID()));
         h.setCalculationType(IslamicCalendar.CalculationType.ISLAMIC_UMALQURA);
         h.setTimeInMillis(now);
-        return h.get(IslamicCalendar.DAY_OF_MONTH) + " " + HIJRI_SHORT[h.get(IslamicCalendar.MONTH)];
+        return h.get(IslamicCalendar.DAY_OF_MONTH) + " " + (tiny ? HIJRI_TINY : HIJRI_SHORT)[h.get(IslamicCalendar.MONTH)];
     }
 
     /** "9 Jumadil Awal 1448" for the civil day of `now`. */

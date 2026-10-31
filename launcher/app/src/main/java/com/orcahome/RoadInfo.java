@@ -27,7 +27,8 @@ import java.util.concurrent.Executors;
  * other public Overpass servers are tried.
  */
 final class RoadInfo {
-    interface Limit { void got(int kmh); } // -1: not known for this road
+    interface Limit { void got(int kmh); } // -1: not known for this road; STALE: answer came too late
+    static final int STALE = -2;
     interface Place { void got(String name, double lat, double lon); } // name null: none near
 
     /** OpenStreetMap's main Overpass server, then a long-running community one (Germany). */
@@ -58,17 +59,19 @@ final class RoadInfo {
     /**
      * The limit of the road the car is on: of the roads within 30 m, the nearest one that runs
      * the way the car drives (bearing; NaN = unknown). Its maxspeed, or -1 if it has none: a
-     * road beside or above (an elevated toll road) doesn't lend its limit. When two roads the
-     * same way are too close to tell apart (a toll road right above a street) and their limits
-     * differ, the answer is -1 rather than a guess. Skipped while a lookup is still running.
+     * road beside or above (an elevated toll road) doesn't lend its limit. When two different
+     * roads the same way are too close to tell apart (a toll road right above a street), both
+     * with a known limit and the limits differ, the answer is -1 rather than a guess (pieces of
+     * one road, and side lanes without a limit, don't count). False: skipped, one is running.
      */
-    static void speedLimit(double lat, double lon, float bearing, Limit done) {
-        if (!limitBusy.compareAndSet(false, true)) return;
+    static boolean speedLimit(double lat, double lon, float bearing, Limit done) {
+        if (!limitBusy.compareAndSet(false, true)) return false;
         long asked = android.os.SystemClock.elapsedRealtime();
         String q = String.format(Locale.US, "[out:json][timeout:10];way(around:30,%.6f,%.6f)[highway];out tags geom;", lat, lon);
         NET.execute(() -> {
             int best = -1, second = -1;
             double bestScore = Double.MAX_VALUE, secondScore = Double.MAX_VALUE;
+            String bestName = "", secondName = "";
             try {
                 JSONArray els = new JSONObject(get(q)).getJSONArray("elements");
                 for (int i = 0; i < els.length(); i++) {
@@ -78,8 +81,13 @@ final class RoadInfo {
                     if (tags == null || geom == null || !ROADS.contains(tags.optString("highway"))) continue;
                     double score = score(geom, lat, lon, bearing);
                     int kmh = parse(tags.optString("maxspeed"));
-                    if (score < bestScore) { second = best; secondScore = bestScore; best = kmh; bestScore = score; }
-                    else if (score < secondScore) { second = kmh; secondScore = score; }
+                    String name = tags.optString("name");
+                    if (score < bestScore) {
+                        second = best; secondScore = bestScore; secondName = bestName;
+                        best = kmh; bestScore = score; bestName = name;
+                    } else if (score < secondScore) {
+                        second = kmh; secondScore = score; secondName = name;
+                    }
                 }
             } catch (Exception e) {
                 Log.i("OrcaHome", "speed limit: " + e);
@@ -87,12 +95,13 @@ final class RoadInfo {
             } finally {
                 limitBusy.set(false);
             }
-            if (secondScore - bestScore < 10 && second != best) best = -1; // can't tell which road
-            if (android.os.SystemClock.elapsedRealtime() - asked > MAX_AGE_MS) return;
-            final int fin = best;
-            Log.i("OrcaHome", "speed limit: " + (fin > 0 ? fin + " km/h" : "not known here"));
+            boolean sameRoad = !bestName.isEmpty() && bestName.equals(secondName);
+            if (secondScore - bestScore < 10 && best > 0 && second > 0 && second != best && !sameRoad) best = -1; // can't tell which road
+            final int fin = android.os.SystemClock.elapsedRealtime() - asked > MAX_AGE_MS ? STALE : best;
+            Log.i("OrcaHome", "speed limit: " + (fin > 0 ? fin + " km/h" : fin == STALE ? "answer too late" : "not known here"));
             main().post(() -> done.got(fin));
         });
+        return true;
     }
 
     /** Metres to the nearest piece of the road, plus 50 if that piece runs across the car's way. */

@@ -83,6 +83,9 @@ final class CanRecorder {
     }
 
     private final Runnable autoStop = this::timeUp;
+    private final Runnable lateFlush = () -> writer.execute(() -> {
+        try { if (out != null) { out.flush(); flushedAt = System.currentTimeMillis(); } } catch (IOException ignored) { }
+    });
 
     private void timeUp() {
         new Prefs(app).setCarDataUntil(0);
@@ -237,8 +240,11 @@ final class CanRecorder {
             } else {
                 out.write(l);
             }
-            // To storage at most once a second (and at stop), not for every message.
+            // To storage at most once a second (and at stop), not for every message; and a
+            // second after the last one, so a quiet spell doesn't leave lines in the buffer.
             if (at - flushedAt >= 1000) { out.flush(); flushedAt = at; }
+            main.removeCallbacks(lateFlush);
+            main.postDelayed(lateFlush, 1100);
         } catch (IOException ignored) {
         }
     }
