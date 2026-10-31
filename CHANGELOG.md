@@ -15,7 +15,8 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - "Up next" on the music card: the next song in the playlist or album; tap for the list and
   pick a song (when the player shares its queue with Android).
 - Lyrics in the music card, in time with the song (LRCLIB, free; one small request per new
-  song, kept on the unit): while they show, the card trades its big cover for a small one
+  song; saved on the unit for 30 days after a song was last played, up to 1000 songs, and
+  not removed by "trim caches", so songs played again show their lyrics at once): while they show, the card trades its big cover for a small one
   beside the title, so the line just sung, the current line (large) and about four lines
   ahead fit; clock and weather stay as they are. Lyrics button on the card, or off in settings.
   Lyrics out of time with your version of a song: long-press them, then Earlier / Later

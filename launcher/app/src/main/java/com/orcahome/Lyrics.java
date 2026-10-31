@@ -36,7 +36,9 @@ import java.util.regex.Pattern;
  * Synced lyrics from LRCLIB (lrclib.net: free, no account), looked up by title, artist and
  * length from the playing app's media session, so they work for Spotify and any other player.
  * One small request per new song, only while the home screen shows lyrics; answers are kept
- * on the unit (max 300 songs), so songs played again need no data.
+ * on the unit, so songs played again need no data and show at once: in the app's own files
+ * (not its cache, which "trim caches" and low storage empty), for 30 days after a song was
+ * last played, at most 1000 songs (a few MB).
  */
 final class Lyrics {
     /** l: the lyrics, or null; failed: they couldn't be loaded (no internet), so try again later. */
@@ -68,7 +70,9 @@ final class Lyrics {
     private static final String UA = "OrcaHome/2.7 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
     private static final Lyrics NONE = new Lyrics(new long[0], new String[0], "");
     private static final long RETRY_NONE_MS = 7L * 24 * 3600 * 1000;
-    private static final int MAX_FILES = 300;
+    private static final long KEEP_MS = 30L * 24 * 3600 * 1000;
+    private static final int MAX_FILES = 1000;
+    private static boolean tidied; // once per start: move old files, drop expired ones
     private static final ExecutorService NET = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final LruCache<String, Lyrics> MEMORY = new LruCache<>(20);
@@ -92,9 +96,11 @@ final class Lyrics {
         final String key = key(artist, title);
         Lyrics m = MEMORY.get(key);
         if (m != null) { done.got(m == NONE ? null : m, false); return; }
-        final File dir = new File(c.getCacheDir(), "lyrics");
+        final File dir = new File(c.getFilesDir(), "lyrics");
+        final File old = new File(c.getCacheDir(), "lyrics");
         final boolean log = (c.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         NET.execute(() -> {
+            if (!tidied) { tidied = true; tidy(old, dir); }
             Lyrics l = fromDisk(dir, key);
             if (l == null) {
                 try {
@@ -219,10 +225,36 @@ final class Lyrics {
                 if (System.currentTimeMillis() - f.lastModified() > RETRY_NONE_MS) return null;
                 return NONE;
             }
+            f.setLastModified(System.currentTimeMillis()); // played again: keep it another 30 days
             return parse(str(j, "syncedLyrics"), str(j, "plainLyrics"));
         } catch (IOException | JSONException | RuntimeException e) {
             return null;
         }
+    }
+
+    /** 2.7 kept lyrics in the cache folder: move them over; then drop the expired ones. */
+    private static void tidy(File old, File dir) {
+        File[] moving = old.listFiles();
+        if (moving != null && (dir.isDirectory() || dir.mkdirs())) {
+            for (File f : moving) if (!f.renameTo(new File(dir, f.getName()))) f.delete();
+            old.delete();
+        }
+        prune(dir, true);
+    }
+
+    /** Lyrics not played for 30 days go (byAge), and the oldest beyond 1000 songs. */
+    private static void prune(File dir, boolean byAge) {
+        File[] all = dir.listFiles();
+        if (all == null) return;
+        List<File> kept = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        for (File f : all) {
+            if (byAge && now - f.lastModified() > KEEP_MS) f.delete();
+            else kept.add(f);
+        }
+        if (kept.size() <= MAX_FILES) return;
+        Collections.sort(kept, (x, y) -> Long.compare(x.lastModified(), y.lastModified()));
+        for (int i = 0; i < kept.size() - MAX_FILES; i++) kept.get(i).delete();
     }
 
     private static void toDisk(File dir, String key, JSONObject found) {
@@ -237,11 +269,7 @@ final class Lyrics {
             try (FileOutputStream out = new FileOutputStream(file(dir, key))) {
                 out.write(j.toString().getBytes(StandardCharsets.UTF_8));
             }
-            File[] all = dir.listFiles();
-            if (all != null && all.length > MAX_FILES) {
-                Arrays.sort(all, (x, y) -> Long.compare(x.lastModified(), y.lastModified()));
-                for (int i = 0; i < all.length - MAX_FILES; i++) all[i].delete();
-            }
+            prune(dir, false);
         } catch (IOException | JSONException ignored) {
         }
     }

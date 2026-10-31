@@ -228,6 +228,8 @@ sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es song playlist > /dev/
 adb logcat -c
 home; shot 61-lyrics 12
 say "Lyrics: $(adb logcat -d -s OrcaHome:I | grep -o 'lyrics for .*' | tr '\n' ';')"
+sh_ pm trim-caches 999G > /dev/null   # as optimize.sh / app-speed.sh do
+say "Saved lyrics after 'trim caches': $(sh_ "run-as $PKG ls files/lyrics" | grep -c json) song(s) (expected 1 or more)"
 sh_ input tap 823 441; sleep 2   # pause, so the screen is still for the next tap
 tap_text "Up next" "823 351"; shot 62-up-next 3
 tap_text "Viva la Vida" "512 256"; sleep 1
