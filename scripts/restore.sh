@@ -44,6 +44,7 @@ pkg_installed com.orcahome && orca_boot off
 pkg_installed com.orcahome && orca_brightness off
 pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
 pkg_installed com.orcahome && dev cmd notification disallow_listener com.orcahome/com.orcahome.MediaListener >/dev/null 2>&1
+pkg_installed com.orcahome && dev am force-stop com.orcahome >/dev/null 2>&1
 maps_pip back || FAILED=1
 
 # NWD firmwares that pick the launcher themselves (see launcher.sh); also when

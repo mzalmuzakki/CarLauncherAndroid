@@ -14,7 +14,9 @@ REPORT=$OUT/report.txt
 
 say() { echo "$*" | tee -a "$REPORT"; }
 # No adb call may hang the run (one did, after the screen went off and on): 2 minutes at most.
-adb() { timeout 120 command adb "$@" || { local e=$?; [ $e = 124 ] && echo "  (adb $1 timed out)" >&2; return $e; }; }
+# (timeout needs the program's path: it can't run a shell function or builtin)
+ADB=$(command -v adb)
+adb() { timeout 120 "$ADB" "$@" || { local e=$?; [ $e = 124 ] && echo "  (adb $1 timed out)" >&2; return $e; }; }
 sh_() { adb shell "$@" | tr -d '\r'; }
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1"; }
 

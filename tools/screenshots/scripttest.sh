@@ -14,9 +14,12 @@ front() { adb shell dumpsys activity activities | tr -d '\r' | grep -m1 -E 'mRes
 saw() { adb shell appops get com.orcahome SYSTEM_ALERT_WINDOW | tr -d '\r' | grep -o -E 'allow|default|ignore|deny' | head -1; }
 ws() { adb shell appops get com.orcahome WRITE_SETTINGS | tr -d '\r' | grep -o -E 'allow|default|ignore|deny' | head -1; }
 nl() { adb shell settings get secure enabled_notification_listeners | grep -q com.orcahome && echo on || echo off; }
-check() { # label expected-home-prefix
-    local h f; sleep 3; h=$(home); f=$(front)
-    case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws), music reader=$(nl)" ;;
+check() { # label expected-home-prefix [expected music reader on/off]
+    local h f r; sleep 3; h=$(home); f=$(front); r=$(nl)
+    if [ -n "${3:-}" ] && [ "$r" != "$3" ]; then
+        say "  FAIL $1: music reader=$r (expected $3), home=$h"; return
+    fi
+    case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws), music reader=$r" ;;
                  *) say "  FAIL $1: home=$h (expected $2...), in front=$f" ;; esac
 }
 
@@ -28,18 +31,18 @@ ORIG=com.google.android.apps.nexuslauncher/
 check "before" "$ORIG"
 
 bash "$ROOT/scripts/launcher.sh" > "$OUT/scripttest-install.txt" 2>&1
-check "launcher.sh" "com.orcahome/"
+check "launcher.sh" "com.orcahome/" on
 bash "$ROOT/scripts/launcher.sh" off > "$OUT/scripttest-off.txt" 2>&1
-check "launcher.sh off" "$ORIG"
+check "launcher.sh off" "$ORIG" off
 
 bash "$ROOT/scripts/launcher.sh" >> "$OUT/scripttest-install.txt" 2>&1
-check "launcher.sh again" "com.orcahome/"
+check "launcher.sh again" "com.orcahome/" on
 bash "$ROOT/scripts/restore.sh" > "$OUT/scripttest-restore.txt" 2>&1
-check "restore.sh" "$ORIG"
+check "restore.sh" "$ORIG" off
 
 bash "$ROOT/scripts/launcher.sh" >> "$OUT/scripttest-install.txt" 2>&1
 rm -rf "$STATE_DIR"/*
-check "launcher.sh, records deleted" "com.orcahome/"
+check "launcher.sh, records deleted" "com.orcahome/" on
 bash "$ROOT/scripts/restore.sh" >> "$OUT/scripttest-restore.txt" 2>&1
-check "restore.sh without records" "$ORIG"
+check "restore.sh without records" "$ORIG" off
 say "  crashes: $(adb logcat -b crash -d | grep -c com.orcahome)"

@@ -40,6 +40,7 @@ if [ "${1:-}" = off ]; then
   # Without this the music-card reader keeps Orca Home running (GPS for the trip, start-up volume).
   pkg_installed com.orcahome && dev cmd notification disallow_listener com.orcahome/com.orcahome.MediaListener >/dev/null 2>&1 \
     && ok "Orca Home no longer runs in the background (music card reader off)"
+  pkg_installed com.orcahome && dev am force-stop com.orcahome >/dev/null 2>&1  # what still runs stops now
   pkg_installed com.orcahome && orca_brightness off \
     && ok "Orca Home no longer changes the brightness (if the screen is dim, turn it up in the unit's settings)"
   nwd_home_back

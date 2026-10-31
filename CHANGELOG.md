@@ -37,7 +37,9 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   radio or CAN service can't crash or busy the home screen (connections guarded, calls off
   the screen's thread, station lists checked); the car-data recording stops on time also
   after the unit slept; less work per GPS fix; only the unit's own radio counts as the
-  radio; tapping the destination keeps its pin offline; downloads limited in size.
+  radio; tapping the destination keeps its pin offline; downloads (map tiles too) limited
+  in size. The start-up volume is set once per car start and only while Orca Home is set up
+  (never mid-drive, never after 'off', which also stops Orca Home).
 
 ## 2.8 — in testing
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and

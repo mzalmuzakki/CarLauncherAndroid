@@ -52,9 +52,17 @@ final class CanRecorder {
     private final File file;
     private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
     /** Formatting and writing happen here, so a callback returns to the CAN service at once. */
-    private final java.util.concurrent.ExecutorService writer = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.ExecutorService writer = oneThread();
     /** Calls to the CAN service (adding and removing callbacks) happen here, never on the screen's thread. */
-    private final java.util.concurrent.ExecutorService binderCalls = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.ExecutorService binderCalls = oneThread();
+
+    /** One thread, tasks in order; the thread ends after 30 s with nothing to do (none kept between recordings). */
+    private static java.util.concurrent.ExecutorService oneThread() {
+        java.util.concurrent.ThreadPoolExecutor e = new java.util.concurrent.ThreadPoolExecutor(1, 1, 30,
+                java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.LinkedBlockingQueue<>());
+        e.allowCoreThreadTimeOut(true);
+        return e;
+    }
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
     private volatile boolean running;
     /** When the recording ends (wall clock, ms; 0: no end). */
@@ -99,7 +107,10 @@ final class CanRecorder {
     /** The timer pauses while the unit sleeps, so the clock is also checked as messages come in. */
     private void checkTime(long now) {
         long u = until;
-        if (running && u > 0 && now >= u) main.post(this::timeUp);
+        if (running && u > 0 && now >= u) {
+            until = 0; // asked once, not for every message until it has stopped
+            main.post(this::timeUp);
+        }
     }
 
     /** Records until `until` (ms), then stops by itself; resume: carry on in the same file (after a restart). */

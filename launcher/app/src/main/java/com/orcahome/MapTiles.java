@@ -129,7 +129,12 @@ final class MapTiles {
             f.getParentFile().mkdirs();
             try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[8192];
-                for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+                long size = 0;
+                for (int n; (n = in.read(buf)) > 0; ) {
+                    out.write(buf, 0, n);
+                    // A tile is 10-60 KB; anything this big isn't one (storage and memory are small).
+                    if ((size += n) > 512_000) return false;
+                }
             }
             return tmp.renameTo(f);
         } finally {

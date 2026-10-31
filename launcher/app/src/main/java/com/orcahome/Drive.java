@@ -46,6 +46,7 @@ final class Drive implements LocationListener {
     private double lastLat = Double.NaN, lastLon;
     private long lastT, savedAt, lastFixAt; // lastT: time of the last counted point
     private Listener listener;
+    private long carStartedAt; // elapsed ms
 
     // Kept in memory, saved every 30 s and when the car goes off.
     private long tripStart, tripMovingMs;
@@ -63,6 +64,8 @@ final class Drive implements LocationListener {
         tripMovingMs = sp.getLong("trip_moving", 0);
         tripM = sp.getFloat("trip_m", 0);
         odoM = sp.getLong("odo_m", 0);
+        // First run of this version: no "screen on" noted yet, so nothing counts as an unseen wake.
+        if (!sp.contains("screen_on")) sp.edit().putLong("screen_on", System.currentTimeMillis()).apply();
         IntentFilter f = new IntentFilter(Intent.ACTION_SCREEN_ON);
         f.addAction(Intent.ACTION_SCREEN_OFF);
         app.registerReceiver(new BroadcastReceiver() {
@@ -82,9 +85,17 @@ final class Drive implements LocationListener {
     void start() {
         if (!screenIsOn()) return;
         // The car went off and came back while Orca Home wasn't running (Android closed it):
-        // the screen-on went unseen, so look at it now.
-        long off = sp.getLong("screen_off", 0);
-        if (off > tripStart && off > sp.getLong("screen_on", 0)) { screenOn(); return; }
+        // the screen-on went unseen. A new trip if it was off long enough, but no start-up
+        // volume (the drive may be well under way). A screen-off "in the future" (the clock
+        // was set back) is ignored.
+        long now = System.currentTimeMillis(), off = sp.getLong("screen_off", 0);
+        if (off > tripStart && off > sp.getLong("screen_on", 0) && off <= now) {
+            sp.edit().putLong("screen_on", now).apply();
+            if (now - off >= carOffMs()) {
+                Log.i("OrcaHome", "car started while Orca Home was closed: new trip");
+                newTrip();
+            }
+        }
         if (running && !idle) return;
         movedAt = System.currentTimeMillis();
         request(LocationManager.GPS_PROVIDER);
@@ -151,18 +162,26 @@ final class Drive implements LocationListener {
     /** The screen came on: after 10 minutes off that's the car starting. */
     void screenOn() {
         long now = System.currentTimeMillis();
-        long off = new Prefs(app).testFast(app) ? 5000 : CAR_OFF_MS;
         sp.edit().putLong("screen_on", now).apply();
-        if (now - sp.getLong("screen_off", 0) >= off) carStarted();
+        if (now - sp.getLong("screen_off", 0) >= carOffMs()) carStarted();
         start();
     }
 
-    /** New trip, and the start-up volume (a few seconds later, after the firmware sets its own). */
+    private long carOffMs() { return new Prefs(app).testFast(app) ? 5000 : CAR_OFF_MS; }
+
+    /**
+     * New trip, and the start-up volume (a few seconds later, after the firmware sets its own).
+     * Once per car start (boot and the screen coming on can both report it); the volume only
+     * while Orca Home is set up ("display over other apps", given by launcher.sh, taken back by 'off').
+     */
     void carStarted() {
+        long t = android.os.SystemClock.elapsedRealtime();
+        if (carStartedAt > 0 && t - carStartedAt < 60_000) return;
+        carStartedAt = t;
         Log.i("OrcaHome", "car started: new trip");
         newTrip();
         int pct = new Prefs(app).startVolume();
-        if (pct < 0) return;
+        if (pct < 0 || !android.provider.Settings.canDrawOverlays(app)) return;
         main.postDelayed(() -> {
             AudioManager am = app.getSystemService(AudioManager.class);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
