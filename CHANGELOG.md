@@ -4,7 +4,8 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
-## 2.9 — in testing
+## 2.9 — working in the car (31 Oct 2026)
+`releases/orca-home-2.9.apk`, built from commit 6fd77c7. Includes 2.8.
 - The unit's own FM/AM radio on the music card (through the NWD radio service): the station
   (name or frequency, radio text), its presets as buttons (tap to tune), ◀ ▶ search the
   previous / next station (the radio's own search), the radio's screen from the middle button
@@ -41,7 +42,7 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   in size. The start-up volume is set once per car start and only while Orca Home is set up
   (never mid-drive, never after 'off', which also stops Orca Home).
 
-## 2.8 — in testing
+## 2.8 — working in the car, as part of 2.9
 - Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and
   the Hijri date; public holidays (Google's Indonesian holiday calendar, cuti bersama included)
   after the date, in red.
