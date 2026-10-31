@@ -1,11 +1,6 @@
---------- beginning of main
 --------- beginning of system
-10-31 16:33:36.910 10792 10792 D OrcaHome: night brightness (test build): dim=true dimmed=false
-10-31 16:33:36.914 10792 10792 I OrcaHome: night brightness: dimmed to 30%
-10-31 16:33:36.933 10792 10792 I OrcaHome: radio: connecting to com.orcahome.demoplayer
-10-31 16:33:36.961 10792 10858 I OrcaHome: radio: connected, state 1, 98.7 MHz band 0 "PRAMBORS", 6 presets
-10-31 16:33:38.722 10792 10870 I OrcaHome: mosque: java.io.FileNotFoundException: https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A10%5D%3Bnwr(around%3A2500%2C-6.190000%2C-73.180000)%5Bamenity%3Dplace_of_worship%5D%5Breligion%3Dmuslim%5D%3Bout%20center%20tags%3B
-10-31 16:33:44.424 10792 10792 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-31 16:33:47.698 10792 10792 D OrcaHome: night brightness (test build): dim=true dimmed=true
-10-31 16:33:53.895 10792 10792 D OrcaHome: night brightness (test build): dim=false dimmed=true
-10-31 16:33:53.898 10792 10792 I OrcaHome: night brightness: back to 200
+--------- beginning of main
+10-31 17:31:14.231 10536 10536 D OrcaHome: night brightness (test build): dim=false dimmed=false
+10-31 17:31:21.710 10536 10536 D OrcaHome: night brightness (test build): dim=false dimmed=false
+10-31 17:31:24.944 10536 10536 D OrcaHome: night brightness (test build): dim=false dimmed=false
+10-31 17:31:31.109 10536 10536 D OrcaHome: night brightness (test build): dim=false dimmed=false
