@@ -99,7 +99,8 @@ final class DayNight {
         return best;
     }
 
-    private static double[] position(Context c) {
+    /** Where the car is (last known fix), or Jakarta before the first one. */
+    static double[] position(Context c) {
         Location best = lastKnown(c);
         return best != null ? new double[]{best.getLatitude(), best.getLongitude()}
                 : new double[]{FALLBACK_LAT, FALLBACK_LON};

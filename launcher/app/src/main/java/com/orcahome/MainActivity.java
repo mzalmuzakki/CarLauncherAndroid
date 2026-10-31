@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -55,6 +56,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * The home screen. Main panel: destination search (or the turn-by-turn card
@@ -87,7 +89,21 @@ public class MainActivity extends Activity implements NavState.Listener {
     private GaugeView gauge;
     private MapPanel map;
     private TextView speedBubble, mapHint;
-    private LinearLayout chipRow, musicApps;
+    private LinearLayout chipRow, musicApps, quickSwitch;
+    private final List<String> quickPkgs = new ArrayList<>(); // the player of each quickSwitch icon
+    // 2.8: next prayer / Hijri date under the clock, speed limit sign and trip under the speed,
+    // reminder pills at the bottom of the map.
+    private TextView prayerLine, limitSign, tripLabel, pillDest, pillMosque, pillOddEven, pillService;
+    private int roadLimit = -1;
+    private double limitLat = Double.NaN, limitLon, mosqueQLat = Double.NaN, mosqueQLon;
+    private long limitAt, mosqueAt;
+    private String mosqueName;
+    private double mosqueLat, mosqueLon;
+    /** Destination of navigation started from Orca Home (kept across rebuilds). */
+    private static String destName;
+    private static double destLat = Double.NaN, destLon;
+    private static long destSince;
+    private static boolean destNavSeen;
     private int speedBand = -1;
     private LinearLayout favRow;
     private TextView calMonth, calDay, calPrev, calToday, calNext;
@@ -154,6 +170,12 @@ public class MainActivity extends Activity implements NavState.Listener {
         updateCalendar();
         showWeather();
         if (prefs.showWeather()) Weather.refreshIfStale(this, prefs, this::showWeather);
+        if (prefs.showHolidays()) Holidays.refreshIfStale(this, this::updateCalendar);
+        Drive drive = Drive.get(this);
+        drive.setListener(this::showTrip);
+        drive.start();
+        showTrip();
+        refreshPills();
         NavState.setListener(this);
         rebindListener();
         onNavChanged();
@@ -170,6 +192,8 @@ public class MainActivity extends Activity implements NavState.Listener {
         hideKeyboard();
         main.removeCallbacks(themeSwitch);
         unregisterReceiver(dateChanged);
+        main.removeCallbacks(calendarTick);
+        Drive.get(this).setListener(null);
         NavState.setListener(null);
         if (map != null) map.setActive(false);
         stopSpeed();
@@ -411,13 +435,38 @@ public class MainActivity extends Activity implements NavState.Listener {
         } else {
             speedBubble = null;
         }
+        // Under the speed: the road's speed limit (a sign) and the trip so far.
+        LinearLayout under = new LinearLayout(this);
+        under.setOrientation(LinearLayout.VERTICAL);
+        under.setGravity(Gravity.CENTER_HORIZONTAL);
+        limitSign = ui.label(this, 17, 0xFF111111, true);
+        limitSign.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
+        ring.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        ring.setColor(0xFFFFFFFF);
+        ring.setStroke(ui.dp(5), GaugeView.ALERT);
+        limitSign.setBackground(ring);
+        limitSign.setVisibility(View.GONE);
+        under.addView(limitSign, new LinearLayout.LayoutParams(ui.dp(46), ui.dp(46)));
+        tripLabel = ui.label(this, 11, ui.text, true);
+        tripLabel.setGravity(Gravity.CENTER);
+        tripLabel.setBackground(ui.box(ui.panel, ui.dp(10)));
+        tripLabel.setPadding(ui.dp(8), ui.dp(3), ui.dp(8), ui.dp(3));
+        tripLabel.setVisibility(View.GONE);
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tl.topMargin = ui.dp(6);
+        under.addView(tripLabel, tl);
+        FrameLayout.LayoutParams ul = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        ul.topMargin = ui.dp(speedBubble != null ? 88 : 10);
+        ul.rightMargin = ui.dp(6);
+        frame.addView(under, ul);
 
+        // A row at the bottom right, so the column under the speed has the height.
         LinearLayout zoom = new LinearLayout(this);
-        zoom.setOrientation(LinearLayout.VERTICAL);
-        zoom.addView(zoomButton("+", 1));
-        View gap = new View(this);
-        zoom.addView(gap, new LinearLayout.LayoutParams(1, ui.dp(8)));
         zoom.addView(zoomButton("\u2212", -1));
+        View gap = new View(this);
+        zoom.addView(gap, new LinearLayout.LayoutParams(ui.dp(8), 1));
+        zoom.addView(zoomButton("+", 1));
         FrameLayout.LayoutParams zl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
         zl.bottomMargin = zl.rightMargin = ui.dp(10);
         frame.addView(zoom, zl);
@@ -432,11 +481,169 @@ public class MainActivity extends Activity implements NavState.Listener {
         bannerEta.setBackground(ui.box(ui.panel, ui.dp(16)));
         bannerEta.setPadding(ui.dp(14), ui.dp(6), ui.dp(14), ui.dp(6));
         bannerEta.setVisibility(View.GONE);
+        // Bottom left: destination, nearest mosque, odd-even and service reminders, the ETA chip.
+        LinearLayout pills = new LinearLayout(this);
+        pills.setOrientation(LinearLayout.VERTICAL);
+        pillDest = pill(v -> { if (!Double.isNaN(destLat)) navigateTo(destName); });
+        pillMosque = pill(v -> navigateTo(String.format(Locale.US, "%.6f,%.6f", mosqueLat, mosqueLon)));
+        pillOddEven = pill(null);
+        pillService = pill(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        for (TextView t : new TextView[]{pillDest, pillMosque, pillOddEven, pillService, bannerEta}) {
+            LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            pl.topMargin = ui.dp(6);
+            pills.addView(t, pl);
+        }
         FrameLayout.LayoutParams el = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
         el.leftMargin = ui.dp(10);
         el.bottomMargin = ui.dp(22);
-        frame.addView(bannerEta, el);
+        el.rightMargin = ui.dp(110); // clear of the zoom buttons
+        frame.addView(pills, el);
         return frame;
+    }
+
+    private TextView pill(View.OnClickListener l) {
+        TextView t = ui.label(this, 13, ui.text, true);
+        t.setSingleLine(true);
+        t.setEllipsize(TextUtils.TruncateAt.END);
+        t.setBackground(ui.box(ui.panel, ui.dp(14)));
+        t.setPadding(ui.dp(12), ui.dp(5), ui.dp(12), ui.dp(5));
+        t.setVisibility(View.GONE);
+        if (l != null) t.setOnClickListener(l);
+        return t;
+    }
+
+    // ---- 2.8: trip, speed limit, destination, mosque, reminders ------------------------
+
+    private void showTrip() {
+        Drive d = Drive.get(this);
+        String trip = prefs.showTrip() ? d.tripText() : "";
+        String avg = prefs.showTrip() ? d.averageText() : "";
+        if (tripLabel != null) {
+            setIfChanged(tripLabel, avg.isEmpty() ? trip : trip + "\n" + avg);
+            tripLabel.setVisibility(trip.isEmpty() ? View.GONE : View.VISIBLE);
+        }
+        if (gauge != null) gauge.setTrip(trip);
+        refreshServicePill();
+    }
+
+    /** At most every 30 s and 200 m, while moving: the road's speed limit (OpenStreetMap). */
+    private void checkRoadLimit(Location l, int kmh) {
+        if (!prefs.showRoadLimit() || kmh < 15) return;
+        long now = SystemClock.elapsedRealtime();
+        if (!Double.isNaN(limitLat)) {
+            float[] d = new float[1];
+            Location.distanceBetween(limitLat, limitLon, l.getLatitude(), l.getLongitude(), d);
+            if (now - limitAt < 30_000 || d[0] < 200) return;
+        }
+        limitLat = l.getLatitude();
+        limitLon = l.getLongitude();
+        limitAt = now;
+        RoadInfo.speedLimit(limitLat, limitLon, kmhLimit -> {
+            roadLimit = kmhLimit;
+            if (limitSign == null) return;
+            limitSign.setText(kmhLimit > 0 ? String.valueOf(kmhLimit) : "");
+            limitSign.setVisibility(kmhLimit > 0 ? View.VISIBLE : View.GONE);
+        });
+    }
+
+    /** Around prayer time: the nearest mosque, again after 1 km or 10 minutes. */
+    private void checkMosque(Location l) {
+        double lat = l.getLatitude(), lon = l.getLongitude();
+        boolean near = PrayerTimes.nearPrayer(lat, lon, System.currentTimeMillis(), TimeZone.getDefault()) || prefs.testFast(this);
+        if (!prefs.showMosque() || !near) {
+            if (mosqueName != null) { mosqueName = null; refreshPills(); }
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (!Double.isNaN(mosqueQLat)) {
+            float[] d = new float[1];
+            Location.distanceBetween(mosqueQLat, mosqueQLon, lat, lon, d);
+            if (d[0] < 1000 && now - mosqueAt < 10 * 60_000L) { refreshPills(); return; }
+        }
+        mosqueQLat = lat;
+        mosqueQLon = lon;
+        mosqueAt = now;
+        RoadInfo.nearestMosque(lat, lon, (name, mLat, mLon) -> {
+            mosqueName = name;
+            mosqueLat = mLat;
+            mosqueLon = mLon;
+            refreshPills();
+        });
+    }
+
+    /** Navigation started from Orca Home: its destination on the map (a name is looked up). */
+    private void setDestination(String dest) {
+        if (!prefs.showDestination()) return;
+        destName = dest;
+        destLat = Double.NaN;
+        destSince = System.currentTimeMillis();
+        destNavSeen = false;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^\\s*(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)\\s*$").matcher(dest);
+        if (m.matches()) {
+            destLat = Double.parseDouble(m.group(1));
+            destLon = Double.parseDouble(m.group(2));
+            return;
+        }
+        final Context app = getApplicationContext();
+        new Thread(() -> {
+            try {
+                List<android.location.Address> a = new android.location.Geocoder(app, Locale.getDefault()).getFromLocationName(dest, 1);
+                if (a == null || a.isEmpty() || !dest.equals(destName)) return;
+                double lat = a.get(0).getLatitude(), lon = a.get(0).getLongitude();
+                main.post(() -> { if (dest.equals(destName)) { destLat = lat; destLon = lon; refreshPills(); } });
+            } catch (Exception ignored) { // no internet or no match: no pin
+            }
+        }).start();
+    }
+
+    private void refreshPills() {
+        if (pillDest == null) return;
+        long now = System.currentTimeMillis();
+        // The destination goes when the navigation that went there has ended, or if it never started.
+        if (destName != null && ((!destNavSeen && now - destSince > 3 * 60_000L) || now - destSince > 4 * 3600_000L)) destName = null;
+        Location here = DayNight.lastKnown(this);
+        boolean dest = destName != null && !Double.isNaN(destLat);
+        if (map != null) map.setDestination(dest ? destLat : Double.NaN, destLon);
+        if (dest) {
+            String label = destName.equals(prefs.homePlace()) ? "Home" : destName.equals(prefs.workPlace()) ? "Work"
+                    : destName.matches("^-?\\d+\\.\\d+,-?\\d+\\.\\d+$") ? (mosqueName != null ? mosqueName : "Destination") : destName;
+            setIfChanged(pillDest, "\uD83D\uDCCD " + label + (here == null ? "" : " \u00b7 " + distance(here, destLat, destLon)));
+        }
+        pillDest.setVisibility(dest ? View.VISIBLE : View.GONE);
+        if (mosqueName != null) {
+            setIfChanged(pillMosque, "\uD83D\uDD4C " + mosqueName + (here == null ? "" : " \u00b7 " + distance(here, mosqueLat, mosqueLon)));
+        }
+        pillMosque.setVisibility(mosqueName != null ? View.VISIBLE : View.GONE);
+        Calendar c = Calendar.getInstance();
+        String oe = OddEven.reminder(prefs.plate(), c, prefs.showHolidays() && Holidays.on(this, c.getTime()) != null);
+        if (oe != null) setIfChanged(pillOddEven, oe);
+        pillOddEven.setVisibility(oe != null ? View.VISIBLE : View.GONE);
+        refreshServicePill();
+    }
+
+    private void refreshServicePill() {
+        if (pillService == null) return;
+        String s = serviceText(prefs, Drive.get(this).odometerKm(), System.currentTimeMillis());
+        if (s != null) setIfChanged(pillService, "\uD83D\uDD27 " + s);
+        pillService.setVisibility(s != null ? View.VISIBLE : View.GONE);
+    }
+
+    /** "Service due: 5,120 km since the last one", "Service in about 250 km", or null. */
+    static String serviceText(Prefs p, double odoKm, long now) {
+        int every = p.serviceKm();
+        if (every <= 0) return null;
+        double since = odoKm - p.serviceAtKm();
+        long at = p.serviceAt();
+        if (at > 0 && now - at >= 182L * 24 * 3600_000L) return "Service due: 6 months since the last one";
+        if (since >= every) return String.format(Locale.US, "Service due: %,d km since the last one", Math.round(since));
+        if (every - since <= 300) return String.format(Locale.US, "Service in about %d km", Math.round(every - since));
+        return null;
+    }
+
+    private static String distance(Location from, double lat, double lon) {
+        float[] d = new float[1];
+        Location.distanceBetween(from.getLatitude(), from.getLongitude(), lat, lon, d);
+        return d[0] < 1000 ? Math.round(d[0] / 10) * 10 + " m" : String.format(Locale.US, "%.1f km", d[0] / 1000);
     }
 
     /** Google Maps-style guidance: turn arrow, distance and street, from the navigation app. */
@@ -705,6 +912,7 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** Starts turn-by-turn navigation in the maps app (Google Maps or Waze), else a search. */
     private void navigateTo(String dest) {
+        setDestination(dest);
         String pkg = NavApps.preferred(this, prefs);
         Uri uri = NavState.MAPS.equals(pkg) ? Uri.parse("google.navigation:q=" + Uri.encode(dest))
                 : NavState.WAZE.equals(pkg) ? Uri.parse("https://waze.com/ul?q=" + Uri.encode(dest) + "&navigate=yes")
@@ -783,10 +991,15 @@ public class MainActivity extends Activity implements NavState.Listener {
             clock.setTextColor(ui.text);
             clock.setIncludeFontPadding(false);
             dc.addView(clock);
+            prayerLine = ui.label(this, 12, ui.sub, false);
+            prayerLine.setSingleLine(true);
+            prayerLine.setEllipsize(TextUtils.TruncateAt.END);
+            dc.addView(prayerLine, wrapTop(4));
             calDay = calPrev = calToday = calNext = null;
             row.addView(dc, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         } else {
             row.addView(cal, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+            prayerLine = null;
         }
 
         if (prefs.showWeather()) {
@@ -901,7 +1114,7 @@ public class MainActivity extends Activity implements NavState.Listener {
             LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
             llp.topMargin = ui.dp(8);
             p.addView(lyricsView(5), llp);
-            musicApps = null;
+            musicApps = quickSwitch = null;
             p.addView(musicNext, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         } else {
             LinearLayout head = new LinearLayout(this);
@@ -910,6 +1123,24 @@ public class MainActivity extends Activity implements NavState.Listener {
             LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
             hlp.leftMargin = ui.dp(8);
             head.addView(musicSource, hlp);
+            // While the card shows the last Spotify song: one tap to another player (the radio...).
+            quickSwitch = new LinearLayout(this);
+            quickSwitch.setGravity(Gravity.CENTER_VERTICAL);
+            quickPkgs.clear();
+            for (Apps.Entry e : musicAppList()) {
+                ImageView icon = new ImageView(this);
+                quickPkgs.add(e.cn.getPackageName());
+                icon.setContentDescription(e.label);
+                icon.setPadding(ui.dp(3), ui.dp(3), ui.dp(3), ui.dp(3));
+                icon.setBackground(ui.box(ui.tile, ui.dp(16)));
+                Apps.icon(icon, e);
+                icon.setOnClickListener(v -> Apps.launch(this, e.cn));
+                LinearLayout.LayoutParams ql = new LinearLayout.LayoutParams(ui.dp(32), ui.dp(32));
+                ql.leftMargin = ui.dp(6);
+                quickSwitch.addView(icon, ql);
+            }
+            quickSwitch.setVisibility(View.GONE);
+            head.addView(quickSwitch);
             head.addView(lyricsChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(24)));
             p.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             // Square cover (or the app buttons when nothing plays) with flexible space around
@@ -1047,7 +1278,8 @@ public class MainActivity extends Activity implements NavState.Listener {
     };
 
     /** Shown in the music card while nothing plays: Spotify, YouTube Music, YouTube and the radio. */
-    private LinearLayout musicShortcuts() {
+    /** Spotify, YouTube Music, YouTube and the radio, those installed. */
+    private List<Apps.Entry> musicAppList() {
         List<Apps.Entry> found = new ArrayList<>();
         List<Apps.Entry> all = Apps.all(this);
         for (String pkg : MUSIC_APPS)
@@ -1056,6 +1288,11 @@ public class MainActivity extends Activity implements NavState.Listener {
             String l = e.label.toLowerCase(Locale.ROOT);
             if (l.contains("radio") || l.equals("fm")) { found.add(e); break; }
         }
+        return found;
+    }
+
+    private LinearLayout musicShortcuts() {
+        List<Apps.Entry> found = musicAppList();
         if (found.isEmpty()) return null;
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER);
@@ -1110,6 +1347,12 @@ public class MainActivity extends Activity implements NavState.Listener {
         dockSlot(d, apps, "music", "Music", R.drawable.ic_music, v -> openMusic());
         dockSlot(d, apps, "nav", "Navigation", R.drawable.ic_navigation, v -> openNavigation());
         dockSlot(d, apps, "web", "Browser", R.drawable.ic_globe, v -> open(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))));
+        if (prefs.quickControls()) {
+            dockButton(d, R.drawable.ic_bright_down, false, v -> stepBrightness(-1), null);
+            dockButton(d, R.drawable.ic_bright_up, false, v -> stepBrightness(1), null);
+            dockButton(d, R.drawable.ic_vol_down, false, v -> stepVolume(AudioManager.ADJUST_LOWER), null);
+            dockButton(d, R.drawable.ic_vol_up, false, v -> stepVolume(AudioManager.ADJUST_RAISE), null);
+        }
         dockButton(d, R.drawable.ic_settings, false, v -> startActivity(new Intent(this, SettingsActivity.class)),
                 v -> { open(new Intent(Settings.ACTION_SETTINGS)); return true; });
         d.addView(ui.logo(this, 30, false), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ui.dp(30)));
@@ -1138,6 +1381,24 @@ public class MainActivity extends Activity implements NavState.Listener {
             b.setPadding(ui.dp(14), ui.dp(9), ui.dp(14), ui.dp(9));
             Apps.icon(b, app);
         }
+    }
+
+    /** One step (about a tenth) darker or brighter; switches auto brightness off. */
+    private void stepBrightness(int dir) {
+        if (!Brightness.allowed(this)) {
+            open(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())));
+            return;
+        }
+        android.content.ContentResolver r = getContentResolver();
+        int now = Settings.System.getInt(r, Settings.System.SCREEN_BRIGHTNESS, 128);
+        int v = Math.max(5, Math.min(255, now + dir * 25));
+        Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+        Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS, v);
+        Toast.makeText(this, "Brightness " + Math.round(v * 100 / 255f) + "%", Toast.LENGTH_SHORT).show();
+    }
+
+    private void stepVolume(int direction) {
+        getSystemService(AudioManager.class).adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI);
     }
 
     private void chooseDockApp(String slot, String name) {
@@ -1252,20 +1513,56 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     // ---- calendar and weather -------------------------------------------------
 
+    /** At the next prayer time: the clock card shows the one after. */
+    private final Runnable calendarTick = this::updateCalendar;
+
     private void updateCalendar() {
         Calendar c = Calendar.getInstance();
         Date now = c.getTime();
-        if (calDay == null) { // map layout: date line above the large clock
-            calMonth.setText(new SimpleDateFormat("EEEE, d MMM", Locale.getDefault()).format(now).toUpperCase(Locale.getDefault()));
+        // Tanggal merah: the holiday's name after the date, in red.
+        String holiday = prefs.showHolidays() ? Holidays.on(this, now) : null;
+        calMonth.setTextColor(holiday != null ? GaugeView.ALERT : ui.sub);
+        String extra = prayerText(now.getTime());
+        main.removeCallbacks(calendarTick);
+        if (prefs.showPrayer()) {
+            double[] p = DayNight.position(this);
+            long next = PrayerTimes.next(p[0], p[1], now.getTime(), TimeZone.getDefault())[1];
+            main.postDelayed(calendarTick, Math.max(1000, next - now.getTime() + 1000));
+        }
+        if (calDay == null) { // map layout: date line above the large clock, prayer and Hijri date below
+            String date = new SimpleDateFormat(holiday != null ? "EEE, d MMM" : "EEEE, d MMM", Locale.getDefault()).format(now);
+            calMonth.setText((date + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
+            if (prayerLine != null) {
+                prayerLine.setText(extra);
+                prayerLine.setVisibility(extra.isEmpty() ? View.GONE : View.VISIBLE);
+            }
+            refreshPills();
             return;
         }
-        calMonth.setText(new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(now).toUpperCase(Locale.getDefault()));
-        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now));
+        calMonth.setText((new SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(now)
+                + (holiday != null ? " \u00b7 " + holiday : "")).toUpperCase(Locale.getDefault()));
+        calDay.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(now) + (extra.isEmpty() ? "" : " \u00b7 " + extra));
         calToday.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
         c.add(Calendar.DAY_OF_MONTH, -1);
         calPrev.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
         c.add(Calendar.DAY_OF_MONTH, 2);
         calNext.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
+    }
+
+    /** "Ashar 14:54 · 20 Jumadil Awal 1448" (either part can be off). */
+    private String prayerText(long now) {
+        StringBuilder s = new StringBuilder();
+        if (prefs.showPrayer()) {
+            double[] p = DayNight.position(this);
+            long[] next = PrayerTimes.next(p[0], p[1], now, TimeZone.getDefault());
+            s.append(PrayerTimes.NAMES[(int) next[0]]).append(' ')
+                    .append(android.text.format.DateFormat.getTimeFormat(this).format(new Date(next[1])));
+        }
+        if (prefs.showHijri()) {
+            if (s.length() > 0) s.append(" \u00b7 ");
+            s.append(PrayerTimes.hijri(now, TimeZone.getDefault()));
+        }
+        return s.toString();
     }
 
     private void showWeather() {
@@ -1279,7 +1576,14 @@ public class MainActivity extends Activity implements NavState.Listener {
             wIcon.setText("");
             return;
         }
-        wCond.setText(Weather.label(code));
+        long rain = prefs.weatherRain();
+        if (rain > System.currentTimeMillis()) { // rain expected within two hours
+            wCond.setText("Rain ~" + android.text.format.DateFormat.getTimeFormat(this).format(new Date(rain)));
+            wCond.setTextColor(GaugeView.ALERT);
+        } else {
+            wCond.setText(Weather.label(code));
+            wCond.setTextColor(ui.text);
+        }
         wTemp.setText(Math.round(t) + "°C");
         String city = prefs.weatherCity();
         wCity.setText(city.isEmpty() ? "" : " \u00b7 " + city);
@@ -1290,6 +1594,8 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     @Override
     public void onNavChanged() {
+        if (NavState.active) destNavSeen = true;
+        else if (destNavSeen && destName != null) { destName = null; refreshPills(); } // arrived or stopped
         boolean show = prefs.showNavCard() && NavState.active;
         if (navBanner != null) {
             // Map layouts: the search bar steps aside and the guidance goes big over the map.
@@ -1339,7 +1645,9 @@ public class MainActivity extends Activity implements NavState.Listener {
             if (l.hasSpeed()) {
                 int kmh = Math.round(l.getSpeed() * 3.6f);
                 if (kmh < 2) kmh = 0;
-                boolean over = prefs.speedLimit() > 0 && kmh > prefs.speedLimit();
+                int limit = prefs.speedLimit() < 0 ? roadLimit : prefs.speedLimit(); // -1: the road's limit
+                boolean over = limit > 0 && kmh > limit;
+                checkRoadLimit(l, kmh);
                 if (speedBubble != null) {
                     speedBubble.setText(kmh + "\nkm/h");
                     if (over != Boolean.TRUE.equals(speedBubble.getTag())) {
@@ -1357,6 +1665,8 @@ public class MainActivity extends Activity implements NavState.Listener {
             }
             if (gauge != null) gauge.setHint("GPS");
             if (prefs.showWeather()) Weather.refreshIfStale(MainActivity.this, prefs, MainActivity.this::showWeather);
+            checkMosque(l);
+            if (destName != null && pillDest != null) refreshPills();
         }
         @Override public void onStatusChanged(String p, int s, Bundle b) { }
         @Override public void onProviderEnabled(String p) { showGpsState(true); }
@@ -1570,8 +1880,10 @@ public class MainActivity extends Activity implements NavState.Listener {
             setIfChanged(musicElapsed, "");
             setIfChanged(musicDuration, "");
             if (last != null) showLastPlayed(last);
+            showQuickSwitch(last != null ? last.pkg : null);
             return;
         }
+        showQuickSwitch(null);
         if (m != shownMeta) { // a new song (or a new player): texts, art and app icon once
             shownMeta = m;
             if (LastPlayed.remembers(this, c.getPackageName())) {
@@ -1617,6 +1929,18 @@ public class MainActivity extends Activity implements NavState.Listener {
         } catch (PackageManager.NameNotFoundException uninstalled) {
             return null;
         }
+    }
+
+    private void showQuickSwitch(String except) {
+        if (quickSwitch == null) return;
+        boolean any = false;
+        for (int i = 0; i < quickSwitch.getChildCount(); i++) {
+            View v = quickSwitch.getChildAt(i);
+            boolean show = except != null && !except.equals(quickPkgs.get(i));
+            v.setVisibility(show ? View.VISIBLE : View.GONE);
+            any |= show;
+        }
+        quickSwitch.setVisibility(any ? View.VISIBLE : View.GONE);
     }
 
     private void showLastPlayed(LastPlayed last) {

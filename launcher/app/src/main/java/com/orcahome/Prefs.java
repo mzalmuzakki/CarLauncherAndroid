@@ -58,6 +58,34 @@ final class Prefs {
     boolean showNavCard() { return sp.getBoolean("navcard", true); }
     /** Synced lyrics in the music card (LRCLIB, internet). */
     boolean showLyrics() { return sp.getBoolean("lyrics", true); }
+    /** Next prayer time and the Hijri date on the clock card. */
+    boolean showPrayer() { return sp.getBoolean("prayer", true); }
+    boolean showHijri() { return sp.getBoolean("hijri", true); }
+    /** Public holidays on the date (Google's holiday calendar, internet). */
+    boolean showHolidays() { return sp.getBoolean("holidays", true); }
+    /** Nearest mosque around prayer time (OpenStreetMap, internet). */
+    boolean showMosque() { return sp.getBoolean("mosque", true); }
+    /** Distance and time since the car started, under the speed. */
+    boolean showTrip() { return sp.getBoolean("trip", true); }
+    /** Speed limit sign beside the speed (OpenStreetMap, internet). */
+    boolean showRoadLimit() { return sp.getBoolean("roadlimit", true); }
+    /** A pin at the destination of navigation started from Orca Home. */
+    boolean showDestination() { return sp.getBoolean("destpin", true); }
+    /** Brightness and volume buttons in the dock. */
+    boolean quickControls() { return sp.getBoolean("quickctl", true); }
+    /** Last digit of the plate for the odd-even reminder: 1 odd, 0 even, -1 off. */
+    int plate() { return sp.getInt("plate", -1); }
+    /** Service every this many km (0 = off) or 6 months; the odometer reading and date of the last one. */
+    int serviceKm() { return sp.getInt("servicekm", 0); }
+    float serviceAtKm() { return sp.getFloat("service_at_km", 0); }
+    long serviceAt() { return sp.getLong("service_at", 0); }
+    /** Test builds only (emulator test): car off after 5 s instead of 10 min, any time is prayer time. */
+    boolean testFast(Context c) {
+        return (c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && sp.getBoolean("test_fast", false);
+    }
+    /** Volume (% of the maximum) set when the car starts; -1 = leave it to the unit. */
+    int startVolume() { return sp.getInt("startvol", -1); }
     /** Package the dock's navigation button opens; empty = automatic. */
     String navApp() { return sp.getString("navapp", ""); }
     long stamp() { return sp.getLong("stamp", 0); }
@@ -117,9 +145,12 @@ final class Prefs {
     int weatherCode() { return sp.getInt("w_code", -1); }
     String weatherCity() { return sp.getString("w_city", ""); }
 
-    void setWeather(float temp, int code, String city) {
+    /** When rain is expected to start (epoch ms), 0 = none in the next two hours. */
+    long weatherRain() { return sp.getLong("w_rain", 0); }
+
+    void setWeather(float temp, int code, String city, long rain) {
         SharedPreferences.Editor e = sp.edit().putLong("w_time", System.currentTimeMillis())
-                .putFloat("w_temp", temp).putInt("w_code", code);
+                .putFloat("w_temp", temp).putInt("w_code", code).putLong("w_rain", rain);
         if (city != null && !city.isEmpty()) e.putString("w_city", city);
         e.apply();
     }
@@ -144,6 +175,22 @@ final class Prefs {
     void resetFavorites() {
         sp.edit().remove("favorites").putLong("stamp", System.nanoTime()).apply();
     }
+
+    void setShowPrayer(boolean b) { put("prayer", b); }
+    void setShowHijri(boolean b) { put("hijri", b); }
+    void setShowHolidays(boolean b) { put("holidays", b); }
+    void setShowMosque(boolean b) { put("mosque", b); }
+    void setShowTrip(boolean b) { put("trip", b); }
+    void setShowRoadLimit(boolean b) { put("roadlimit", b); }
+    void setShowDestination(boolean b) { put("destpin", b); }
+    void setQuickControls(boolean b) { put("quickctl", b); }
+    void setPlate(int p) { sp.edit().putInt("plate", p).putLong("stamp", System.nanoTime()).apply(); }
+    void setServiceKm(int km) { sp.edit().putInt("servicekm", km).putLong("stamp", System.nanoTime()).apply(); }
+    void setServiceDone(float odometerKm) {
+        sp.edit().putFloat("service_at_km", odometerKm).putLong("service_at", System.currentTimeMillis())
+                .putLong("stamp", System.nanoTime()).apply();
+    }
+    void setStartVolume(int pct) { sp.edit().putInt("startvol", pct).apply(); }
 
     private void put(String k, boolean v) {
         sp.edit().putBoolean(k, v).putLong("stamp", System.nanoTime()).apply();

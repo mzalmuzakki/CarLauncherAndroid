@@ -7,14 +7,17 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -44,14 +47,18 @@ final class Weather {
         NET.execute(() -> {
             try {
                 String url = String.format(Locale.US,
-                        "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f&current=temperature_2m,weather_code&timezone=auto",
+                        "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f&current=temperature_2m,weather_code"
+                                + "&minutely_15=precipitation&forecast_minutely_15=8&timezone=auto",
                         loc.getLatitude(), loc.getLongitude());
-                JSONObject cur = new JSONObject(get(url)).getJSONObject("current");
+                JSONObject all = new JSONObject(get(url));
+                JSONObject cur = all.getJSONObject("current");
                 float temp = (float) cur.getDouble("temperature_2m");
                 int code = cur.getInt("weather_code");
+                long rain = rainStart(all, isRain(code));
+                android.util.Log.i("OrcaHome", "weather: code " + code + ", rain expected: " + (rain > 0 ? new java.util.Date(rain) : "no"));
                 String city = cityName(app, loc);
                 MAIN.post(() -> {
-                    prefs.setWeather(temp, code, city);
+                    prefs.setWeather(temp, code, city, rain);
                     running = false;
                     done.run();
                 });
@@ -62,6 +69,30 @@ final class Weather {
     }
 
     private static Location lastLocation(Context c) { return DayNight.lastKnown(c); }
+
+    static boolean isRain(int code) { return code >= 51 && code <= 99 && !(code >= 71 && code <= 77); }
+
+    /**
+     * When rain is expected to start within the next two hours (epoch ms), from the 15-minute
+     * forecast; 0 if none, or if it's raining already. Times come in the place's local time.
+     */
+    static long rainStart(JSONObject all, boolean rainingNow) {
+        if (rainingNow) return 0;
+        try {
+            JSONObject m = all.getJSONObject("minutely_15");
+            JSONArray times = m.getJSONArray("time"), mm = m.getJSONArray("precipitation");
+            long offset = all.optLong("utc_offset_seconds", 0) * 1000;
+            SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
+            f.setTimeZone(TimeZone.getTimeZone("UTC"));
+            long now = f.parse(all.getJSONObject("current").getString("time")).getTime();
+            for (int i = 0; i < times.length() && i < mm.length(); i++) {
+                long t = f.parse(times.getString(i)).getTime();
+                if (t > now && t - now <= 2 * 3600_000L && !mm.isNull(i) && mm.getDouble(i) >= 0.3) return t - offset;
+            }
+        } catch (Exception ignored) {
+        }
+        return 0;
+    }
 
     private static String cityName(Context c, Location l) {
         try {

@@ -12,8 +12,8 @@ android {
         // Sideloaded on an Android 10 head unit; 29 keeps package queries and
         // background rules simple.
         targetSdk 29
-        versionCode 9
-        versionName '2.7'
+        versionCode 10
+        versionName '2.8'
     }
 
     // The signing key is never in the repository: the build workflow writes it from the

@@ -48,6 +48,9 @@ final class MapPanel extends View implements MapTiles.Listener {
 
     private int zoom;
     private double lat = Double.NaN, lon;
+    private double destLat = Double.NaN, destLon;
+    private final Paint destFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint destRing = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float bearing, accuracyM;
     private boolean hasBearing, active;
 
@@ -70,6 +73,8 @@ final class MapPanel extends View implements MapTiles.Listener {
         credit.setTextSize(ui.dp(9));
         compassBg.setColor(ui.panel);
         compassBg.setAlpha(235);
+        destFill.setColor(GaugeView.ALERT);
+        destRing.setColor(0xFFFFFFFF);
         compassRing.setStyle(Paint.Style.STROKE);
         compassRing.setStrokeWidth(ui.dp(1.5f));
         compassRing.setColor(ui.sub);
@@ -93,6 +98,14 @@ final class MapPanel extends View implements MapTiles.Listener {
         arrow.lineTo(0, s * 0.5f);
         arrow.lineTo(-s * 0.8f, s);
         arrow.close();
+    }
+
+    /** A pin at the destination; NaN = none. */
+    void setDestination(double lat, double lon) {
+        if (Double.compare(lat, destLat) == 0 && Double.compare(lon, destLon) == 0) return;
+        destLat = lat;
+        destLon = lon;
+        invalidate();
     }
 
     /** North up, or driving direction up (the map turns). */
@@ -200,6 +213,13 @@ final class MapPanel extends View implements MapTiles.Listener {
                 c.drawBitmap(b, 0, 0, tilePaint);
                 c.restore();
             }
+        }
+        if (!Double.isNaN(destLat)) { // the destination: a red dot with a white ring
+            double n2 = tilePx * (1 << zoom), dLatR = Math.toRadians(destLat);
+            float px = (float) ((destLon + 180) / 360 * n2 - cx + mx);
+            float py = (float) ((1 - Math.log(Math.tan(dLatR) + 1 / Math.cos(dLatR)) / Math.PI) / 2 * n2 - cy + my);
+            c.drawCircle(px, py, ui.dp(10), destRing);
+            c.drawCircle(px, py, ui.dp(7), destFill);
         }
         if (accuracyM > 15) {
             double metersPerPx = 156543.03392 * Math.cos(latR) / (1 << zoom) * 256 / tilePx;

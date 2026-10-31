@@ -3,6 +3,8 @@
 
     <!-- Speed gauge and weather location; GPS only while the home screen is visible. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Trip info and the service odometer while other apps are in front (granted by scripts/launcher.sh). -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <!-- Weather from Open-Meteo, at most every 30 minutes while home is visible. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Only for BootReceiver: open Orca Home over a firmware "Select a Home app" box at boot. -->

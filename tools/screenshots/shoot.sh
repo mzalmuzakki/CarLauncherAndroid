@@ -262,6 +262,40 @@ sh_ input tap 823 441; shot 69-play-last-played-opened 10
 say "  player blocked in the background: in front $(front), player $(player_state), $(adb logcat -d -s OrcaHome:I | grep -o 'resume: .*' | tr '\n' ';')"
 sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es buttons on > /dev/null
 
+# 2.8: prayer time, Hijri date, holidays, rain, speed limit sign, trip, reminders, destination,
+# nearest mosque, start-up volume. test_fast (test builds only): car off after 5 s, any time
+# counts as prayer time.
+sh_ pm grant "$PKG" android.permission.ACCESS_BACKGROUND_LOCATION
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive start > /dev/null; sleep 4
+day=$(sh_ date +%d); plate=$(( (10#$day + 1) % 2 ))   # a plate that doesn't match today's date
+now_ms=$(date +%s)000
+EXTRA="<int name=\"plate\" value=\"$plate\" /><int name=\"servicekm\" value=\"5000\" />
+    <float name=\"service_at_km\" value=\"-5100.0\" /><long name=\"service_at\" value=\"$now_ms\" />
+    <int name=\"speedlimit\" value=\"-1\" /><boolean name=\"test_fast\" value=\"true\" />" \
+    prefs 6 true theme north wide
+adb logcat -c
+home; shot 70-home-2.8 25
+say ""
+say "2.8 on the emulator ($(sh_ date '+%a %d %b %H:%M'), plate digit parity $plate):"
+say "  $(adb logcat -d -s OrcaHome:I | grep -o -E '(speed limit|mosque|holidays|weather|car started): .*' | sort -u | tr '\n' ';')"
+wd=$(sh_ date +%u); hr=$(sh_ date +%H)
+say "  odd-even pill expected: $([ "$wd" -le 5 ] && [ "10#$hr" -ge 5 ] && [ "10#$hr" -lt 21 ] && echo yes || echo 'no (weekend or night)')"
+sh_ input tap 70 113; sleep 6   # Home chip: navigation to "Monas, Jakarta" starts in Google Maps
+home; shot 71-destination 8
+sh_ am start -W -n "$PKG/.SettingsActivity" > /dev/null; sleep 2
+for i in 1 2 3 4 5; do sh_ input swipe 512 520 512 120 400; done; shot 72-settings-driving 2
+sh_ input swipe 512 520 512 120 400; sh_ input swipe 512 520 512 120 400; shot 73-settings-service-volume 2
+sh_ input swipe 512 520 512 120 400; shot 74-settings-prayer 2
+sh_ input keyevent KEYCODE_BACK
+# Start-up volume: car off (screen off) and on again; 30 % expected a few seconds later.
+EXTRA='<int name="startvol" value="30" /><boolean name="test_fast" value="true" />' prefs 6 true theme north wide
+home; sleep 5
+sh_ media volume --stream 3 --set 2 > /dev/null
+adb logcat -c
+sh_ input keyevent KEYCODE_SLEEP; sleep 8; sh_ input keyevent KEYCODE_WAKEUP; sleep 1; sh_ wm dismiss-keyguard; sleep 8
+say "  start-up volume: $(sh_ media volume --stream 3 --get | grep -o 'volume is [0-9]* in range \[[0-9.]*\]') (expected about 30 %), $(adb logcat -d -s OrcaHome:I | grep -o -E '(start-up volume|car started): .*' | tr '\n' ';')"
+sh_ am start -n com.orcahome.demoplayer/.DemoActivity --es drive stop > /dev/null
+
 # Music shortcuts: nothing playing (the demo player stopped).
 sh_ am force-stop com.orcahome.demoplayer
 prefs 6 true theme north wide; home; shot 56-music-shortcuts 8

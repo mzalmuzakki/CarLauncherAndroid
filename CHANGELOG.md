@@ -4,6 +4,23 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.8 — in testing
+- Clock card: the next prayer time (Kemenag method, worked out on the unit, no internet) and
+  the Hijri date; public holidays (Google's Indonesian holiday calendar, cuti bersama included)
+  after the date, in red.
+- Weather card: "Rain ~15:20" when rain is expected within two hours (same request as before).
+- Under the speed: the road's speed limit as a sign (OpenStreetMap; the speed alert can use it)
+  and the trip: distance and time since the car started, average speed. The km are counted
+  by GPS while the car is on, also with other apps in front (launcher.sh allows background
+  location; 'off' / restore.sh take it back).
+- Pills at the bottom of the map: the destination of navigation started from Orca Home (also
+  a pin on the map), the nearest mosque around prayer time (tap to go there), the Jakarta
+  odd-even plate reminder, and the service reminder (every 5,000 / 7,500 / 10,000 km or
+  6 months). The zoom buttons are a row now.
+- Music card: while it shows the last Spotify song, small buttons for the other players
+  (radio, YouTube Music, YouTube).
+- Dock: brightness and volume buttons. Settings: volume when the car starts.
+
 ## 2.7 — working in the car (31 Oct 2026)
 `releases/orca-home-2.7.apk`, built from commit 3292caf. Includes 2.4, 2.5 and 2.6.
 - Map compass: a red arrow pointing north (N under it) that turns with the map, in both

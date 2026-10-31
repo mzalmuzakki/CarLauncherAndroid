@@ -19,7 +19,7 @@ final class GaugeView extends View {
     private final Paint small = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF arc = new RectF();
     private int speed = -1; // -1 = no GPS fix yet
-    private String hint = "";
+    private String hint = "", trip = "";
     static final int ALERT = 0xFFE53935;
     private int accent;
 
@@ -54,6 +54,13 @@ final class GaugeView extends View {
         invalidate();
     }
 
+    /** "12.4 km · 0:32", under the hint. */
+    void setTrip(String t) {
+        if (t.equals(trip)) return;
+        trip = t;
+        invalidate();
+    }
+
     void setHint(String h) {
         if (h.equals(hint)) return;
         hint = h;
@@ -76,5 +83,6 @@ final class GaugeView extends View {
         c.drawText(speed < 0 ? "--" : String.valueOf(speed), cx, cy + size * 0.08f, big);
         c.drawText("km/h", cx, cy + size * 0.2f, small);
         if (!hint.isEmpty()) c.drawText(hint, cx, cy + size * 0.33f, small);
+        if (!trip.isEmpty()) c.drawText(trip, cx, cy + size * 0.44f, small);
     }
 }

@@ -24,6 +24,7 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(i.getAction())) return;
         Brightness.apply(c); // alarms don't survive a reboot
+        Drive.get(c).carStarted(); // a new trip, and the start-up volume
         if (!Settings.canDrawOverlays(c)) {
             Log.i("OrcaHome", "start-up: not opening (no \"display over other apps\")");
             return;

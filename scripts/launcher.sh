@@ -36,6 +36,7 @@ fi
 
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
+  pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
   pkg_installed com.orcahome && orca_brightness off \
     && ok "Orca Home no longer changes the brightness (if the screen is dim, turn it up in the unit's settings)"
   nwd_home_back
@@ -75,6 +76,8 @@ else echo "$out" | sed 's/^/    /'; warn "install failed (if a Play Protect dial
 
 info "Permissions"
 dev pm grant com.orcahome android.permission.ACCESS_FINE_LOCATION >/dev/null && ok "GPS for the speedometer"
+dev pm grant com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null \
+  && ok "GPS while other apps are in front (trip info, service km)"
 dev cmd notification allow_listener com.orcahome/com.orcahome.MediaListener >/dev/null && ok "music card (reads what's playing)"
 [ "$(dev settings get secure location_mode)" = 0 ] && warn "Location is off on the unit: the speedometer needs it (Settings > Location)"
 

@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** Theme, what the home screen shows, permissions, and a way back to the old launcher. */
 public class SettingsActivity extends Activity {
@@ -168,8 +169,55 @@ public class SettingsActivity extends Activity {
         }
 
         radios(col, "Speed alert (the speed turns red above it)", new String[][]{
-                {"0", "Off"}, {"60", "60 km/h"}, {"80", "80 km/h"}, {"100", "100 km/h"}, {"110", "110 km/h"}, {"120", "120 km/h"}},
+                {"0", "Off"}, {"-1", "The road's speed limit (when the map knows it)"}, {"60", "60 km/h"}, {"80", "80 km/h"},
+                {"100", "100 km/h"}, {"110", "110 km/h"}, {"120", "120 km/h"}},
                 String.valueOf(prefs.speedLimit()), v -> prefs.setSpeedLimit(Integer.parseInt(v)), 800);
+
+        header(col, "Driving");
+        check(col, "Road speed limit sign under the speed (OpenStreetMap, internet)", prefs.showRoadLimit(), prefs::setShowRoadLimit);
+        check(col, "Trip: distance and time since the car started, average speed", prefs.showTrip(), prefs::setShowTrip);
+        check(col, "Destination pin on the map (navigation started from Orca Home)", prefs.showDestination(), prefs::setShowDestination);
+        check(col, "Brightness and volume buttons in the dock", prefs.quickControls(), prefs::setQuickControls);
+        radios(col, "Odd-even plate reminder (Jakarta ganjil-genap)", new String[][]{
+                {"-1", "Off"}, {"1", "My plate ends in an odd number (1, 3, 5, 7, 9)"}, {"0", "My plate ends in an even number (0, 2, 4, 6, 8)"}},
+                String.valueOf(prefs.plate()), v -> prefs.setPlate(Integer.parseInt(v)), 900);
+        TextView oeNote = ui.label(this, 13, ui.sub, false);
+        oeNote.setText("Shown on weekdays from 05:00 to 21:00 when today's date doesn't match your plate (the rule applies 06-10 and 16-21; not on public holidays when the holiday calendar is on).");
+        col.addView(oeNote);
+
+        double odo = Drive.get(this).odometerKm();
+        radios(col, "Service reminder (km counted by GPS while Orca Home runs)", new String[][]{
+                {"0", "Off"}, {"5000", "Every 5,000 km or 6 months"}, {"7500", "Every 7,500 km or 6 months"}, {"10000", "Every 10,000 km or 6 months"}},
+                String.valueOf(prefs.serviceKm()), v -> {
+                    int km = Integer.parseInt(v);
+                    if (km > 0 && prefs.serviceAt() == 0) prefs.setServiceDone((float) odo); // start counting now
+                    prefs.setServiceKm(km);
+                    build();
+                }, 1000);
+        if (prefs.serviceKm() > 0) {
+            TextView since = ui.label(this, 13, ui.sub, false);
+            since.setText(String.format(Locale.US, "Since the last service: %,d km, %s.", Math.round(odo - prefs.serviceAtKm()),
+                    android.text.format.DateFormat.getDateFormat(this).format(new java.util.Date(prefs.serviceAt()))));
+            col.addView(since);
+            button(col, "Service done today", () -> {
+                prefs.setServiceDone((float) odo);
+                Toast.makeText(this, "Service noted: the next one is counted from today", Toast.LENGTH_SHORT).show();
+                build();
+            });
+        }
+
+        radios(col, "Volume when the car starts", new String[][]{
+                {"-1", "Leave it to the unit"}, {"20", "20 %"}, {"30", "30 %"}, {"40", "40 %"}, {"50", "50 %"}},
+                String.valueOf(prefs.startVolume()), v -> prefs.setStartVolume(Integer.parseInt(v)), 1100);
+        TextView volNote = ui.label(this, 13, ui.sub, false);
+        volNote.setText("Set a few seconds after the car starts (after the unit sets its own). Never the last, possibly loud level.");
+        col.addView(volNote);
+
+        header(col, "Prayer times and dates");
+        check(col, "Next prayer time on the clock card (Kemenag method, worked out on the unit)", prefs.showPrayer(), prefs::setShowPrayer);
+        check(col, "Hijri date on the clock card", prefs.showHijri(), prefs::setShowHijri);
+        check(col, "Public holidays on the date (Google's Indonesian holiday calendar, internet)", prefs.showHolidays(), prefs::setShowHolidays);
+        check(col, "Nearest mosque around prayer time (OpenStreetMap, internet)", prefs.showMosque(), prefs::setShowMosque);
 
         header(col, "Maps app (navigation button, map tap, destination search)");
         RadioGroup nav = new RadioGroup(this);
@@ -229,7 +277,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.7 · CAKRA Labs\nNo ads and no background services. Internet is used only for weather, map tiles and song lyrics.");
+        about.setText("Orca Home 2.8 · CAKRA Labs\nNo ads. Internet is used only for weather, map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);
