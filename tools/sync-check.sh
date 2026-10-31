@@ -8,8 +8,9 @@
 set -uo pipefail
 PRIV=$1 PUB=$2
 # Meant to differ: the signing key (private only), how the build gets it, the personal
-# notes (cleaned in public) and the private word list.
-ALLOWED='^(launcher/orcahome\.jks|\.github/workflows/launcher\.yml|notes/unit-log\.md|tools/private-words\.txt)$'
+# notes (cleaned in public), the private word list and the unit's firmware apps (private only:
+# not ours to publish).
+ALLOWED='^(launcher/orcahome\.jks|\.github/workflows/launcher\.yml|notes/unit-log\.md|tools/private-words\.txt|notes/firmware/.*)$'
 bad=0
 files() { git -C "$1" ls-files | sort; }
 
