@@ -45,7 +45,8 @@ final class Weather {
     static void refreshIfStale(Context ctx, Prefs prefs, Location here, Runnable done) {
         long now = System.currentTimeMillis();
         if (running || now - lastTry < RETRY_MS) return;
-        // A rough fix (or one without accuracy) neither triggers nor places the weather.
+        // A rough fix (or one without accuracy) doesn't trigger the 10 km rule. Once the weather
+        // is 30 minutes old it is fetched anyway, for the newest position, which can be that fix.
         if (here != null && (!here.hasAccuracy() || here.getAccuracy() > 100)) here = null;
         if (now - prefs.weatherTime() < MAX_AGE_MS) {
             if (here == null) return;

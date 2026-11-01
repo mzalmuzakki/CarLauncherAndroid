@@ -150,7 +150,7 @@ public class SettingsActivity extends Activity {
         col.addView(mapNote);
 
         header(col, "Show on the home screen");
-        check(col, "Weather (Open-Meteo, internet: every 30 min, or every 10 km driven; Open-Meteo gets the car's position)", prefs.showWeather(), prefs::setShowWeather);
+        check(col, "Weather (Open-Meteo, internet: every 30 min, or every 10 km driven; Open-Meteo and Android's place-name lookup get the car's position)", prefs.showWeather(), prefs::setShowWeather);
         check(col, "Speed (gauge, or a bubble on the map)", prefs.showGauge(), prefs::setShowGauge);
         check(col, "Navigation card while Google Maps / Waze navigates", prefs.showNavCard(), prefs::setShowNavCard);
         check(col, "Song lyrics in the music card, in time with the music (from LRCLIB, internet; also the Lyrics button on the card)",

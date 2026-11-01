@@ -1665,7 +1665,7 @@ public class MainActivity extends Activity implements NavState.Listener {
 
     /** 10 km or more from where the prayer times shown were worked out: again for here. */
     private void checkPrayerPlace(Location l) {
-        if (!prefs.showPrayer() || Double.isNaN(prayerLat)) return;
+        if (!prefs.showPrayer() || Double.isNaN(prayerLat) || !l.hasAccuracy() || l.getAccuracy() > 100) return;
         float[] d = new float[1];
         Location.distanceBetween(prayerLat, prayerLon, l.getLatitude(), l.getLongitude(), d);
         if (d[0] < 10_000) return;
