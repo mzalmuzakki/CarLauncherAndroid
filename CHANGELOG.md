@@ -13,7 +13,8 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 - The 10 km rule uses the GPS fixes the home screen already gets for the speed and map; in
   the grid layout with the speed switched off there are none, so there it is 30 minutes and
   each prayer time, as before. GPS fixes rougher than 100 m (or without an accuracy) don't
-  count, so on a unit whose GPS never reports one it stays 30 minutes. Settings say how
+  count, so on a unit whose GPS never reports one the weather stays at 30 minutes and
+  prayer times at each prayer time. Settings say how
   often the weather (and so the car's position) goes to Open-Meteo and Android's
   place-name lookup.
 
