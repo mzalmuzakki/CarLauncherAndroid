@@ -135,6 +135,8 @@ final class CanRecorder {
     void start(boolean resume) {
         if (running) return;
         running = true;
+        bumps = 0; // a notice that came in after the last stop doesn't count here
+        main.removeCallbacks(bumpSummary);
         writer.execute(() -> {
             if (!resume) {
                 File old = new File(file.getParentFile(), "car-data-log.old.txt");
@@ -163,7 +165,7 @@ final class CanRecorder {
 
     private void writeBumps() {
         main.removeCallbacks(bumpSummary);
-        if (bumps > 1) line("bump sensor: " + (bumps - 1) + " more notice(s) since the last count (" + BUMP + ")");
+        if (bumps > 1) line("bump sensor: " + (bumps - 1) + " more notice(s) since the one written in full (" + BUMP + ")");
         bumps = 0;
     }
 

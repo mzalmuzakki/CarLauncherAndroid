@@ -357,6 +357,7 @@ system_ok() { case "$(sh_ service check package)" in *": found"*) return 0 ;; es
 for i in 1 2 3 4 5 6; do system_ok && break; sleep 10; done
 if ! system_ok; then
     say ""
+    echo "::warning::Release checks INCOMPLETE: the emulator's Android system stopped answering (see report.txt)"
     say "INCOMPLETE: release checks skipped, the emulator's Android system stopped answering (cause unknown: see crash-release.txt and logcat-orcahome.txt)"
     say "Release-APK crashes: $(adb logcat -b crash -d | grep -c 'Process: com.orcahome,')"
     adb logcat -b crash -d > "$OUT/crash-release.txt"
