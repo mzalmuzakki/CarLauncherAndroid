@@ -21,7 +21,10 @@ check() { # label expected-home-prefix [expected music reader on/off]
     fi
     # Switched off: nothing of Orca Home may still run.
     if [ "${3:-}" = off ] && [ -n "$(adb shell pidof com.orcahome | tr -d '\r')" ]; then
-        say "  FAIL $1: Orca Home still running after being switched off, home=$h"; return
+        say "  FAIL $1: Orca Home still running after being switched off, home=$h (see scripttest-still-running.txt)"
+        { echo "== $1"; adb shell dumpsys activity processes com.orcahome | head -60
+          adb shell dumpsys activity activities | grep -i -m10 orcahome; } >> "$OUT/scripttest-still-running.txt" 2>&1
+        return
     fi
     case "$h" in "$2"*) say "  OK   $1: home=$h, in front=$f, overlay=$(saw), brightness=$(ws), music reader=$r" ;;
                  *) say "  FAIL $1: home=$h (expected $2...), in front=$f" ;; esac

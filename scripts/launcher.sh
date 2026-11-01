@@ -36,7 +36,6 @@ fi
 
 if [ "${1:-}" = off ]; then
   pkg_installed com.orcahome && orca_boot off && ok "Orca Home no longer opens by itself at start-up"
-  pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
   # Without this the music-card reader keeps Orca Home running (GPS for the trip, start-up volume).
   pkg_installed com.orcahome && dev cmd notification disallow_listener com.orcahome/com.orcahome.MediaListener >/dev/null 2>&1 \
     && ok "Orca Home no longer runs in the background (music card reader off)"
@@ -57,6 +56,9 @@ if [ "${1:-}" = off ]; then
     warn "choose the original launcher on the unit: Settings opens now"
     dev am start -a android.settings.HOME_SETTINGS >/dev/null
   fi
+  # Last: taking back a permission ends the app, and Android restarts the app on screen
+  # straight away; once Orca Home is stopped (above) nothing restarts it.
+  pkg_installed com.orcahome && dev pm revoke com.orcahome android.permission.ACCESS_BACKGROUND_LOCATION >/dev/null 2>&1
   exit 0
 fi
 
