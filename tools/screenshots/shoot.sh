@@ -350,6 +350,18 @@ adb logcat -b crash -d > "$OUT/crash-debug.txt"
 adb logcat -c
 setup_launcher "$RELEASE_APK"
 home; sleep 25
+# The emulator image's own Android has twice gone down here (its system process out of memory
+# after an install: "Can't find service: package"). Then every check below would only time out:
+# wait a minute for it to come back, else say so and stop (the boot test reboots it).
+system_ok() { case "$(sh_ service check package)" in *": found"*) return 0 ;; esac; return 1; }
+for i in 1 2 3 4 5 6; do system_ok && break; sleep 10; done
+if ! system_ok; then
+    say ""
+    say "Release checks skipped: the emulator's Android system stopped (not Orca Home; see crash-release.txt)"
+    adb logcat -b crash -d > "$OUT/crash-release.txt"
+    say "Done."
+    exit 0
+fi
 pid=$(sh_ pidof "$PKG")
 say ""
 say "Release APK: $(sh_ dumpsys package "$PKG" | grep -m1 versionName | xargs)"

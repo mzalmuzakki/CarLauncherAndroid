@@ -86,6 +86,9 @@ final class RadioClient {
     private volatile int state = -1;
     /** When the radio last came on, changed station or was started from Orca Home (elapsed ms). */
     private volatile long playedAt;
+    private static final long REDRAW_MS = 250;
+    private final java.util.concurrent.atomic.AtomicBoolean redrawPending = new java.util.concurrent.atomic.AtomicBoolean();
+    private volatile long redrawnAt;
 
     static synchronized RadioClient get(Context c) {
         if (instance == null) instance = new RadioClient(c.getApplicationContext());
@@ -242,7 +245,19 @@ final class RadioClient {
 
     static String describe(Station s) { return s == null ? "no station" : s.number() + " " + s.unit() + " band " + s.band + " \"" + s.name + "\""; }
 
-    private void notifyChanged() { main.post(() -> { if (listener != null) listener.changed(); }); }
+    /**
+     * The card is redrawn at most 4 times a second: the radio's own search reports every
+     * frequency step (about 25 a second). One redraw on its way shows the latest state.
+     */
+    private void notifyChanged() {
+        if (!redrawPending.compareAndSet(false, true)) return;
+        long wait = Math.max(0, REDRAW_MS - (android.os.SystemClock.elapsedRealtime() - redrawnAt));
+        main.postDelayed(() -> {
+            redrawPending.set(false);
+            redrawnAt = android.os.SystemClock.elapsedRealtime();
+            if (listener != null) listener.changed();
+        }, wait);
+    }
 
     /** What the radio service tells us: station changes, presets, radio text. */
     private final Binder callback = new Binder() {
@@ -256,7 +271,7 @@ final class RadioClient {
                 case CB_STATE:
                     state = data.readByte();
                     if (state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
-                    Log.i("OrcaHome", "radio: state " + state);
+                    Log.i("OrcaHome", "radio: state " + state + (state == 1 ? ", " + describe(current) : ""));
                     break;
                 case CB_FREQUENCY: {
                     byte band = data.readByte();
@@ -268,7 +283,9 @@ final class RadioClient {
                     current = s;
                     // A station change means the radio is what's being listened to.
                     if (!s.same(before) && state > 0) playedAt = android.os.SystemClock.elapsedRealtime();
-                    if (!s.same(before)) Log.i("OrcaHome", "radio: now " + describe(s)); // not each scrolling name
+                    // Not each scrolling name, nor each step of a search (state 2, 3: the station it
+                    // stops on is logged with "state 1").
+                    if (!s.same(before) && state != 2 && state != 3) Log.i("OrcaHome", "radio: now " + describe(s));
                     break;
                 }
                 case CB_PRESETS:

@@ -4,6 +4,14 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.10 — in testing
+- Radio: while the radio searches for a station (it reports every 0.1 MHz step, about 25 a
+  second), the music card is redrawn at most 4 times a second; the log names the station
+  the search stops on instead of every step.
+- Car data recorder: the firmware's bump-sensor notice (com.nwd.ACTION_OS_CRASH, which is the
+  G-sensor, not a crash) is counted and written once a minute instead of every time: it was
+  half of the first recording.
+
 ## 2.9 — working in the car (31 Oct 2026)
 `releases/orca-home-2.9.apk`, built from commit 6fd77c7. Includes 2.8.
 - The unit's own FM/AM radio on the music card (through the NWD radio service): the station

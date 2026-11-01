@@ -46,6 +46,13 @@ final class CanRecorder {
         "com.nwd.action.ACTION_AUX_OPEN_STATE", "com.nwd.ACTION_OS_CRASH",
     };
     private static final long MAX_BYTES = 2_000_000;
+    /**
+     * The firmware's G-sensor bump notice (its own name: ACTION_GSENSOR_CRASH). Road bumps send
+     * it up to twice a second, so it is counted and written once a minute.
+     */
+    private static final String BUMP = "com.nwd.ACTION_OS_CRASH";
+    private int bumps; // on the main thread
+    private final Runnable bumpSummary = this::writeBumps;
 
     private static CanRecorder instance;
     private final Context app;
@@ -153,9 +160,16 @@ final class CanRecorder {
         }
     }
 
+    private void writeBumps() {
+        main.removeCallbacks(bumpSummary);
+        if (bumps > 0) line("bump sensor: " + bumps + " notice(s) in the last minute (" + BUMP + ")");
+        bumps = 0;
+    }
+
     void stop() {
         main.removeCallbacks(autoStop);
         if (!running) return;
+        writeBumps();
         running = false;
         until = 0;
         try { app.unregisterReceiver(notices); } catch (IllegalArgumentException ignored) { }
@@ -250,6 +264,11 @@ final class CanRecorder {
     private final BroadcastReceiver notices = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
+            if (BUMP.equals(i.getAction())) {
+                checkTime(System.currentTimeMillis());
+                if (bumps++ == 0) main.postDelayed(bumpSummary, 60_000);
+                return;
+            }
             StringBuilder s = new StringBuilder("notice ").append(i.getAction());
             try {
                 Bundle b = i.getExtras();
