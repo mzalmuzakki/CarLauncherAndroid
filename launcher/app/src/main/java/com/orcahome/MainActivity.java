@@ -1668,7 +1668,12 @@ public class MainActivity extends Activity implements NavState.Listener {
         if (!prefs.showPrayer() || Double.isNaN(prayerLat)) return;
         float[] d = new float[1];
         Location.distanceBetween(prayerLat, prayerLon, l.getLatitude(), l.getLongitude(), d);
-        if (d[0] >= 10_000) updateCalendar();
+        if (d[0] < 10_000) return;
+        updateCalendar();
+        // This fix counts as the place now, whatever position the times were taken from: one
+        // move gives one recalculation, never one per fix.
+        prayerLat = l.getLatitude();
+        prayerLon = l.getLongitude();
     }
 
     /** "Ashar 14:54", or "" when prayer times are off. */

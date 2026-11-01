@@ -25,7 +25,7 @@ Layout inspired by car dashboard launchers; all code and icons are our own
 - The notification listener (needed for the music and nav cards) ignores every app except
   Google Maps and Waze.
 - No live map, no animations; the gauge redraws only when the speed changes.
-- Weather: one small request at most every 30 minutes, only while home is visible; cached.
+- Weather: one small request every 30 minutes, or every 10 km driven, only while home is visible; cached.
 - Map: tiles only while home is visible, cached on the unit; no continuous redraw.
 - `scripts/launcher.sh` stops the old launcher after switching and prints memory before/after;
   `scripts/launcher.sh check` shows it again. If Orca Home is ever heavier: `scripts/launcher.sh off`.

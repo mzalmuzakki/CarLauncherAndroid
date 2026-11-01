@@ -45,16 +45,20 @@ final class Weather {
     static void refreshIfStale(Context ctx, Prefs prefs, Location here, Runnable done) {
         long now = System.currentTimeMillis();
         if (running || now - lastTry < RETRY_MS) return;
+        // A rough fix (or one without accuracy) neither triggers nor places the weather.
+        if (here != null && (!here.hasAccuracy() || here.getAccuracy() > 100)) here = null;
         if (now - prefs.weatherTime() < MAX_AGE_MS) {
+            if (here == null) return;
             double wLat = prefs.weatherLat(), wLon = prefs.weatherLon();
-            if (here == null || Double.isNaN(wLat)) return;
-            float[] d = new float[1];
-            Location.distanceBetween(wLat, wLon, here.getLatitude(), here.getLongitude(), d);
-            if (d[0] < MOVE_M) return;
+            if (!Double.isNaN(wLat)) { // no saved place (first run of 2.11): fetch now, which saves one
+                float[] d = new float[1];
+                Location.distanceBetween(wLat, wLon, here.getLatitude(), here.getLongitude(), d);
+                if (d[0] < MOVE_M) return;
+            }
         }
-        lastTry = now;
         final Location loc = here != null ? here : lastLocation(ctx);
-        if (loc == null) return;
+        if (loc == null) return; // no position yet: the first fix may try straight away
+        lastTry = now;
         running = true;
         final Context app = ctx.getApplicationContext();
         NET.execute(() -> {

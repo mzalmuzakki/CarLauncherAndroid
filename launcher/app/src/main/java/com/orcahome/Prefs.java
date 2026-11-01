@@ -166,7 +166,9 @@ final class Prefs {
     void setWeather(float temp, int code, String city, long rain, double lat, double lon) {
         SharedPreferences.Editor e = sp.edit().putLong("w_time", System.currentTimeMillis())
                 .putFloat("w_temp", temp).putInt("w_code", code).putLong("w_rain", rain)
-                .putFloat("w_lat", (float) lat).putFloat("w_lon", (float) lon);
+                // Rounded to ~100 m: plenty for the 10 km rule, less precise data kept on the unit.
+                .putFloat("w_lat", (float) (Math.round(lat * 1000) / 1000.0))
+                .putFloat("w_lon", (float) (Math.round(lon * 1000) / 1000.0));
         if (city != null && !city.isEmpty()) e.putString("w_city", city);
         e.apply();
     }
