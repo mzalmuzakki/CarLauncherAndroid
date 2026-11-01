@@ -22,11 +22,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Current weather from Open-Meteo (free, no account). Fetched at most every
- * 30 minutes and only when the home screen asks, i.e. while it is visible.
+ * Current weather from Open-Meteo (free, no account). Fetched again after 10 km driven or
+ * 30 minutes, whichever comes first, and only when the home screen asks, i.e. while it is
+ * visible.
  */
 final class Weather {
     static final long MAX_AGE_MS = 30 * 60 * 1000L;
+    static final float MOVE_M = 10_000;
     private static final ExecutorService NET = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final long RETRY_MS = 60 * 1000L;
@@ -35,12 +37,23 @@ final class Weather {
 
     private Weather() {}
 
-    /** Refreshes if the cached weather is old; calls done on the main thread when updated. */
-    static void refreshIfStale(Context ctx, Prefs prefs, Runnable done) {
+    /**
+     * Refreshes if the cached weather is 30 minutes old, or is for a place 10 km or more from
+     * here (a fix the caller already has; null: the time rule only). Calls done on the main
+     * thread when updated.
+     */
+    static void refreshIfStale(Context ctx, Prefs prefs, Location here, Runnable done) {
         long now = System.currentTimeMillis();
-        if (running || now - prefs.weatherTime() < MAX_AGE_MS || now - lastTry < RETRY_MS) return;
+        if (running || now - lastTry < RETRY_MS) return;
+        if (now - prefs.weatherTime() < MAX_AGE_MS) {
+            double wLat = prefs.weatherLat(), wLon = prefs.weatherLon();
+            if (here == null || Double.isNaN(wLat)) return;
+            float[] d = new float[1];
+            Location.distanceBetween(wLat, wLon, here.getLatitude(), here.getLongitude(), d);
+            if (d[0] < MOVE_M) return;
+        }
         lastTry = now;
-        final Location loc = lastLocation(ctx);
+        final Location loc = here != null ? here : lastLocation(ctx);
         if (loc == null) return;
         running = true;
         final Context app = ctx.getApplicationContext();
@@ -58,7 +71,7 @@ final class Weather {
                 android.util.Log.i("OrcaHome", "weather: code " + code + ", rain expected: " + (rain > 0 ? new java.util.Date(rain) : "no"));
                 String city = cityName(app, loc);
                 MAIN.post(() -> {
-                    prefs.setWeather(temp, code, city, rain);
+                    prefs.setWeather(temp, code, city, rain, loc.getLatitude(), loc.getLongitude());
                     running = false;
                     done.run();
                 });

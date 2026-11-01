@@ -41,7 +41,7 @@ final class RoadInfo {
             mosqueBusy = new java.util.concurrent.atomic.AtomicBoolean();
     private static final long MAX_AGE_MS = 45_000;
     private static int server; // the last one that answered
-    private static final String UA = "OrcaHome/2.10 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
+    private static final String UA = "OrcaHome/2.11 (https://github.com/mzalmuzakki/CarLauncherAndroid)";
     private static final ExecutorService NET = Executors.newSingleThreadExecutor();
     private static Handler main;
 

@@ -177,7 +177,7 @@ public class MainActivity extends Activity implements NavState.Listener {
         registerReceiver(dateChanged, t);
         updateCalendar();
         showWeather();
-        if (prefs.showWeather()) Weather.refreshIfStale(this, prefs, this::showWeather);
+        if (prefs.showWeather()) Weather.refreshIfStale(this, prefs, null, this::showWeather);
         if (prefs.showHolidays()) Holidays.refreshIfStale(this, this::updateCalendar);
         RadioClient radio = RadioClient.get(this);
         radio.setListener(this::showTrack);
@@ -1660,10 +1660,23 @@ public class MainActivity extends Activity implements NavState.Listener {
         calNext.setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
     }
 
+    /** Where the prayer times shown are for (NaN: not worked out yet). */
+    private double prayerLat = Double.NaN, prayerLon;
+
+    /** 10 km or more from where the prayer times shown were worked out: again for here. */
+    private void checkPrayerPlace(Location l) {
+        if (!prefs.showPrayer() || Double.isNaN(prayerLat)) return;
+        float[] d = new float[1];
+        Location.distanceBetween(prayerLat, prayerLon, l.getLatitude(), l.getLongitude(), d);
+        if (d[0] >= 10_000) updateCalendar();
+    }
+
     /** "Ashar 14:54", or "" when prayer times are off. */
     private String prayerText(long now) {
         if (!prefs.showPrayer()) return "";
         double[] p = DayNight.position(this);
+        prayerLat = p[0];
+        prayerLon = p[1];
         long[] next = PrayerTimes.next(p[0], p[1], now, TimeZone.getDefault());
         return PrayerTimes.NAMES[(int) next[0]] + " "
                 + android.text.format.DateFormat.getTimeFormat(this).format(new Date(next[1]));
@@ -1790,7 +1803,8 @@ public class MainActivity extends Activity implements NavState.Listener {
                 }
             }
             if (gauge != null) gauge.setHint("GPS");
-            if (prefs.showWeather()) Weather.refreshIfStale(MainActivity.this, prefs, MainActivity.this::showWeather);
+            if (prefs.showWeather()) Weather.refreshIfStale(MainActivity.this, prefs, l, MainActivity.this::showWeather);
+            checkPrayerPlace(l);
             checkMosque(l);
             long t = SystemClock.elapsedRealtime();
             if ((destName != null || mosqueName != null) && pillDest != null && t - pillsAt >= 5000) {

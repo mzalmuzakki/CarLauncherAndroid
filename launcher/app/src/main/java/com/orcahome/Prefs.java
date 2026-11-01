@@ -159,9 +159,14 @@ final class Prefs {
     /** When rain is expected to start (epoch ms), 0 = none in the next two hours. */
     long weatherRain() { return sp.getLong("w_rain", 0); }
 
-    void setWeather(float temp, int code, String city, long rain) {
+    /** Where the last weather was for (NaN before the first). */
+    double weatherLat() { return sp.getFloat("w_lat", Float.NaN); }
+    double weatherLon() { return sp.getFloat("w_lon", Float.NaN); }
+
+    void setWeather(float temp, int code, String city, long rain, double lat, double lon) {
         SharedPreferences.Editor e = sp.edit().putLong("w_time", System.currentTimeMillis())
-                .putFloat("w_temp", temp).putInt("w_code", code).putLong("w_rain", rain);
+                .putFloat("w_temp", temp).putInt("w_code", code).putLong("w_rain", rain)
+                .putFloat("w_lat", (float) lat).putFloat("w_lon", (float) lon);
         if (city != null && !city.isEmpty()) e.putString("w_city", city);
         e.apply();
     }

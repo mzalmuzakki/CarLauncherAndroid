@@ -314,7 +314,7 @@ public class SettingsActivity extends Activity {
         llp.bottomMargin = ui.dp(10);
         col.addView(ui.logo(this, 120, true), llp);
         TextView about = ui.label(this, 14, ui.text, false);
-        about.setText("Orca Home 2.10 · CAKRA Labs\nNo ads. Internet is used only for weather, map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data.");
+        about.setText("Orca Home 2.11 · CAKRA Labs\nNo ads. Internet is used only for weather, map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data.");
         about.setLineSpacing(ui.dp(3), 1f);
         col.addView(about);
         TextView copy = ui.label(this, 13, ui.sub, false);

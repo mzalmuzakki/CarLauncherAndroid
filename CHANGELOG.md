@@ -4,6 +4,13 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
+## 2.11 — in testing
+- Weather follows the car by distance too: fetched again after 10 km driven or 30 minutes,
+  whichever comes first (on a long trip the card shows the weather where the car is, not
+  where it was up to half an hour ago; standing still it still updates every 30 minutes).
+- Prayer times are worked out again after 10 km driven (they shift about a minute every
+  25-30 km east or west), as well as at each prayer time.
+
 ## 2.10 — working in the car (1 Nov 2026)
 `releases/orca-home-2.10.apk`, built from commit 78c0383.
 - Radio: while the radio searches for a station (it reports every 0.1 MHz step, about 25 a
