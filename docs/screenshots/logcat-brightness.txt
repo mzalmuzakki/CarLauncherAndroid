@@ -1,10 +1,10 @@
 --------- beginning of main
+11-01 12:54:45.963 12772 12831 I OrcaHome: speed limit: not known here
 --------- beginning of system
-11-01 12:31:52.604 10754 10754 D OrcaHome: night brightness (test build): dim=true dimmed=false
-11-01 12:31:52.610 10754 10754 I OrcaHome: night brightness: dimmed to 30%
-11-01 12:31:52.646 10754 10812 I OrcaHome: lyrics for "Sunset Drive": none
-11-01 12:31:59.787 10754 10754 D OrcaHome: night brightness (test build): dim=true dimmed=true
-11-01 12:32:01.128 10754 10808 I OrcaHome: weather: code 3, rain expected: no
-11-01 12:32:02.955 10754 10754 D OrcaHome: night brightness (test build): dim=true dimmed=true
-11-01 12:32:09.131 10754 10754 D OrcaHome: night brightness (test build): dim=false dimmed=true
-11-01 12:32:09.134 10754 10754 I OrcaHome: night brightness: back to 200
+11-01 12:54:51.503 12974 12974 D OrcaHome: night brightness (test build): dim=true dimmed=false
+11-01 12:54:51.506 12974 12974 I OrcaHome: night brightness: dimmed to 30%
+11-01 12:54:51.540 12974 13028 I OrcaHome: lyrics for "Sunset Drive": none
+11-01 12:54:58.518 12974 12974 D OrcaHome: night brightness (test build): dim=true dimmed=true
+11-01 12:55:01.710 12974 12974 D OrcaHome: night brightness (test build): dim=true dimmed=true
+11-01 12:55:07.824 12974 12974 D OrcaHome: night brightness (test build): dim=false dimmed=true
+11-01 12:55:07.825 12974 12974 I OrcaHome: night brightness: back to 200
