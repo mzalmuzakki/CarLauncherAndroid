@@ -6,7 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Trip info and the service odometer while other apps are in front (granted by scripts/launcher.sh). -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <!-- Weather from Open-Meteo, at most every 30 minutes while home is visible. -->
+    <!-- Internet, only while home is visible: weather (Open-Meteo, every 30 min or 10 km driven),
+         map tiles, song lyrics, the holiday calendar and OpenStreetMap road and mosque data. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Only for BootReceiver: open Orca Home over a firmware "Select a Home app" box at boot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
