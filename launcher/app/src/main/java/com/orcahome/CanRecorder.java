@@ -48,7 +48,8 @@ final class CanRecorder {
     private static final long MAX_BYTES = 2_000_000;
     /**
      * The firmware's G-sensor bump notice (its own name: ACTION_GSENSOR_CRASH). Road bumps send
-     * it up to twice a second, so it is counted and written once a minute.
+     * it up to twice a second, so only the first of each minute is written in full (with any
+     * extras) and the rest are counted.
      */
     private static final String BUMP = "com.nwd.ACTION_OS_CRASH";
     private int bumps; // on the main thread
@@ -162,7 +163,7 @@ final class CanRecorder {
 
     private void writeBumps() {
         main.removeCallbacks(bumpSummary);
-        if (bumps > 0) line("bump sensor: " + bumps + " notice(s) in the last minute (" + BUMP + ")");
+        if (bumps > 1) line("bump sensor: " + (bumps - 1) + " more notice(s) since the last count (" + BUMP + ")");
         bumps = 0;
     }
 
@@ -265,9 +266,8 @@ final class CanRecorder {
         @Override
         public void onReceive(Context c, Intent i) {
             if (BUMP.equals(i.getAction())) {
-                checkTime(System.currentTimeMillis());
-                if (bumps++ == 0) main.postDelayed(bumpSummary, 60_000);
-                return;
+                if (bumps++ > 0) { checkTime(System.currentTimeMillis()); return; } // counted
+                main.postDelayed(bumpSummary, 60_000); // the first of this minute: written in full below
             }
             StringBuilder s = new StringBuilder("notice ").append(i.getAction());
             try {

@@ -9,8 +9,8 @@ any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
   second), the music card is redrawn at most 4 times a second; the log names the station
   the search stops on instead of every step.
 - Car data recorder: the firmware's bump-sensor notice (com.nwd.ACTION_OS_CRASH, which is the
-  G-sensor, not a crash) is counted and written once a minute instead of every time: it was
-  half of the first recording.
+  G-sensor, not a crash): the first of each minute is written in full, the rest are counted
+  in one line. It was half of the first recording.
 
 ## 2.9 — working in the car (31 Oct 2026)
 `releases/orca-home-2.9.apk`, built from commit 6fd77c7. Includes 2.8.

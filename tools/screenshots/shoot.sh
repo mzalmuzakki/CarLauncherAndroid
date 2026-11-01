@@ -357,9 +357,11 @@ system_ok() { case "$(sh_ service check package)" in *": found"*) return 0 ;; es
 for i in 1 2 3 4 5 6; do system_ok && break; sleep 10; done
 if ! system_ok; then
     say ""
-    say "Release checks skipped: the emulator's Android system stopped (not Orca Home; see crash-release.txt)"
+    say "INCOMPLETE: release checks skipped, the emulator's Android system stopped answering (cause unknown: see crash-release.txt and logcat-orcahome.txt)"
+    say "Release-APK crashes: $(adb logcat -b crash -d | grep -c 'Process: com.orcahome,')"
     adb logcat -b crash -d > "$OUT/crash-release.txt"
-    say "Done."
+    adb logcat -d | grep -iE 'orcahome|AndroidRuntime|system_server' | tail -200 > "$OUT/logcat-orcahome.txt"
+    say "Done (incomplete: not a pass for the release APK)."
     exit 0
 fi
 pid=$(sh_ pidof "$PKG")
