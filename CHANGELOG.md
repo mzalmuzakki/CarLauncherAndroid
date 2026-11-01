@@ -4,7 +4,8 @@ Every version that worked in the car is kept in `releases/`. To go back to one:
 `adb install -r releases/orca-home-<version>.apk` (same signing key, so it installs over
 any newer version; Android may ask to allow a downgrade: add `-d` after `-r`).
 
-## 2.10 — in testing
+## 2.10 — working in the car (1 Nov 2026)
+`releases/orca-home-2.10.apk`, built from commit 78c0383.
 - Radio: while the radio searches for a station (it reports every 0.1 MHz step, about 25 a
   second), the music card is redrawn at most 4 times a second; the log names the station
   the search stops on instead of every step.
