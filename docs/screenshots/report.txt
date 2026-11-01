@@ -1,20 +1,20 @@
 Screen: Physical size: 1024x600, Physical density: 160
 Android: 10 (SDK 29), x86
 Home tiles: com.google.android.youtube/.app.honeycomb.Shell$HomeActivity;com.google.android.apps.maps/com.google.android.maps.MapsActivity;com.android.chrome/com.google.android.apps.chrome.Main;com.google.android.apps.photos/.home.HomeActivity;com.android.vending/.AssetBrowserActivity;com.android.settings/.Settings
-GPS seen by Android:     gps: Location[gps -6.186398,106.824520 hAcc=20 et=+1m19s972ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
-Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m44s770ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
-Compass tap: map direction now heading (expected north)
+GPS seen by Android:     gps: Location[gps -6.186398,106.824398 hAcc=20 et=+1m18s222ms alt=10.0 vel=13.3 bear=0.0 vAcc=??? sAcc=??? bAcc=??? {Bundle[{satellites=0, maxCn0=0, meanCn0=0}]}]
+Test GPS for 2.4 shots:     gps: Location[gps -6.186400,106.824160 hAcc=5 et=+3m46s860ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+Compass tap: map direction now north (expected north)
 Keyboard shown after coming back: mInputShown=false
-Auto theme: at 12:16 UTC it is night in Jakarta, so 41-auto-theme.png should show the night theme (day: Light, night: Midnight Drive)
-Home button: no navigation started
-Test GPS for 2.6 shots:     gps: Location[gps -6.186400,106.824520 hAcc=5 et=+5m52s33ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
+Auto theme: at 04:04 UTC it is day in Jakarta, so 41-auto-theme.png should show the day theme (day: Light, night: Midnight Drive)
+Home button: act=android.intent.action.VIEW dat=google.navigation:q=Monas,
+Test GPS for 2.6 shots:     gps: Location[gps -6.186400,106.824640 hAcc=5 et=+5m55s110ms alt=10.0 vel=13.3 bear=90.0 vAcc=??? sAcc=??? bAcc=??? mock]
 Dock browser button set to com.google.android.youtube/.app.honeycomb.Shell$HomeActivity for 53-dock-custom-app.png
-Recent places saved: Kota Tua
-Night brightness, car at -6.1864,106.8238 (night): brightness 77 (mode 0), expected 77 (30 %)
+Recent places saved: Kota Tua&#10;Bundaran HI&#10;Blok M Plaza
+Night brightness, car at -6.19,-73.18 (night): brightness 77 (mode 0), expected 77 (30 %)
   turned up by hand to 120, after going home again: 120 (mode 0), expected 120
-  car at -6.19,-73.18 (day): 200 (mode 0), expected 200 (mode 0)
+  car at -6.1864,106.8238 (day): 200 (mode 0), expected 200 (mode 0)
 Lyrics: lyrics for "Yellow": 49 synced lines;
-Saved lyrics after 'trim caches': 1 song(s) (expected 1 or more)
+Saved lyrics after 'trim caches': 2 song(s) (expected 1 or more)
 After picking from Up next: description=Viva la Vida
 Lyrics: lyrics for "Yellow": 49 synced lines;lyrics for "Viva la Vida": 55 synced lines;
 Lyrics timing saved: value="-1000"  (expected -1000 for Viva la Vida)
@@ -23,8 +23,8 @@ Remembered song: Viva la Vida, cover saved: 1
 Play on the last song: in front com.orcahome/.MainActivity, player 3, resume: play sent to com.orcahome.demoplayer/.ButtonReceiver;resume: com.orcahome.demoplayer playing;
   player blocked in the background: in front com.orcahome/.MainActivity, player 3, resume: play sent to com.orcahome.demoplayer/.ButtonReceiver;resume: opening com.orcahome.demoplayer;resume: com.orcahome.demoplayer playing, back to the home screen;
 
-2.8 on the emulator (Sat, plate digit parity 0):
-  speed limit: java.net.SocketTimeoutException: timeout;weather: code 51, rain expected: no;
+2.8 on the emulator (Sun, plate digit parity 0):
+  speed limit: java.net.SocketTimeoutException: timeout;weather: code 3, rain expected: no;
   odd-even pill expected: no (weekend or night)
   start-up volume: volume is 5 in range [0..15] (expected about 30 %), car started: new trip;start-up volume: 5/15 (now 5);
 
@@ -33,16 +33,16 @@ Play on the last song: in front com.orcahome/.MainActivity, player 3, resume: pl
   favourite saved: 0:10260:TRAX FM (expected 0:10260:TRAX FM)
 Debug-build crashes: 0 (other apps: 0)
 
-Release APK: versionName=2.9
-Home screen visible for 25 s, process 12540
-  memory (TOTAL PSS): 30113 KB
+Release APK: versionName=2.10
+Home screen visible for 25 s, process 13521
+  memory (TOTAL PSS): 37425 KB
   CPU over 10 s: 0.9%
   location requests from Orca Home: 4
 Another app in front for 20 s:
-  process still there: 12540
+  process still there: 13521
   CPU over 10 s: 0.0%
   location requests from Orca Home: 2
-  memory (TOTAL PSS): 29600 KB
+  memory (TOTAL PSS): 30073 KB
 Back home: location requests from Orca Home: 4
 Release-APK crashes: 0
 Done.
@@ -52,11 +52,11 @@ Boot test (two home apps, no default):
   home apps: com.google.android.apps.nexuslauncher/.NexusLauncherActivity com.orcahome/.MainActivity com.android.settings/.FallbackHome
   default home: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
   helper off: SYSTEM_ALERT_WINDOW: default
-  helper off, after reboot: mResumedActivity: ActivityRecord{6bd3460 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t39}
+  helper off, after reboot: mResumedActivity: ActivityRecord{dde23ad u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t33}
   helper on: SYSTEM_ALERT_WINDOW: allow
-  helper on: Orca Home in front after about 55 s
-  helper on, after reboot:  mResumedActivity: ActivityRecord{f925848 u0 com.orcahome/.MainActivity t40}
-  after reboot: SYSTEM_ALERT_WINDOW: allow; time=+12s730ms ago
+  helper on: Orca Home in front after about 50 s
+  helper on, after reboot:  mResumedActivity: ActivityRecord{7268a26 u0 com.orcahome/.MainActivity t34}
+  after reboot: SYSTEM_ALERT_WINDOW: allow; time=+11s804ms ago
   RESULT: Orca Home opened by itself over the chooser
   crashes: 0
 
